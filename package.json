@@ -1,0 +1,27 @@
+{
+  "name": "local-coderabbit",
+  "version": "1.0.0",
+  "description": "Local PR review tool with advanced analysis",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "nodemon server/index.js",
+    "client": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "install-all": "npm install && cd client && npm install"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "simple-git": "^3.15.0",
+    "cors": "^2.8.5",
+    "morgan": "^1.10.0",
+    "jscodeshift": "^0.13.1",
+    "escomplex": "^2.0.0-alpha",
+    "eslint": "^8.14.0",
+    "diff": "^5.1.0"
+  },
+  "devDependencies": {
+    "concurrently": "^7.1.0",
+    "nodemon": "^2.0.16"
+  }
+}

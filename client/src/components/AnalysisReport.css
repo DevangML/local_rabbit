@@ -1,0 +1,134 @@
+.analysis-report {
+  padding: 1rem;
+}
+
+.analysis-report h2 {
+  margin-bottom: 1.5rem;
+}
+
+.impact-files, .quality-files {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.impact-file, .quality-file {
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.impact-file-header, .quality-file-header {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.impact-level, .quality-assessment {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.impact-high {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.impact-medium {
+  background-color: var(--warning-color);
+  color: black;
+}
+
+.impact-low {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.quality-improved {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.quality-reduced {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.quality-unchanged {
+  background-color: var(--info-color);
+  color: white;
+}
+
+.impact-details, .quality-details {
+  padding: 1rem;
+}
+
+.impact-section, .quality-section {
+  margin-bottom: 1.5rem;
+}
+
+.impact-section h4, .quality-section h4 {
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.impact-section ul, .quality-section ul {
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.lint-comparison {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.lint-before, .lint-after, .lint-diff {
+  flex: 1;
+  background-color: var(--bg-color);
+  padding: 1rem;
+  border-radius: 4px;
+}
+
+.lint-before h5, .lint-after h5, .lint-diff h5 {
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.positive {
+  color: var(--success-color);
+  margin-left: 0.5rem;
+}
+
+.negative {
+  color: var(--danger-color);
+  margin-left: 0.5rem;
+}
+
+.quality-summary {
+  padding: 1rem;
+  border-radius: 4px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.quality-summary.quality-improved {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.quality-summary.quality-reduced {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.quality-summary.quality-unchanged {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
