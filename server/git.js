@@ -53,11 +53,11 @@ class GitService {
 
   async getDiff(fromBranch, toBranch) {
     try {
-      // First validate that this is a Flutter repo
-      await this.validateFlutterRepo();
-
-      // Get the raw diff
-      const diffResult = await this.git.diff([fromBranch, toBranch, '--', '*.dart']);
+      console.log(`Getting diff between ${fromBranch} and ${toBranch}`);
+      
+      // Get the raw diff first
+      const diffResult = await this.git.diff([fromBranch, toBranch]);
+      console.log('Raw diff length:', diffResult.length);
       
       // Initialize with empty response structure
       const response = { 
@@ -78,14 +78,18 @@ class GitService {
       };
 
       if (!diffResult) {
-        response.message = 'No Dart files changed between branches';
+        console.log('No diff result found');
+        response.message = 'No changes between branches';
         return response;
       }
 
       // Parse the diff into structured data
       const files = await this.parseDiff(diffResult, fromBranch, toBranch);
+      console.log('Parsed files:', files.length);
+      console.log('First file chunks:', files[0]?.chunks?.length || 0);
       
       if (!files || !Array.isArray(files)) {
+        console.error('Invalid parsed files result');
         response.message = 'Error parsing diff results';
         response.errors = ['Invalid diff parsing result'];
         return response;
@@ -93,11 +97,12 @@ class GitService {
 
       response.files = files;
       response.summary = this.generateSummary(files);
+      console.log('Response summary:', response.summary);
 
       return response;
 
     } catch (error) {
-      console.error('Error analyzing Flutter changes:', error);
+      console.error('Error analyzing changes:', error);
       return {
         files: [],
         summary: {
@@ -121,46 +126,105 @@ class GitService {
     const files = [];
     const diffLines = diffText.split('\n');
     let currentFile = null;
+    let currentChunk = null;
+    let oldStart = 0;
+    let newStart = 0;
+    let oldLines = 0;
+    let newLines = 0;
 
     for (let i = 0; i < diffLines.length; i++) {
       const line = diffLines[i];
       
       if (line.startsWith('diff --git')) {
         if (currentFile) {
+          if (currentChunk) {
+            currentFile.chunks.push(currentChunk);
+            currentChunk = null;
+          }
           files.push(currentFile);
         }
 
-        // Extract file path more robustly
-        const filePathMatch = line.match(/b\/(.+)$/);
-        const filePath = filePathMatch ? filePathMatch[1] : '';
-        
-        // Only create a file entry if we have a valid path
-        if (filePath) {
+        // Parse both a/ and b/ paths correctly
+        const match = line.match(/^diff --git a\/(.*) b\/(.*)$/);
+        if (match) {
+          const [, oldPath, newPath] = match;
+          
+          // Determine if file is new, deleted, or modified
+          let fileStatus = 'modified';
+          try {
+            await this.git.show([`${fromBranch}:${oldPath}`]);
+          } catch (e) {
+            fileStatus = 'added';
+          }
+          
+          if (fileStatus === 'modified') {
+            try {
+              await this.git.show([`${toBranch}:${newPath}`]);
+            } catch (e) {
+              fileStatus = 'deleted';
+            }
+          }
+
           currentFile = {
-            path: filePath,
-            type: this.getFileType(filePath),
+            oldPath,
+            path: newPath,
+            type: this.getFileType(newPath),
+            status: fileStatus,
             additions: 0,
             deletions: 0,
-            changes: [],
-            analysis: await this.analyzeFile(filePath, fromBranch, toBranch)
+            chunks: [],
+            analysis: await this.analyzeFile(oldPath, newPath, fromBranch, toBranch, fileStatus)
           };
         }
-      } else if (currentFile) {  // Only process changes if we have a valid currentFile
-        if (line.startsWith('+') && !line.startsWith('+++')) {
+      } else if (line.startsWith('@@ ')) {
+        // If we have a current chunk, save it before starting a new one
+        if (currentChunk) {
+          currentFile.chunks.push(currentChunk);
+        }
+
+        // Parse chunk header
+        const chunkMatch = line.match(/@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/);
+        if (chunkMatch) {
+          const [, oldStart, oldCount, newStart, newCount] = chunkMatch;
+          currentChunk = {
+            oldStart: parseInt(oldStart),
+            oldLines: parseInt(oldCount || 1),
+            newStart: parseInt(newStart),
+            newLines: parseInt(newCount || 1),
+            lines: []
+          };
+        }
+      } else if (currentFile && currentChunk) {
+        // Process diff content lines
+        if (line.startsWith('+')) {
           currentFile.additions++;
-          currentFile.changes.push({ type: 'addition', content: line.substring(1) });
-        } else if (line.startsWith('-') && !line.startsWith('---')) {
+          currentChunk.lines.push({ 
+            type: 'addition',
+            content: line.substring(1)
+          });
+        } else if (line.startsWith('-')) {
           currentFile.deletions++;
-          currentFile.changes.push({ type: 'deletion', content: line.substring(1) });
+          currentChunk.lines.push({ 
+            type: 'deletion',
+            content: line.substring(1)
+          });
+        } else if (!line.startsWith('\\')) { // Ignore "No newline at end of file" markers
+          currentChunk.lines.push({ 
+            type: 'context',
+            content: line.startsWith(' ') ? line.substring(1) : line
+          });
         }
       }
     }
 
+    // Don't forget to add the last chunk and file
     if (currentFile) {
+      if (currentChunk) {
+        currentFile.chunks.push(currentChunk);
+      }
       files.push(currentFile);
     }
 
-    // Filter out any files without valid paths
     return files.filter(file => file && file.path);
   }
 
@@ -184,9 +248,20 @@ class GitService {
     return 'other';
   }
 
-  async analyzeFile(filePath, fromBranch, toBranch) {
+  async analyzeFile(oldPath, newPath, fromBranch, toBranch, fileStatus) {
     try {
-      const content = await this.git.show([`${toBranch}:${filePath}`]);
+      let content;
+      
+      // Get content based on file status
+      if (fileStatus === 'added') {
+        content = await this.git.show([`${toBranch}:${newPath}`]);
+      } else if (fileStatus === 'deleted') {
+        content = await this.git.show([`${fromBranch}:${oldPath}`]);
+      } else {
+        // For modified files, analyze the new version
+        content = await this.git.show([`${toBranch}:${newPath}`]);
+      }
+
       if (!content) return null;
 
       const analysis = {
@@ -202,7 +277,8 @@ class GitService {
         complexity: {
           widgetNesting: 0,
           stateVariables: 0
-        }
+        },
+        status: fileStatus
       };
 
       const lines = content.split('\n');
@@ -253,8 +329,11 @@ class GitService {
       return analysis;
 
     } catch (error) {
-      console.error(`Error analyzing file ${filePath}:`, error);
-      return null;
+      console.error(`Error analyzing file ${newPath}:`, error);
+      return {
+        status: fileStatus,
+        error: `Failed to analyze file: ${error.message}`
+      };
     }
   }
 

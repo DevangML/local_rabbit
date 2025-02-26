@@ -217,8 +217,12 @@ router.get('/analyze/impact', async (req, res) => {
     const gitService = new GitService(currentRepoPath);
     const diffResult = await gitService.getDiff(fromBranch, toBranch);
     
+    if (!diffResult.files || !Array.isArray(diffResult.files)) {
+      return res.status(500).json({ error: 'Invalid diff result structure' });
+    }
+    
     const analyzer = new CodeAnalyzer(currentRepoPath);
-    const analysisResult = await analyzer.analyzeImpact(diffResult, fromBranch, toBranch, gitService);
+    const analysisResult = await analyzer.analyzeImpact(diffResult.files, fromBranch, toBranch, gitService);
     
     return res.json(analysisResult);
   } catch (error) {
@@ -243,8 +247,12 @@ router.get('/analyze/quality', async (req, res) => {
     const gitService = new GitService(currentRepoPath);
     const diffResult = await gitService.getDiff(fromBranch, toBranch);
     
+    if (!diffResult.files || !Array.isArray(diffResult.files)) {
+      return res.status(500).json({ error: 'Invalid diff result structure' });
+    }
+    
     const analyzer = new CodeAnalyzer(currentRepoPath);
-    const analysisResult = await analyzer.analyzeQuality(diffResult, fromBranch, toBranch, gitService);
+    const analysisResult = await analyzer.analyzeQuality(diffResult.files, fromBranch, toBranch, gitService);
     
     return res.json(analysisResult);
   } catch (error) {
@@ -269,8 +277,12 @@ router.get('/analyze/review', async (req, res) => {
     const gitService = new GitService(currentRepoPath);
     const diffResult = await gitService.getDiff(fromBranch, toBranch);
     
+    if (!diffResult.files || !Array.isArray(diffResult.files)) {
+      return res.status(500).json({ error: 'Invalid diff result structure' });
+    }
+    
     const analyzer = new CodeAnalyzer(currentRepoPath);
-    const reviewResult = await analyzer.genericReview(diffResult, fromBranch, toBranch, gitService);
+    const reviewResult = await analyzer.genericReview(diffResult.files, fromBranch, toBranch, gitService);
     
     return res.json(reviewResult);
   } catch (error) {

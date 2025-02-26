@@ -271,31 +271,152 @@ class CodeAnalyzer {
   }
 
   generateRecommendations(analysis) {
-    // Test coverage recommendations
-    if (analysis.summary.testCoverage < 70) {
-      analysis.recommendations.push({
-        priority: 'high',
-        message: 'Increase test coverage for modified files',
-        details: `Current coverage: ${analysis.summary.testCoverage.toFixed(1)}%`
-      });
+    const recommendations = [];
+
+    // Handle both quality analysis and review modes
+    if (analysis.summary.testCoverage !== undefined) {
+      // Quality analysis mode
+      if (analysis.summary.testCoverage < 70) {
+        recommendations.push({
+          priority: 'high',
+          message: 'Increase test coverage for modified files',
+          details: `Current coverage: ${analysis.summary.testCoverage.toFixed(1)}%`
+        });
+      }
+
+      if (analysis.summary.complexityScore > 5) {
+        recommendations.push({
+          priority: 'medium',
+          message: 'Consider refactoring complex widgets',
+          details: 'High complexity score indicates potential maintenance issues'
+        });
+      }
+
+      if (analysis.details.bestPractices.length > 0) {
+        recommendations.push({
+          priority: 'low',
+          message: 'Follow Flutter best practices',
+          details: `${analysis.details.bestPractices.length} best practice violations found`
+        });
+      }
+    } else {
+      // Review mode
+      const { totalFiles, totalAdditions, totalDeletions, fileTypes } = analysis.summary;
+
+      // Large changes recommendation
+      if (totalAdditions + totalDeletions > 300) {
+        recommendations.push({
+          priority: 'high',
+          message: 'Consider breaking down large changes',
+          details: `Total changes (${totalAdditions + totalDeletions} lines) might be hard to review`
+        });
+      }
+
+      // Test coverage recommendation
+      if (fileTypes.widget > 0 && (!fileTypes.test || fileTypes.test === 0)) {
+        recommendations.push({
+          priority: 'high',
+          message: 'Add tests for new widgets',
+          details: 'New widgets added without corresponding test files'
+        });
+      }
+
+      // State management recommendation
+      const stateManagementFiles = analysis.fileAnalysis.filter(
+        file => file.issues.some(issue => issue.includes('state management'))
+      );
+      if (stateManagementFiles.length > 0) {
+        recommendations.push({
+          priority: 'medium',
+          message: 'Review state management approach',
+          details: `${stateManagementFiles.length} files might benefit from better state management`
+        });
+      }
+
+      // Code organization recommendation
+      const complexFiles = analysis.fileAnalysis.filter(
+        file => file.metrics.complexity > 3
+      );
+      if (complexFiles.length > 0) {
+        recommendations.push({
+          priority: 'medium',
+          message: 'Consider refactoring complex files',
+          details: `${complexFiles.length} files have high complexity`
+        });
+      }
     }
 
-    // Complexity recommendations
-    if (analysis.summary.complexityScore > 5) {
-      analysis.recommendations.push({
-        priority: 'medium',
-        message: 'Consider refactoring complex widgets',
-        details: 'High complexity score indicates potential maintenance issues'
-      });
-    }
+    return recommendations;
+  }
 
-    // Best practices recommendations
-    if (analysis.details.bestPractices.length > 0) {
-      analysis.recommendations.push({
-        priority: 'low',
-        message: 'Follow Flutter best practices',
-        details: `${analysis.details.bestPractices.length} best practice violations found`
-      });
+  async genericReview(diffFiles, fromBranch, toBranch, gitService) {
+    try {
+      const review = {
+        summary: {
+          totalFiles: diffFiles.length,
+          additions: diffFiles.reduce((sum, file) => sum + file.additions, 0),
+          deletions: diffFiles.reduce((sum, file) => sum + file.deletions, 0),
+          fileTypes: {}
+        },
+        fileAnalysis: [],
+        recommendations: [],
+        risks: []
+      };
+
+      // Analyze each file
+      for (const file of diffFiles) {
+        const fileAnalysis = {
+          path: file.path,
+          status: file.status,
+          type: file.type,
+          metrics: {
+            additions: file.additions,
+            deletions: file.deletions,
+            complexity: 0
+          },
+          issues: [],
+          suggestions: []
+        };
+
+        // Update file type statistics
+        review.summary.fileTypes[file.type] = (review.summary.fileTypes[file.type] || 0) + 1;
+
+        // Analyze complexity if file has analysis data
+        if (file.analysis) {
+          fileAnalysis.metrics.complexity = file.analysis.complexity?.widgetNesting || 0;
+          
+          // Check for potential issues
+          if (file.analysis.complexity?.widgetNesting > 3) {
+            fileAnalysis.issues.push('High widget nesting depth may impact readability and maintainability');
+          }
+
+          if (file.analysis.complexity?.stateVariables > 5) {
+            fileAnalysis.issues.push('High number of state variables may indicate need for state management solution');
+          }
+
+          // Add Flutter-specific suggestions
+          if (file.analysis.stateManagement?.isStateful && !file.analysis.stateManagement?.usesBloc && !file.analysis.stateManagement?.usesProvider) {
+            fileAnalysis.suggestions.push('Consider using a state management solution (BLoC or Provider) for complex stateful widgets');
+          }
+
+          if (file.type === 'widget' && file.analysis.imports?.length > 10) {
+            fileAnalysis.suggestions.push('High number of imports may indicate violation of single responsibility principle');
+          }
+        }
+
+        review.fileAnalysis.push(fileAnalysis);
+
+        // Analyze risks
+        this.analyzeRisks(file, review.risks);
+      }
+
+      // Generate overall recommendations
+      review.recommendations = this.generateRecommendations(review);
+
+      return review;
+    } catch (error) {
+      console.error('Error in generic review:', error);
+      throw error;
     }
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { API_BASE_URL } from '../config';
 import './DiffViewer.css';
 import CommentsPanel from './CommentsPanel';
@@ -9,13 +9,12 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   
-  useEffect(() => {
-    if (fromBranch && toBranch) {
-      fetchDiff();
-    }
-  }, [fromBranch, toBranch]);
-  
   const fetchDiff = async () => {
+    if (!fromBranch || !toBranch) {
+      setError('Please select both branches before starting the analysis');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     
@@ -43,6 +42,30 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
       setIsLoading(false);
     }
   };
+
+  const renderStartButton = () => {
+    if (!fromBranch || !toBranch) {
+      return (
+        <div className="start-button-container">
+          <button className="start-button" disabled>
+            Please select both branches to start
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="start-button-container">
+        <button 
+          className="start-button"
+          onClick={fetchDiff}
+          disabled={isLoading}
+        >
+          {isLoading ? 'Analyzing...' : 'Start Analysis'}
+        </button>
+      </div>
+    );
+  };
   
   const getLineClass = (line) => {
     switch (line.type) {
@@ -61,8 +84,8 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
   };
 
   const getFileIcon = (file) => {
-    if (!file.newPath.endsWith('.dart')) return '📄';
-    switch (file.fileType) {
+    if (!file.path.endsWith('.dart')) return '📄';
+    switch (file.type) {
       case 'widget': return '🔷';
       case 'screen': return '📱';
       case 'model': return '📦';
@@ -73,8 +96,8 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
   };
 
   const getFileTypeLabel = (file) => {
-    if (!file.newPath.endsWith('.dart')) return 'Other';
-    switch (file.fileType) {
+    if (!file.path.endsWith('.dart')) return 'Other';
+    switch (file.type) {
       case 'widget': return 'Widget';
       case 'screen': return 'Screen';
       case 'model': return 'Model';
@@ -82,6 +105,33 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
       case 'test': return 'Test';
       default: return 'Other';
     }
+  };
+
+  const getFileStatusBadge = (file) => {
+    const statusColors = {
+      added: '#28a745',
+      deleted: '#dc3545',
+      modified: '#0366d6'
+    };
+
+    const statusLabels = {
+      added: 'Added',
+      deleted: 'Deleted',
+      modified: 'Modified'
+    };
+
+    return (
+      <span 
+        className="file-status-badge"
+        style={{ 
+          backgroundColor: statusColors[file.status] + '20',
+          color: statusColors[file.status],
+          border: `1px solid ${statusColors[file.status]}40`
+        }}
+      >
+        {statusLabels[file.status]}
+      </span>
+    );
   };
 
   const renderErrors = () => {
@@ -159,6 +209,7 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
   
   return (
     <div className="diff-viewer">
+      {renderStartButton()}
       <div className="file-list">
         <h3>Changed Files ({diffData.files?.length || 0})</h3>
         {renderErrors()}
@@ -171,8 +222,11 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
             >
               <span className="file-icon">{getFileIcon(file)}</span>
               <span className="file-info">
-                <span className="file-path">{file.newPath}</span>
-                <span className="file-type">{getFileTypeLabel(file)}</span>
+                <span className="file-path">{file.path}</span>
+                <div className="file-meta">
+                  {getFileStatusBadge(file)}
+                  <span className="file-type">{getFileTypeLabel(file)}</span>
+                </div>
                 {file.metadata?.error && (
                   <span className="file-error-indicator">⚠️</span>
                 )}
@@ -192,7 +246,8 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
             <div className="file-header">
               <div className="file-title">
                 <span className="file-icon">{getFileIcon(selectedFile)}</span>
-                <h3>{selectedFile.newPath}</h3>
+                <h3>{selectedFile.path}</h3>
+                {getFileStatusBadge(selectedFile)}
                 {selectedFile.metadata?.error && (
                   <span className="file-error-badge" title={selectedFile.metadata.error}>
                     ⚠️ Analysis Error
@@ -208,7 +263,7 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
             {renderFileMetadata(selectedFile)}
             
             <div className="diff-code">
-              {selectedFile.chunks.map((chunk, chunkIndex) => (
+              {selectedFile.chunks?.map((chunk, chunkIndex) => (
                 <div key={chunkIndex} className="diff-chunk">
                   <div className="chunk-header">
                     @@ -{chunk.oldStart},{chunk.oldLines} +{chunk.newStart},{chunk.newLines} @@
@@ -238,7 +293,7 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
             </div>
             
             <CommentsPanel 
-              fileId={`${fromBranch}-${toBranch}-${selectedFile.newPath}`} 
+              fileId={`${fromBranch}-${toBranch}-${selectedFile.path}`} 
               selectedFile={selectedFile}
             />
           </>
