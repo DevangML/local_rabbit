@@ -36,23 +36,21 @@ body {
 }
 
 .app-header {
-  background: white;
+  background-color: #f8f9fa;
   padding: 2rem;
   text-align: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid #e9ecef;
 }
 
 .app-header h1 {
   margin: 0;
-  color: #2d3748;
-  font-size: 2.5rem;
-  font-weight: 700;
+  color: #343a40;
+  font-size: 2rem;
 }
 
 .app-header p {
   margin: 0.5rem 0 0;
-  color: #718096;
-  font-size: 1.1rem;
+  color: #6c757d;
 }
 
 .repo-selector {
@@ -145,40 +143,43 @@ button:disabled {
 }
 
 .app-nav {
-  background-color: white;
-  padding: 0 2rem;
-  border-bottom: 1px solid var(--border-color);
+  background-color: #f5f5f5;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .app-nav ul {
-  display: flex;
   list-style: none;
-}
-
-.app-nav li {
-  margin-right: 1rem;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
 }
 
 .app-nav a {
-  display: block;
-  padding: 1rem 0;
-  color: var(--text-color);
   text-decoration: none;
-  font-weight: 600;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s;
+  color: #333;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
 }
 
-.app-nav a:hover,
+.app-nav a:hover {
+  background-color: #e0e0e0;
+}
+
 .app-nav a.active {
-  color: var(--primary-color);
-  border-bottom-color: var(--primary-color);
+  background-color: #007bff;
+  color: white;
 }
 
 .app-main {
+  padding: 1rem;
   max-width: 1200px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  margin: 0 auto;
 }
 
 .loading {
@@ -201,15 +202,29 @@ button:disabled {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+.loading-message {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-size: 1.1rem;
+}
+
 .error-message {
-  max-width: 800px;
-  margin: 1rem auto;
+  background-color: #fff3f3;
+  border: 1px solid #ffcdd2;
+  border-radius: 4px;
+  color: #d32f2f;
+  margin: 1rem;
   padding: 1rem;
-  background: #fff5f5;
-  color: #c53030;
-  border-radius: 8px;
-  border-left: 4px solid #e53e3e;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+}
+
+.error-message pre {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+  overflow-x: auto;
 }
 
 /* Responsive styles */

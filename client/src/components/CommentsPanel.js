@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import './CommentsPanel.css';
 
 const CommentsPanel = ({ fileId, selectedFile }) => {
@@ -19,7 +20,7 @@ const CommentsPanel = ({ fileId, selectedFile }) => {
     setError(null);
     
     try {
-      const response = await fetch(`http://localhost:3001/api/comments/${encodeURIComponent(fileId)}`);
+      const response = await fetch(`${API_BASE_URL}/api/comments/${encodeURIComponent(fileId)}`);
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -42,7 +43,7 @@ const CommentsPanel = ({ fileId, selectedFile }) => {
     setError(null);
     
     try {
-      const response = await fetch(`http://localhost:3001/api/comments/${encodeURIComponent(fileId)}`, {
+      const response = await fetch(`${API_BASE_URL}/api/comments/${encodeURIComponent(fileId)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -75,7 +76,7 @@ const CommentsPanel = ({ fileId, selectedFile }) => {
     setError(null);
     
     try {
-      const response = await fetch(`http://localhost:3001/api/comments/${encodeURIComponent(fileId)}/${commentId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/comments/${encodeURIComponent(fileId)}/${commentId}`, {
         method: 'DELETE'
       });
       

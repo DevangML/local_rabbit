@@ -127,13 +127,13 @@ router.post('/set-repo', async (req, res) => {
       currentRepoPath = gitRootPath;
       
       // Get additional repo info
-      const branches = await gitService.getBranches();
+      const branchData = await gitService.getBranches();
       const currentBranch = await gitService.getCurrentBranch();
       
       const response = {
         success: true,
         repoPath: gitRootPath,
-        branches: branches || [],
+        branches: branchData.all || [],
         currentBranch: currentBranch || 'main'
       };
 
@@ -164,12 +164,12 @@ router.get('/repo-info', async (req, res) => {
     }
     
     const gitService = new GitService(currentRepoPath);
-    const branches = await gitService.getBranches();
+    const branchData = await gitService.getBranches();
     const currentBranch = await gitService.getCurrentBranch();
     
     return res.json({ 
       repoPath: currentRepoPath,
-      branches,
+      branches: branchData.all || [],
       currentBranch
     });
   } catch (error) {

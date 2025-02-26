@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import './ReviewPanel.css';
 import DiffViewer from './DiffViewer';
 
@@ -19,7 +20,7 @@ const ReviewPanel = ({ fromBranch, toBranch }) => {
     setError(null);
     
     try {
-      const response = await fetch(`/api/analyze/review?fromBranch=${fromBranch}&toBranch=${toBranch}`);
+      const response = await fetch(`${API_BASE_URL}/api/analyze/review?fromBranch=${fromBranch}&toBranch=${toBranch}`);
       
       if (!response.ok) {
         const errorData = await response.json();

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import './DiffViewer.css';
 import CommentsPanel from './CommentsPanel';
 
 const DiffViewer = ({ fromBranch, toBranch }) => {
-  const [diffData, setDiffData] = useState([]);
+  const [diffData, setDiffData] = useState({ files: [], errors: null });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -19,7 +20,7 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
     setError(null);
     
     try {
-      const response = await fetch(`/api/diff?fromBranch=${fromBranch}&toBranch=${toBranch}`);
+      const response = await fetch(`${API_BASE_URL}/api/diff?fromBranch=${fromBranch}&toBranch=${toBranch}`);
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -30,13 +31,14 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
       setDiffData(data);
       
       // Select the first file by default if available
-      if (data.length > 0) {
-        setSelectedFile(data[0]);
+      if (data.files && data.files.length > 0) {
+        setSelectedFile(data.files[0]);
       } else {
         setSelectedFile(null);
       }
     } catch (error) {
       setError(error.message);
+      setDiffData({ files: [], errors: null });
     } finally {
       setIsLoading(false);
     }
@@ -57,6 +59,95 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
       default: return ' ';
     }
   };
+
+  const getFileIcon = (file) => {
+    if (!file.newPath.endsWith('.dart')) return '📄';
+    switch (file.fileType) {
+      case 'widget': return '🔷';
+      case 'screen': return '📱';
+      case 'model': return '📦';
+      case 'service': return '⚙️';
+      case 'test': return '🧪';
+      default: return '📄';
+    }
+  };
+
+  const getFileTypeLabel = (file) => {
+    if (!file.newPath.endsWith('.dart')) return 'Other';
+    switch (file.fileType) {
+      case 'widget': return 'Widget';
+      case 'screen': return 'Screen';
+      case 'model': return 'Model';
+      case 'service': return 'Service';
+      case 'test': return 'Test';
+      default: return 'Other';
+    }
+  };
+
+  const renderErrors = () => {
+    if (!diffData.errors) return null;
+
+    return (
+      <div className="diff-errors">
+        <h4>Analysis Errors</h4>
+        <ul>
+          {diffData.errors.map((error, index) => (
+            <li key={index}>
+              <strong>{error.file}:</strong> {error.error}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
+  const renderFileMetadata = (file) => {
+    if (!file.isFlutterFile || !file.metadata) return null;
+
+    return (
+      <div className="file-metadata">
+        {file.metadata.error ? (
+          <div className="metadata-error">
+            <h4>Analysis Error</h4>
+            <p>{file.metadata.error}</p>
+          </div>
+        ) : (
+          <>
+            <div className="metadata-section">
+              <h4>Widget Info</h4>
+              {file.metadata.widgetTypes.length > 0 ? (
+                <ul>
+                  {file.metadata.widgetTypes.map((type, index) => (
+                    <li key={index}>{type}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>Not a widget file</p>
+              )}
+            </div>
+
+            {file.metadata.hasStateManagement && (
+              <div className="metadata-section">
+                <h4>State Management</h4>
+                <p>Uses state management</p>
+              </div>
+            )}
+
+            {file.metadata.imports.length > 0 && (
+              <div className="metadata-section">
+                <h4>Imports ({file.metadata.imports.length})</h4>
+                <ul className="imports-list">
+                  {file.metadata.imports.map((imp, index) => (
+                    <li key={index}>{imp}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
   
   if (isLoading) {
     return <div className="loading">Loading diff...</div>;
@@ -69,15 +160,23 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
   return (
     <div className="diff-viewer">
       <div className="file-list">
-        <h3>Changed Files ({diffData.length})</h3>
+        <h3>Changed Files ({diffData.files?.length || 0})</h3>
+        {renderErrors()}
         <ul>
-          {diffData.map((file, index) => (
+          {diffData.files?.map((file, index) => (
             <li 
               key={index} 
               className={selectedFile === file ? 'selected' : ''}
               onClick={() => setSelectedFile(file)}
             >
-              <span className="file-path">{file.newPath}</span>
+              <span className="file-icon">{getFileIcon(file)}</span>
+              <span className="file-info">
+                <span className="file-path">{file.newPath}</span>
+                <span className="file-type">{getFileTypeLabel(file)}</span>
+                {file.metadata?.error && (
+                  <span className="file-error-indicator">⚠️</span>
+                )}
+              </span>
               <span className="file-stats">
                 <span className="additions">+{file.additions}</span>
                 <span className="deletions">-{file.deletions}</span>
@@ -91,12 +190,22 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
         {selectedFile ? (
           <>
             <div className="file-header">
-              <h3>{selectedFile.newPath}</h3>
+              <div className="file-title">
+                <span className="file-icon">{getFileIcon(selectedFile)}</span>
+                <h3>{selectedFile.newPath}</h3>
+                {selectedFile.metadata?.error && (
+                  <span className="file-error-badge" title={selectedFile.metadata.error}>
+                    ⚠️ Analysis Error
+                  </span>
+                )}
+              </div>
               <div className="file-stats">
                 <span className="additions">+{selectedFile.additions}</span>
                 <span className="deletions">-{selectedFile.deletions}</span>
               </div>
             </div>
+            
+            {renderFileMetadata(selectedFile)}
             
             <div className="diff-code">
               {selectedFile.chunks.map((chunk, chunkIndex) => (
@@ -135,7 +244,7 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
           </>
         ) : (
           <div className="no-file-selected">
-            {diffData.length > 0 
+            {diffData.files?.length > 0 
               ? 'Select a file from the list to view diff' 
               : 'No changes found between selected branches'}
           </div>

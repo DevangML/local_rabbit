@@ -2,30 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config';
 import './AnalysisReport.css';
 
-const AnalysisReport = ({ fromBranch, toBranch, mode }) => {
-  const [analysisData, setAnalysisData] = useState([]);
+const AnalysisReport = ({ fromBranch, toBranch }) => {
+  const [analysisData, setAnalysisData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  
+
   useEffect(() => {
     if (fromBranch && toBranch) {
       fetchAnalysis();
     }
-  }, [fromBranch, toBranch, mode]);
-  
+  }, [fromBranch, toBranch]);
+
   const fetchAnalysis = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const endpoint = `/api/analyze/${mode}`;
-      const response = await fetch(`${API_BASE_URL}${endpoint}?fromBranch=${fromBranch}&toBranch=${toBranch}`);
-      
+      const response = await fetch(
+        `${API_BASE_URL}/api/analyze/flutter?fromBranch=${fromBranch}&toBranch=${toBranch}`
+      );
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to fetch ${mode} analysis`);
+        throw new Error(errorData.message || 'Failed to analyze Flutter changes');
       }
-      
+
       const data = await response.json();
       setAnalysisData(data);
     } catch (error) {
@@ -34,246 +35,155 @@ const AnalysisReport = ({ fromBranch, toBranch, mode }) => {
       setIsLoading(false);
     }
   };
-  
-  const renderImpactAnalysis = () => (
-    <div className="impact-analysis">
-      <h2>Impact Analysis Report</h2>
-      
-      {analysisData.length === 0 ? (
-        <p>No JS/JSX files with changes to analyze</p>
-      ) : (
-        <div className="impact-files">
-          {analysisData.map((file, index) => (
-            <div key={index} className={`impact-file impact-${file.impactLevel.toLowerCase()}`}>
-              <div className="impact-file-header">
-                <h3>{file.file}</h3>
-                <span className={`impact-level impact-${file.impactLevel.toLowerCase()}`}>
-                  {file.impactLevel} Impact
-                </span>
+
+  const renderSummary = () => {
+    const { summary } = analysisData;
+    return (
+      <div className="analysis-summary">
+        <h3>Changes Overview</h3>
+        <div className="summary-grid">
+          <div className="summary-item">
+            <span className="summary-label">Files Changed</span>
+            <span className="summary-value">{summary.totalFiles}</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-label">Lines Added</span>
+            <span className="summary-value additions">+{summary.totalAdditions}</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-label">Lines Removed</span>
+            <span className="summary-value deletions">-{summary.totalDeletions}</span>
+          </div>
+        </div>
+
+        <div className="file-types">
+          <h4>Changes by Type</h4>
+          <div className="type-grid">
+            {Object.entries(summary.byType).map(([type, count]) => (
+              <div key={type} className="type-item">
+                <span className="type-label">{type}</span>
+                <span className="type-count">{count}</span>
               </div>
-              
-              <div className="impact-details">
-                <div className="impact-section">
-                  <h4>Function Changes</h4>
-                  <ul>
-                    {file.functionsChanged.added.length > 0 && (
-                      <li>
-                        <strong>{file.functionsChanged.added.length} new functions added</strong>
-                        <ul>
-                          {file.functionsChanged.added.map((func, i) => (
-                            <li key={i}>{func.name}</li>
-                          ))}
-                        </ul>
-                      </li>
-                    )}
-                    
-                    {file.functionsChanged.modified.length > 0 && (
-                      <li>
-                        <strong>{file.functionsChanged.modified.length} functions modified</strong>
-                        <ul>
-                          {file.functionsChanged.modified.map((func, i) => (
-                            <li key={i}>{func.name}</li>
-                          ))}
-                        </ul>
-                      </li>
-                    )}
-                    
-                    {file.functionsChanged.removed.length > 0 && (
-                      <li>
-                        <strong>{file.functionsChanged.removed.length} functions removed</strong>
-                        <ul>
-                          {file.functionsChanged.removed.map((func, i) => (
-                            <li key={i}>{func.name}</li>
-                          ))}
-                        </ul>
-                      </li>
-                    )}
-                    
-                    {file.functionsChanged.added.length === 0 && 
-                     file.functionsChanged.modified.length === 0 && 
-                     file.functionsChanged.removed.length === 0 && (
-                      <li>No function changes detected</li>
-                    )}
-                  </ul>
-                </div>
-                
-                <div className="impact-section">
-                  <h4>Variable Changes</h4>
-                  <ul>
-                    {file.variablesChanged.added.length > 0 && (
-                      <li>
-                        <strong>{file.variablesChanged.added.length} new variables added</strong>
-                      </li>
-                    )}
-                    
-                    {file.variablesChanged.modified.length > 0 && (
-                      <li>
-                        <strong>{file.variablesChanged.modified.length} variables modified</strong>
-                      </li>
-                    )}
-                    
-                    {file.variablesChanged.removed.length > 0 && (
-                      <li>
-                        <strong>{file.variablesChanged.removed.length} variables removed</strong>
-                      </li>
-                    )}
-                    
-                    {file.variablesChanged.added.length === 0 && 
-                     file.variablesChanged.modified.length === 0 && 
-                     file.variablesChanged.removed.length === 0 && (
-                      <li>No variable changes detected</li>
-                    )}
-                  </ul>
-                </div>
-                
-                <div className="impact-section">
-                  <h4>Flow Changes</h4>
-                  <ul>
-                    {file.flowChanges.ifStatements.added !== 0 && (
-                      <li>
-                        <strong>
-                          {file.flowChanges.ifStatements.added > 0 ? 'Added' : 'Removed'} {Math.abs(file.flowChanges.ifStatements.added)} conditional statements
-                        </strong>
-                      </li>
-                    )}
-                    
-                    {file.flowChanges.loopStatements.added !== 0 && (
-                      <li>
-                        <strong>
-                          {file.flowChanges.loopStatements.added > 0 ? 'Added' : 'Removed'} {Math.abs(file.flowChanges.loopStatements.added)} loop statements
-                        </strong>
-                      </li>
-                    )}
-                    
-                    {file.flowChanges.switchStatements.added !== 0 && (
-                      <li>
-                        <strong>
-                          {file.flowChanges.switchStatements.added > 0 ? 'Added' : 'Removed'} {Math.abs(file.flowChanges.switchStatements.added)} switch statements
-                        </strong>
-                      </li>
-                    )}
-                    
-                    {file.flowChanges.tryCatchStatements.added !== 0 && (
-                      <li>
-                        <strong>
-                          {file.flowChanges.tryCatchStatements.added > 0 ? 'Added' : 'Removed'} {Math.abs(file.flowChanges.tryCatchStatements.added)} try/catch blocks
-                        </strong>
-                      </li>
-                    )}
-                    
-                    {file.flowChanges.ifStatements.added === 0 && 
-                     file.flowChanges.loopStatements.added === 0 && 
-                     file.flowChanges.switchStatements.added === 0 && 
-                     file.flowChanges.tryCatchStatements.added === 0 && (
-                      <li>No flow control changes detected</li>
-                    )}
-                  </ul>
-                </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="state-management">
+          <h4>State Management</h4>
+          <div className="state-grid">
+            <div className="state-item">
+              <span className="state-label">Stateful Widgets</span>
+              <span className="state-count">{summary.stateManagement.stateful}</span>
+            </div>
+            <div className="state-item">
+              <span className="state-label">Stateless Widgets</span>
+              <span className="state-count">{summary.stateManagement.stateless}</span>
+            </div>
+            <div className="state-item">
+              <span className="state-label">BLoC Usage</span>
+              <span className="state-count">{summary.stateManagement.bloc}</span>
+            </div>
+            <div className="state-item">
+              <span className="state-label">Provider Usage</span>
+              <span className="state-count">{summary.stateManagement.provider}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderFileChanges = () => {
+    return (
+      <div className="file-changes">
+        <h3>Changed Files</h3>
+        {analysisData.files.map((file, index) => (
+          <div key={index} className="file-card">
+            <div className="file-header">
+              <div className="file-info">
+                <span className="file-type">{file.type}</span>
+                <span className="file-path">{file.path}</span>
+              </div>
+              <div className="file-stats">
+                <span className="additions">+{file.additions}</span>
+                <span className="deletions">-{file.deletions}</span>
               </div>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-  
-  const renderQualityAnalysis = () => (
-    <div className="quality-analysis">
-      <h2>Code Quality Analysis Report</h2>
-      
-      {analysisData.length === 0 ? (
-        <p>No JS/JSX files with changes to analyze</p>
-      ) : (
-        <div className="quality-files">
-          {analysisData.map((file, index) => (
-            <div key={index} className={`quality-file quality-${file.qualityAssessment.toLowerCase()}`}>
-              <div className="quality-file-header">
-                <h3>{file.file}</h3>
-                <span className={`quality-assessment quality-${file.qualityAssessment.toLowerCase()}`}>
-                  Quality {file.qualityAssessment}
-                </span>
-              </div>
-              
-              <div className="quality-details">
-                <div className="quality-section">
-                  <h4>Complexity Metrics</h4>
-                  <ul>
-                    <li>
-                      Cyclomatic Complexity: {file.complexityChange.cyclomatic > 0 ? '+' : ''}{file.complexityChange.cyclomatic.toFixed(2)}
-                      <span className={file.complexityChange.cyclomatic <= 0 ? 'positive' : 'negative'}>
-                        ({file.complexityChange.cyclomatic <= 0 ? 'Good' : 'Concerning'})
-                      </span>
-                    </li>
-                    <li>
-                      Maintainability Index: {file.complexityChange.maintainability > 0 ? '+' : ''}{file.complexityChange.maintainability.toFixed(2)}
-                      <span className={file.complexityChange.maintainability >= 0 ? 'positive' : 'negative'}>
-                        ({file.complexityChange.maintainability >= 0 ? 'Good' : 'Concerning'})
-                      </span>
-                    </li>
-                    <li>
-                      Halstead Difficulty: {file.complexityChange.halstead.difficulty > 0 ? '+' : ''}{file.complexityChange.halstead.difficulty.toFixed(2)}
-                      <span className={file.complexityChange.halstead.difficulty <= 0 ? 'positive' : 'negative'}>
-                        ({file.complexityChange.halstead.difficulty <= 0 ? 'Good' : 'Concerning'})
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-                
-                <div className="quality-section">
-                  <h4>Linting Results</h4>
-                  <div className="lint-comparison">
-                    <div className="lint-before">
-                      <h5>Before</h5>
-                      <p>Errors: {file.lintResults.old.errors}</p>
-                      <p>Warnings: {file.lintResults.old.warnings}</p>
-                    </div>
-                    <div className="lint-after">
-                      <h5>After</h5>
-                      <p>Errors: {file.lintResults.new.errors}</p>
-                      <p>Warnings: {file.lintResults.new.warnings}</p>
-                    </div>
-                    <div className="lint-diff">
-                      <h5>Change</h5>
-                      <p className={file.lintResults.new.errors - file.lintResults.old.errors <= 0 ? 'positive' : 'negative'}>
-                        Errors: {file.lintResults.new.errors - file.lintResults.old.errors > 0 ? '+' : ''}
-                        {file.lintResults.new.errors - file.lintResults.old.errors}
-                      </p>
-                      <p className={file.lintResults.new.warnings - file.lintResults.old.warnings <= 0 ? 'positive' : 'negative'}>
-                        Warnings: {file.lintResults.new.warnings - file.lintResults.old.warnings > 0 ? '+' : ''}
-                        {file.lintResults.new.warnings - file.lintResults.old.warnings}
-                      </p>
+
+            {file.analysis && (
+              <div className="file-analysis">
+                {file.analysis.widgets.length > 0 && (
+                  <div className="analysis-item">
+                    <span className="analysis-label">Widget Type:</span>
+                    <span className="analysis-value">{file.analysis.widgets.join(', ')}</span>
+                  </div>
+                )}
+
+                {file.analysis.stateManagement.isStateful && (
+                  <div className="analysis-item">
+                    <span className="analysis-label">State Variables:</span>
+                    <span className="analysis-value">{file.analysis.complexity.stateVariables}</span>
+                  </div>
+                )}
+
+                {(file.analysis.stateManagement.usesBloc || file.analysis.stateManagement.usesProvider) && (
+                  <div className="analysis-item">
+                    <span className="analysis-label">State Management:</span>
+                    <div className="state-tags">
+                      {file.analysis.stateManagement.usesBloc && (
+                        <span className="state-tag bloc">BLoC</span>
+                      )}
+                      {file.analysis.stateManagement.usesProvider && (
+                        <span className="state-tag provider">Provider</span>
+                      )}
                     </div>
                   </div>
-                </div>
-                
-                <div className="quality-section">
-                  <h4>Summary</h4>
-                  <p className={`quality-summary quality-${file.qualityAssessment.toLowerCase()}`}>
-                    {file.qualityAssessment === 'Improved' && 'Code quality has improved! The changes have reduced complexity and/or fixed issues.'}
-                    {file.qualityAssessment === 'Reduced' && 'Code quality has declined. The changes have increased complexity and/or introduced new issues.'}
-                    {file.qualityAssessment === 'Unchanged' && 'Code quality is mostly unchanged. The changes have had minimal impact on overall quality.'}
-                  </p>
-                </div>
+                )}
+
+                {file.analysis.complexity.widgetNesting > 3 && (
+                  <div className="analysis-warning">
+                    <span className="warning-icon">⚠️</span>
+                    High widget nesting detected ({file.analysis.complexity.widgetNesting} levels)
+                  </div>
+                )}
               </div>
+            )}
+
+            <div className="file-changes-preview">
+              {file.changes.slice(0, 5).map((change, i) => (
+                <pre key={i} className={`change-line ${change.type}`}>
+                  {change.type === 'addition' ? '+' : '-'} {change.content}
+                </pre>
+              ))}
+              {file.changes.length > 5 && (
+                <div className="more-changes">
+                  And {file.changes.length - 5} more changes...
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-  
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   if (isLoading) {
-    return <div className="loading">Running analysis...</div>;
+    return <div className="loading">Analyzing Flutter changes...</div>;
   }
-  
+
   if (error) {
     return <div className="error">Error: {error}</div>;
   }
-  
+
+  if (!analysisData) {
+    return <div className="empty">Select branches to analyze Flutter changes</div>;
+  }
+
   return (
-    <div className="analysis-report">
-      {mode === 'impact' && renderImpactAnalysis()}
-      {mode === 'quality' && renderQualityAnalysis()}
+    <div className="flutter-analysis">
+      <h2>Flutter Analysis Report</h2>
+      {renderSummary()}
+      {renderFileChanges()}
     </div>
   );
 };
