@@ -18,7 +18,7 @@ const AnalysisReport = ({ fromBranch, toBranch, mode }) => {
     
     try {
       const endpoint = `/api/analyze/${mode}`;
-      const response = await fetch(`${endpoint}?fromBranch=${fromBranch}&toBranch=${toBranch}`);
+      const response = await fetch(`http://localhost:3001${endpoint}?fromBranch=${fromBranch}&toBranch=${toBranch}`);
       
       if (!response.ok) {
         const errorData = await response.json();

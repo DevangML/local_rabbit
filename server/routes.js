@@ -3,6 +3,8 @@ const path = require('path');
 const fs = require('fs').promises;
 const GitService = require('./git');
 const CodeAnalyzer = require('./analyzer');
+const { execSync } = require('child_process');
+const os = require('os');
 
 const router = express.Router();
 
@@ -10,26 +12,147 @@ const router = express.Router();
 let currentRepoPath = '';
 const comments = new Map();
 
+// Helper function to find git root from file paths
+const findGitRootFromPaths = async (dirName, samplePaths) => {
+  try {
+    // Common base directories to check
+    const baseDirectories = [
+      process.cwd(),
+      os.homedir(),
+      path.join(os.homedir(), 'Documents'),
+      path.join(os.homedir(), 'Projects'),
+      path.join(os.homedir(), 'Desktop'),
+      '/Users',
+      '/home',
+      '/'
+    ];
+
+    // Try to find the directory in common locations
+    for (const baseDir of baseDirectories) {
+      const possiblePath = path.join(baseDir, dirName);
+      try {
+        // Check if .git exists and it's a valid repo
+        const gitPath = path.join(possiblePath, '.git');
+        const stats = await fs.stat(gitPath);
+        
+        if (stats.isDirectory()) {
+          try {
+            const gitRoot = execSync('git -C "' + possiblePath + '" rev-parse --show-toplevel', {
+              encoding: 'utf8'
+            }).trim();
+            return gitRoot;
+          } catch (gitError) {
+            continue;
+          }
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+
+    // If not found in common locations, try using mdfind (on macOS) or find
+    try {
+      let searchCommand;
+      if (process.platform === 'darwin') {
+        searchCommand = `mdfind -name "${dirName}"`;
+      } else {
+        searchCommand = `find / -type d -name "${dirName}" 2>/dev/null`;
+      }
+
+      const searchResults = execSync(searchCommand, { encoding: 'utf8' })
+        .split('\n')
+        .filter(Boolean);
+
+      for (const foundPath of searchResults) {
+        try {
+          const gitPath = path.join(foundPath, '.git');
+          const stats = await fs.stat(gitPath);
+          
+          if (stats.isDirectory()) {
+            try {
+              const gitRoot = execSync('git -C "' + foundPath + '" rev-parse --show-toplevel', {
+                encoding: 'utf8'
+              }).trim();
+              return gitRoot;
+            } catch (gitError) {
+              continue;
+            }
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+    } catch (e) {
+      console.error('Search error:', e);
+    }
+  } catch (error) {
+    console.error('Error finding git root:', error);
+  }
+  return null;
+};
+
 // Set repository path
 router.post('/set-repo', async (req, res) => {
   try {
-    const { path: repoPath } = req.body;
+    const { name, samplePaths } = req.body;
     
-    // Validate that the path exists and is a git repository
-    try {
-      const stats = await fs.stat(path.join(repoPath, '.git'));
-      if (!stats.isDirectory()) {
-        return res.status(400).json({ error: 'Not a valid git repository' });
-      }
-    } catch (error) {
-      return res.status(400).json({ error: 'Not a valid git repository' });
+    if (!name) {
+      console.error('Missing name in request body');
+      return res.status(400).json({ error: 'Directory name is required' });
+    }
+
+    console.log('Received directory name:', name);
+    console.log('Sample paths:', samplePaths?.length || 0);
+
+    // Try to find the git root directory
+    const gitRootPath = await findGitRootFromPaths(name, samplePaths);
+    if (!gitRootPath) {
+      console.error('Could not find git root for directory:', name);
+      return res.status(400).json({ 
+        error: 'Could not locate the git repository. Please try selecting it again.',
+        details: `Tried directory name: ${name}`
+      });
     }
     
-    currentRepoPath = repoPath;
-    return res.json({ success: true, repoPath });
+    console.log('Found git root:', gitRootPath);
+    
+    // Create a new GitService instance with the root path
+    const gitService = new GitService(gitRootPath);
+    
+    try {
+      // Try to get git status - this will throw if not a valid repo
+      await gitService.git.status();
+      
+      // If we get here, it's a valid git repo
+      currentRepoPath = gitRootPath;
+      
+      // Get additional repo info
+      const branches = await gitService.getBranches();
+      const currentBranch = await gitService.getCurrentBranch();
+      
+      const response = {
+        success: true,
+        repoPath: gitRootPath,
+        branches: branches || [],
+        currentBranch: currentBranch || 'main'
+      };
+
+      console.log('Sending response:', response);
+      
+      return res.json(response);
+    } catch (gitError) {
+      console.error('Git error:', gitError);
+      return res.status(400).json({ 
+        error: 'Not a valid git repository. Please select a directory that contains a git repository.',
+        details: gitError.message
+      });
+    }
   } catch (error) {
     console.error('Error setting repository path:', error);
-    return res.status(500).json({ error: 'Failed to set repository path' });
+    return res.status(500).json({ 
+      error: 'Failed to set repository path',
+      details: error.message
+    });
   }
 });
 
