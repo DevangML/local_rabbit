@@ -1,0 +1,177 @@
+// Adapted from Rainglow VSCode themes with improved contrast ratios
+export const themes = {
+  // Light Themes
+  'light-default': {
+    name: 'Light Default',
+    colors: {
+      bgPrimary: '#ffffff',
+      bgSecondary: '#f8f9fa',
+      textPrimary: '#1a1f36',
+      textSecondary: '#4a5568',
+      border: '#d1d5db',
+      accent: '#4338ca',
+      accentHover: '#3730a3',
+      success: '#047857',
+      warning: '#b45309',
+      error: '#b91c1c',
+      addition: '#dcfce7',
+      deletion: '#fee2e2',
+      surface: '#ffffff',
+      surfaceHover: '#f1f5f9',
+    }
+  },
+  'glance-light': {
+    name: 'Glance Light',
+    colors: {
+      bgPrimary: '#f7f7f7',
+      bgSecondary: '#ffffff',
+      textPrimary: '#1e293b',
+      textSecondary: '#475569',
+      border: '#d1d5db',
+      accent: '#2563eb',
+      accentHover: '#1d4ed8',
+      success: '#047857',
+      warning: '#b45309',
+      error: '#b91c1c',
+      addition: '#bbf7d0',
+      deletion: '#fecaca',
+      surface: '#ffffff',
+      surfaceHover: '#f8fafc',
+    }
+  },
+
+  // Dark Themes
+  'dark-default': {
+    name: 'Dark Default',
+    colors: {
+      bgPrimary: '#0f172a',
+      bgSecondary: '#1e293b',
+      textPrimary: '#f8fafc',
+      textSecondary: '#cbd5e1',
+      border: '#334155',
+      accent: '#818cf8',
+      accentHover: '#6366f1',
+      success: '#34d399',
+      warning: '#fbbf24',
+      error: '#f87171',
+      addition: '#064e3b',
+      deletion: '#7f1d1d',
+      surface: '#1e293b',
+      surfaceHover: '#334155',
+    }
+  },
+  'synthwave': {
+    name: 'Synthwave',
+    colors: {
+      bgPrimary: '#1a1625',
+      bgSecondary: '#241b2f',
+      textPrimary: '#ffffff',
+      textSecondary: '#e2e8f0',
+      border: '#495495',
+      accent: '#36f9f6',
+      accentHover: '#72f1b8',
+      success: '#72f1b8',
+      warning: '#fede5d',
+      error: '#fe4450',
+      addition: '#2a2139',
+      deletion: '#34294f',
+      surface: '#241b2f',
+      surfaceHover: '#2a2139',
+    }
+  },
+  'tomorrow-night-blue': {
+    name: 'Tomorrow Night Blue',
+    colors: {
+      bgPrimary: '#002451',
+      bgSecondary: '#00346e',
+      textPrimary: '#ffffff',
+      textSecondary: '#d1d5db',
+      border: '#003f8e',
+      accent: '#bbdaff',
+      accentHover: '#99c8ff',
+      success: '#d1f1a9',
+      warning: '#ffeead',
+      error: '#ff9da4',
+      addition: '#003f8e',
+      deletion: '#00346e',
+      surface: '#00346e',
+      surfaceHover: '#003f8e',
+    }
+  },
+  'tinacious': {
+    name: 'Tinacious Design',
+    colors: {
+      bgPrimary: '#1d1f21',
+      bgSecondary: '#2d2d2d',
+      textPrimary: '#ffffff',
+      textSecondary: '#d1d5db',
+      border: '#3d3d3d',
+      accent: '#ff3366',
+      accentHover: '#ff0080',
+      success: '#00ff9c',
+      warning: '#ffcc66',
+      error: '#ff3366',
+      addition: '#2d2d2d',
+      deletion: '#3d3d3d',
+      surface: '#2d2d2d',
+      surfaceHover: '#3d3d3d',
+    }
+  },
+  'gloom': {
+    name: 'Gloom Dark',
+    colors: {
+      bgPrimary: '#1c1c1c',
+      bgSecondary: '#252525',
+      textPrimary: '#ffffff',
+      textSecondary: '#d4d4d4',
+      border: '#404040',
+      accent: '#a78bfa',
+      accentHover: '#8b5cf6',
+      success: '#4ade80',
+      warning: '#fbbf24',
+      error: '#f87171',
+      addition: '#1b5e20',
+      deletion: '#b71c1c',
+      surface: '#252525',
+      surfaceHover: '#2d2d2d',
+    }
+  },
+  'azure': {
+    name: 'Azure Dark',
+    colors: {
+      bgPrimary: '#171d2b',
+      bgSecondary: '#1f2937',
+      textPrimary: '#e5e7eb',
+      textSecondary: '#9ca3af',
+      border: '#374151',
+      accent: '#60a5fa',
+      accentHover: '#3b82f6',
+      success: '#34d399',
+      warning: '#fbbf24',
+      error: '#ef4444',
+      addition: '#065f46',
+      deletion: '#991b1b',
+      surface: '#1f2937',
+      surfaceHover: '#374151',
+    }
+  },
+  'halflife': {
+    name: 'Half Life',
+    colors: {
+      bgPrimary: '#141414',
+      bgSecondary: '#1a1a1a',
+      textPrimary: '#ff9933',
+      textSecondary: '#cc7a29',
+      border: '#333333',
+      accent: '#ff6600',
+      accentHover: '#cc5200',
+      success: '#33cc33',
+      warning: '#ffcc00',
+      error: '#ff3300',
+      addition: '#1a3300',
+      deletion: '#330000',
+      surface: '#1a1a1a',
+      surfaceHover: '#262626',
+    }
+  }
+}; 

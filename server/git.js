@@ -55,10 +55,6 @@ class GitService {
     try {
       console.log(`Getting diff between ${fromBranch} and ${toBranch}`);
       
-      // Get the raw diff first
-      const diffResult = await this.git.diff([fromBranch, toBranch]);
-      console.log('Raw diff length:', diffResult.length);
-      
       // Initialize with empty response structure
       const response = { 
         files: [], 
@@ -77,29 +73,72 @@ class GitService {
         errors: null
       };
 
-      if (!diffResult) {
-        console.log('No diff result found');
-        response.message = 'No changes between branches';
-        return response;
-      }
-
-      // Parse the diff into structured data
-      const files = await this.parseDiff(diffResult, fromBranch, toBranch);
-      console.log('Parsed files:', files.length);
-      console.log('First file chunks:', files[0]?.chunks?.length || 0);
+      // Validate branches exist
+      const branches = await this.git.branch();
+      const allBranches = branches.all || [];
       
-      if (!files || !Array.isArray(files)) {
-        console.error('Invalid parsed files result');
-        response.message = 'Error parsing diff results';
-        response.errors = ['Invalid diff parsing result'];
+      if (!allBranches.includes(fromBranch) && !allBranches.includes(`remotes/origin/${fromBranch}`)) {
+        response.errors = [`Branch '${fromBranch}' does not exist in the repository`];
+        return response;
+      }
+      
+      if (!allBranches.includes(toBranch) && !allBranches.includes(`remotes/origin/${toBranch}`)) {
+        response.errors = [`Branch '${toBranch}' does not exist in the repository`];
         return response;
       }
 
-      response.files = files;
-      response.summary = this.generateSummary(files);
-      console.log('Response summary:', response.summary);
+      try {
+        // Get the raw diff
+        const diffResult = await this.git.diff([fromBranch, toBranch]);
+        console.log('Raw diff length:', diffResult.length);
 
-      return response;
+        if (!diffResult) {
+          console.log('No diff result found');
+          response.message = 'No changes between branches';
+          return response;
+        }
+
+        // Parse the diff into structured data
+        const files = await this.parseDiff(diffResult, fromBranch, toBranch);
+        console.log('Parsed files:', files.length);
+
+        // Ensure each file has content
+        for (const file of files) {
+          if (!file.content) {
+            try {
+              // For added/modified files, get content from toBranch
+              // For deleted files, get content from fromBranch
+              const branch = file.status === 'deleted' ? fromBranch : toBranch;
+              const path = file.status === 'deleted' ? file.oldPath : file.path;
+              
+              console.log(`Getting content for ${path} from ${branch}`);
+              const content = await this.git.show([`${branch}:${path}`]);
+              file.content = content || '';
+            } catch (error) {
+              console.warn(`Failed to get content for ${file.path}:`, error);
+              file.content = '';
+            }
+          }
+        }
+        
+        if (!files || !Array.isArray(files)) {
+          console.error('Invalid parsed files result');
+          response.message = 'Error parsing diff results';
+          response.errors = ['Invalid diff parsing result'];
+          return response;
+        }
+
+        response.files = files;
+        response.summary = this.generateSummary(files);
+        console.log('Response summary:', response.summary);
+
+        return response;
+
+      } catch (diffError) {
+        console.error('Error getting diff:', diffError);
+        response.errors = [diffError.message];
+        return response;
+      }
 
     } catch (error) {
       console.error('Error analyzing changes:', error);
@@ -127,10 +166,7 @@ class GitService {
     const diffLines = diffText.split('\n');
     let currentFile = null;
     let currentChunk = null;
-    let oldStart = 0;
-    let newStart = 0;
-    let oldLines = 0;
-    let newLines = 0;
+    let contentLines = [];
 
     for (let i = 0; i < diffLines.length; i++) {
       const line = diffLines[i];
@@ -141,7 +177,10 @@ class GitService {
             currentFile.chunks.push(currentChunk);
             currentChunk = null;
           }
+          // Add the content before pushing the file
+          currentFile.content = contentLines.join('\n');
           files.push(currentFile);
+          contentLines = []; // Reset content lines for next file
         }
 
         // Parse both a/ and b/ paths correctly
@@ -151,6 +190,8 @@ class GitService {
           
           // Determine if file is new, deleted, or modified
           let fileStatus = 'modified';
+          let fileContent = '';
+          
           try {
             await this.git.show([`${fromBranch}:${oldPath}`]);
           } catch (e) {
@@ -202,17 +243,21 @@ class GitService {
             type: 'addition',
             content: line.substring(1)
           });
+          contentLines.push(line.substring(1));
         } else if (line.startsWith('-')) {
           currentFile.deletions++;
           currentChunk.lines.push({ 
             type: 'deletion',
             content: line.substring(1)
           });
+          // Don't add deletions to content as they're not in the final state
         } else if (!line.startsWith('\\')) { // Ignore "No newline at end of file" markers
+          const content = line.startsWith(' ') ? line.substring(1) : line;
           currentChunk.lines.push({ 
             type: 'context',
-            content: line.startsWith(' ') ? line.substring(1) : line
+            content
           });
+          contentLines.push(content);
         }
       }
     }
@@ -222,6 +267,7 @@ class GitService {
       if (currentChunk) {
         currentFile.chunks.push(currentChunk);
       }
+      currentFile.content = contentLines.join('\n');
       files.push(currentFile);
     }
 

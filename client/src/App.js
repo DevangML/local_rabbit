@@ -7,19 +7,49 @@ import DiffViewer from './components/DiffViewer';
 import ReviewPanel from './components/ReviewPanel';
 import AnalysisReport from './components/AnalysisReport';
 import AIAnalyzer from './components/AIAnalyzer';
-import SearchBar from './components/SearchBar';
+import ThemeToggle from './components/ThemeToggle';
+
+// Constants for localStorage keys
+const STORAGE_KEYS = {
+  REPO_INFO: 'localCodeRabbit_repoInfo',
+  SELECTED_BRANCHES: 'localCodeRabbit_selectedBranches',
+  VIEW_MODE: 'localCodeRabbit_viewMode'
+};
 
 function App() {
-  const [repoInfo, setRepoInfo] = useState(null);
-  const [selectedBranches, setSelectedBranches] = useState({
-    from: '',
-    to: ''
+  // Initialize state with persisted data
+  const [repoInfo, setRepoInfo] = useState(() => {
+    const savedRepo = localStorage.getItem(STORAGE_KEYS.REPO_INFO);
+    return savedRepo ? JSON.parse(savedRepo) : null;
   });
+  
+  const [selectedBranches, setSelectedBranches] = useState(() => {
+    const savedBranches = localStorage.getItem(STORAGE_KEYS.SELECTED_BRANCHES);
+    return savedBranches ? JSON.parse(savedBranches) : { from: '', to: '' };
+  });
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [diffData, setDiffData] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Persist repoInfo changes
+  useEffect(() => {
+    if (repoInfo) {
+      localStorage.setItem(STORAGE_KEYS.REPO_INFO, JSON.stringify(repoInfo));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.REPO_INFO);
+    }
+  }, [repoInfo]);
+
+  // Persist selectedBranches changes
+  useEffect(() => {
+    if (selectedBranches.from || selectedBranches.to) {
+      localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCHES, JSON.stringify(selectedBranches));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.SELECTED_BRANCHES);
+    }
+  }, [selectedBranches]);
 
   const handleProjectSelect = async (dirInfo) => {
     setError(null);
@@ -68,6 +98,9 @@ function App() {
       setError(error.message);
       setRepoInfo(null);
       setSelectedBranches({ from: '', to: '' });
+      // Clear localStorage on error
+      localStorage.removeItem(STORAGE_KEYS.REPO_INFO);
+      localStorage.removeItem(STORAGE_KEYS.SELECTED_BRANCHES);
     } finally {
       setIsLoading(false);
     }
@@ -112,26 +145,6 @@ function App() {
     }
   }, [selectedBranches, fetchDiffData]);
 
-  const handleSearch = (query) => {
-    setSearchQuery(query);
-  };
-
-  // Filter diff data based on search query
-  const getFilteredDiffData = () => {
-    if (!diffData || !diffData.files || !searchQuery) {
-      return diffData;
-    }
-
-    const filteredFiles = diffData.files.filter(file => 
-      file.path.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    return {
-      ...diffData,
-      files: filteredFiles
-    };
-  };
-
   // Update navigation component to use Link and handle active state
   const Navigation = () => {
     const location = useLocation();
@@ -140,7 +153,7 @@ function App() {
       <nav className="app-nav">
         <div className="nav-container">
           <button 
-            className="mobile-menu-toggle"
+            className="theme-toggle mobile-menu-toggle"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle navigation menu"
           >
@@ -205,8 +218,8 @@ function App() {
             </li>
           </ul>
           
-          <div className="search-container">
-            <SearchBar onSearch={handleSearch} placeholder="Search files..." />
+          <div className="nav-end">
+            <ThemeToggle />
           </div>
         </div>
       </nav>
@@ -234,31 +247,38 @@ function App() {
           isLoading={isLoading}
         />
 
+        <Navigation />
+
         {error && (
-          <div className="error-message">
+          <div className="error-message" role="alert">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12" y2="16" />
+            </svg>
             {error}
           </div>
         )}
 
         {isLoading && !diffData && (
-          <div className="loading-message">
-            <div className="loading-spinner"></div>
+          <div className="loading-message" role="status">
+            <div className="loading-spinner" aria-hidden="true"></div>
             Loading repository information...
           </div>
         )}
 
         {repoInfo && (
-          <>
-            <Navigation />
-            <main className="app-main">
+          <main className="app-main">
+            <div className="content-container">
               <Routes>
                 <Route 
                   path="/" 
                   element={
                     <DiffViewer 
-                      fromBranch={selectedBranches.from} 
-                      toBranch={selectedBranches.to} 
-                      diffData={getFilteredDiffData()}
+                      diffData={diffData} 
+                      isLoading={isLoading}
+                      fromBranch={selectedBranches.from}
+                      toBranch={selectedBranches.to}
                     />
                   } 
                 />
@@ -266,9 +286,10 @@ function App() {
                   path="/impact" 
                   element={
                     <AnalysisReport 
-                      fromBranch={selectedBranches.from} 
+                      diffData={diffData}
+                      type="impact"
+                      fromBranch={selectedBranches.from}
                       toBranch={selectedBranches.to}
-                      mode="impact"
                     />
                   } 
                 />
@@ -276,9 +297,10 @@ function App() {
                   path="/quality" 
                   element={
                     <AnalysisReport 
-                      fromBranch={selectedBranches.from} 
+                      diffData={diffData}
+                      type="quality"
+                      fromBranch={selectedBranches.from}
                       toBranch={selectedBranches.to}
-                      mode="quality"
                     />
                   } 
                 />
@@ -286,8 +308,9 @@ function App() {
                   path="/review" 
                   element={
                     <ReviewPanel 
-                      fromBranch={selectedBranches.from} 
-                      toBranch={selectedBranches.to} 
+                      diffData={diffData}
+                      fromBranch={selectedBranches.from}
+                      toBranch={selectedBranches.to}
                     />
                   } 
                 />
@@ -302,8 +325,8 @@ function App() {
                   } 
                 />
               </Routes>
-            </main>
-          </>
+            </div>
+          </main>
         )}
       </div>
     </Router>

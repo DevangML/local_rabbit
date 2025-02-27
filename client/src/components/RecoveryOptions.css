@@ -1,0 +1,116 @@
+.recovery-options {
+  padding: var(--space-4);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin: var(--space-4);
+}
+
+.recovery-header {
+  margin-bottom: var(--space-4);
+}
+
+.recovery-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-2);
+}
+
+.recovery-header p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.recovery-error {
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+  background-color: var(--error);
+  color: white;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+}
+
+.recovery-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.recovery-button {
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-all);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text-primary);
+}
+
+.recovery-button:hover:not(:disabled) {
+  background-color: var(--surface-hover);
+  border-color: var(--accent);
+}
+
+.recovery-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.recovery-button.danger {
+  background-color: var(--error);
+  color: white;
+  border-color: var(--error);
+}
+
+.recovery-button.danger:hover:not(:disabled) {
+  filter: brightness(0.9);
+}
+
+.import-button {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.import-button:hover {
+  background-color: var(--accent);
+  color: white;
+}
+
+.recovery-info {
+  padding: var(--space-3);
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+}
+
+.recovery-info p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.recovery-info strong {
+  color: var(--text-primary);
+}
+
+@media (max-width: 640px) {
+  .recovery-options {
+    margin: var(--space-2);
+    padding: var(--space-3);
+  }
+
+  .recovery-actions {
+    flex-direction: column;
+  }
+
+  .recovery-button {
+    width: 100%;
+  }
+} 

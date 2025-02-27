@@ -5,12 +5,53 @@ const GitService = require('./git');
 const CodeAnalyzer = require('./analyzer');
 const { execSync } = require('child_process');
 const os = require('os');
+const fsSync = require('fs');
 
 const router = express.Router();
 
 // Store repository path and comments
+const STATE_FILE = path.join(__dirname, '.state.json');
 let currentRepoPath = '';
 const comments = new Map();
+
+// Load state from file synchronously
+function loadStateSync() {
+  try {
+    console.log('Loading state from:', STATE_FILE);
+    if (fsSync.existsSync(STATE_FILE)) {
+      const data = fsSync.readFileSync(STATE_FILE, 'utf8');
+      const state = JSON.parse(data);
+      currentRepoPath = state.repoPath || '';
+      console.log('Loaded repository path:', currentRepoPath);
+    } else {
+      console.log('No state file exists yet');
+      currentRepoPath = '';
+    }
+  } catch (error) {
+    console.error('Error loading state:', error);
+    currentRepoPath = '';
+  }
+}
+
+// Save state to file
+async function saveState() {
+  try {
+    console.log('Saving state, currentRepoPath:', currentRepoPath);
+    await fs.writeFile(STATE_FILE, JSON.stringify({ repoPath: currentRepoPath }));
+    console.log('State saved successfully');
+  } catch (error) {
+    console.error('Error saving state:', error);
+  }
+}
+
+// Load initial state synchronously
+loadStateSync();
+
+// Add middleware to log repository path for every request
+router.use((req, res, next) => {
+  console.log('Current repository path:', currentRepoPath);
+  next();
+});
 
 // Helper function to find git root from file paths
 const findGitRootFromPaths = async (dirName, samplePaths) => {
@@ -125,6 +166,9 @@ router.post('/set-repo', async (req, res) => {
       
       // If we get here, it's a valid git repo
       currentRepoPath = gitRootPath;
+      
+      // Save the state
+      await saveState();
       
       // Get additional repo info
       const branchData = await gitService.getBranches();
