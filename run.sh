@@ -306,7 +306,7 @@ check_system_requirements() {
     
     # Read requirements from JSON
     local node_req=$(cat project-requirements.json | jq -r '.systemRequirements.node' | sed 's/>=//g')
-    local yarn_req="3.6.0"
+    local npm_req="8.0.0"
     local git_req=$(cat project-requirements.json | jq -r '.systemRequirements.git' | sed 's/>=//g')
 
     # Progress bar function
@@ -344,16 +344,15 @@ check_system_requirements() {
         check_command "node"
         local node_version=$(node -v | sed 's/v//g')
         
-        show_progress "Checking Yarn..." 50
+        show_progress "Checking npm..." 50
         sleep 0.5
-        # Attempt to fix Yarn if needed
-        if [ ! -f ".yarn/releases/yarn-${yarn_req}.cjs" ]; then
-            show_progress "Setting up Yarn Berry..." 60
-            bash setup-yarn.sh || {
-                npm install -g yarn
-                yarn set version berry
-                yarn set version 3.6.0
-            }
+        # Attempt to fix npm if needed
+        if ! check_command "npm"; then
+            show_progress "Installing npm..." 60
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm install-latest-npm
         fi
         
         show_progress "Checking Git..." 80
@@ -382,11 +381,14 @@ clean_install() {
     
     # Run with progress animation
     (
+        npm cache clean --force
         rm -rf client/node_modules
         rm -rf server/node_modules
         rm -rf client/build
         rm -rf client/.cache
         rm -rf server/.cache
+        rm -rf .yarn
+        rm -rf yarn.lock
     ) &
     
     spinner $! "Removing old files and directories..."
@@ -404,15 +406,15 @@ install_dependencies() {
     cp server/package.json server/package.json.backup 2>/dev/null
     
     # Client dependencies
-    if ! retry_command "yarn install" $MAX_RETRIES "client"; then
-        handle_error $? "yarn install" "client"
-        retry_command "yarn install" 1 "client" || return 1
+    if ! retry_command "npm install" $MAX_RETRIES "client"; then
+        handle_error $? "npm install" "client"
+        retry_command "npm install" 1 "client" || return 1
     fi
     
     # Server dependencies
-    if ! retry_command "yarn install" $MAX_RETRIES "server"; then
-        handle_error $? "yarn install" "server"
-        retry_command "yarn install" 1 "server" || return 1
+    if ! retry_command "npm install" $MAX_RETRIES "server"; then
+        handle_error $? "npm install" "server"
+        retry_command "npm install" 1 "server" || return 1
     fi
     
     return 0
