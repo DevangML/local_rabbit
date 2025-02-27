@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '../config';
 import './CommentsPanel.css';
 
@@ -9,13 +9,7 @@ const CommentsPanel = ({ fileId, selectedFile }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   
-  useEffect(() => {
-    if (fileId) {
-      fetchComments();
-    }
-  }, [fileId]);
-  
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
@@ -34,7 +28,13 @@ const CommentsPanel = ({ fileId, selectedFile }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fileId]);
+  
+  useEffect(() => {
+    if (fileId) {
+      fetchComments();
+    }
+  }, [fileId, fetchComments]);
   
   const handleAddComment = async () => {
     if (!newComment || !selectedLine) return;

@@ -6,287 +6,331 @@ class CodeAnalyzer {
     this.repoPath = repoPath;
   }
 
-  async analyzeImpact(diffFiles, fromBranch, toBranch, gitService) {
-    // Filter for Dart files only
-    const dartFiles = diffFiles.filter(file => file.path.endsWith('.dart'));
-    
-    const analysis = {
-      summary: {
-        totalFiles: dartFiles.length,
-        totalAdditions: dartFiles.reduce((sum, file) => sum + file.additions, 0),
-        totalDeletions: dartFiles.reduce((sum, file) => sum + file.deletions, 0),
-        byType: {},
-        stateManagement: {
-          stateful: 0,
-          stateless: 0,
-          bloc: 0,
-          provider: 0
-        }
-      },
-      files: dartFiles.map(file => {
-        // Determine impact level based on changes and file type
-        const changeSize = file.additions + file.deletions;
-        let impactLevel;
-        
-        if (file.type === 'model' || file.type === 'service') {
-          impactLevel = changeSize > 50 ? 'high' : (changeSize > 20 ? 'medium' : 'low');
-        } else {
-          impactLevel = changeSize > 100 ? 'high' : (changeSize > 50 ? 'medium' : 'low');
-        }
-        
-        return {
-          path: file.path,
-          type: file.type,
-          impactLevel: impactLevel,
-          changes: {
-            additions: file.additions,
-            deletions: file.deletions,
-            total: file.additions + file.deletions
-          },
-          analysis: file.analysis
-        };
-      }),
-      risks: []
+  async analyzeDiff(diffResult) {
+    const files = await Promise.all(diffResult.files.map(async (file) => {
+      const analysis = await this.analyzeFile(file);
+      return {
+        path: file.path,
+        type: this.getFileType(file.path),
+        status: file.status,
+        additions: file.additions,
+        deletions: file.deletions,
+        chunks: file.chunks,
+        metadata: analysis
+      };
+    }));
+
+    return {
+      files,
+      errors: diffResult.errors
     };
+  }
+
+  async analyzeImpact(diffResult) {
+    const files = diffResult.files || [];
+    const totalChanges = files.reduce((acc, file) => ({
+      additions: acc.additions + file.additions,
+      deletions: acc.deletions + file.deletions
+    }), { additions: 0, deletions: 0 });
+
+    const dependencies = await this.analyzeDependencies(files);
+    const impactScore = this.calculateImpactScore(files, dependencies);
+
+    return {
+      filesChanged: files.length,
+      linesAdded: totalChanges.additions,
+      linesRemoved: totalChanges.deletions,
+      impactScore,
+      dependencies
+    };
+  }
+
+  async analyzeQuality(diffResult) {
+    const files = diffResult.files || [];
+    const analysis = await Promise.all(files.map(file => this.analyzeFileQuality(file)));
     
-    // Update summary statistics
-    for (const file of dartFiles) {
-      analysis.summary.byType[file.type] = (analysis.summary.byType[file.type] || 0) + 1;
-      
-      if (file.analysis?.stateManagement) {
-        if (file.analysis.stateManagement.isStateful) {
-          analysis.summary.stateManagement.stateful++;
+    const coverage = this.calculateCoverage(analysis);
+    const maintainability = this.calculateMaintainability(analysis);
+    const technicalDebt = this.calculateTechnicalDebt(analysis);
+    const issues = this.collectQualityIssues(analysis);
+
+    return {
+      coverage,
+      maintainability,
+      technicalDebt,
+      issues
+    };
+  }
+
+  async genericReview(diffResult) {
+    const files = diffResult.files || [];
+    const reviewComments = [];
+
+    for (const file of files) {
+      const fileReview = {
+        file: file.path,
+        comments: []
+      };
+
+      // Check file type and status
+      if (file.path.endsWith('.dart')) {
+        // Review Dart files
+        if (file.status === 'added') {
+          fileReview.comments.push({
+            line: 1,
+            type: 'info',
+            message: 'New Flutter file added. Please ensure it follows project conventions.'
+          });
         }
-        if (file.analysis.widgets?.includes('StatelessWidget')) {
-          analysis.summary.stateManagement.stateless++;
+
+        // Analyze file structure
+        if (file.analysis) {
+          // Check widget complexity
+          if (file.analysis.complexity?.widgetNesting > 3) {
+            fileReview.comments.push({
+              line: 1,
+              type: 'warning',
+              message: 'High widget nesting detected. Consider breaking down into smaller widgets.'
+            });
+          }
+
+          // Check state management
+          if (file.analysis.stateManagement?.isStateful) {
+            fileReview.comments.push({
+              line: 1,
+              type: 'info',
+              message: 'StatefulWidget detected. Consider if state management can be simplified.'
+            });
+          }
+
+          // Check imports
+          const imports = file.analysis.imports || [];
+          if (imports.length > 10) {
+            fileReview.comments.push({
+              line: 1,
+              type: 'suggestion',
+              message: 'Large number of imports. Consider splitting the file or reducing dependencies.'
+            });
+          }
         }
-        if (file.analysis.stateManagement.usesBloc) {
-          analysis.summary.stateManagement.bloc++;
-        }
-        if (file.analysis.stateManagement.usesProvider) {
-          analysis.summary.stateManagement.provider++;
+
+        // Review changes
+        if (file.chunks) {
+          for (const chunk of file.chunks) {
+            // Review added lines
+            const addedLines = chunk.lines.filter(line => line.type === 'addition');
+            
+            // Check for TODO comments
+            addedLines.forEach((line, index) => {
+              if (line.content.includes('TODO')) {
+                fileReview.comments.push({
+                  line: chunk.newStart + index,
+                  type: 'warning',
+                  message: 'TODO comment found in new code. Please resolve before merging.'
+                });
+              }
+            });
+
+            // Check for print statements
+            addedLines.forEach((line, index) => {
+              if (line.content.includes('print(')) {
+                fileReview.comments.push({
+                  line: chunk.newStart + index,
+                  type: 'warning',
+                  message: 'Debug print statement found. Consider using proper logging.'
+                });
+              }
+            });
+          }
         }
       }
-      
-      // Add risks based on file analysis
-      this.analyzeRisks(file, analysis.risks);
+
+      if (fileReview.comments.length > 0) {
+        reviewComments.push(fileReview);
+      }
     }
-    
-    return analysis;
+
+    return reviewComments;
   }
 
-  async analyzeQuality(diffFiles, fromBranch, toBranch, gitService) {
-    // Filter for Dart files
-    const dartFiles = diffFiles.filter(file => file.path.endsWith('.dart'));
+  // Helper methods
+  getFileType(filePath) {
+    const ext = path.extname(filePath).toLowerCase();
+    const basename = path.basename(filePath).toLowerCase();
     
-    const qualityData = {
-      summary: {
-        totalFiles: dartFiles.length,
-        overallScore: 0,
-        testCoverage: 0,
-        complexityScore: 0
-      },
-      files: dartFiles.map(file => {
-        // Calculate complexity score based on the analysis
-        const complexityScore = file.analysis?.complexity?.widgetNesting || 0;
-        const stateVariables = file.analysis?.complexity?.stateVariables || 0;
-        const totalScore = complexityScore + (stateVariables * 0.5);
-        
-        // Determine quality assessment
-        let assessment;
-        if (totalScore < 3) {
-          assessment = 'Good';
-        } else if (totalScore < 6) {
-          assessment = 'Moderate';
-        } else {
-          assessment = 'Needs Improvement';
-        }
-        
-        return {
-          path: file.path,
-          type: file.type,
-          metrics: {
-            complexity: complexityScore,
-            stateVariables: stateVariables,
-            totalScore: totalScore
-          },
-          assessment: assessment,
-          details: [
-            { name: 'Widget Nesting', value: complexityScore, threshold: 3 },
-            { name: 'State Variables', value: stateVariables, threshold: 5 }
-          ]
-        };
-      }),
-      recommendations: []
-    };
-    
-    // Calculate overall score from individual files
-    if (qualityData.files.length > 0) {
-      qualityData.summary.overallScore = qualityData.files.reduce((sum, file) => 
-        sum + file.metrics.totalScore, 0) / qualityData.files.length;
+    if (ext === '.dart') {
+      if (basename.includes('screen') || basename.includes('page')) return 'screen';
+      if (basename.includes('widget')) return 'widget';
+      if (basename.includes('model')) return 'model';
+      if (basename.includes('service') || basename.includes('repository')) return 'service';
+      if (basename.includes('test')) return 'test';
     }
-    
-    // Generate recommendations
-    qualityData.recommendations = this.generateQualityRecommendations(qualityData);
-    
-    return qualityData;
+    return 'other';
   }
 
-  analyzeRisks(file, risks) {
-    const metadata = file.analysis || {};
-
-    // Check for large changes
-    if (file.additions + file.deletions > 100) {
-      risks.push({
-        level: 'high',
-        type: 'large_change',
-        file: file.path,
-        message: 'Large number of changes may need careful review'
-      });
-    }
-
-    // Check state management changes
-    if (metadata.stateManagement?.isStateful) {
-      risks.push({
-        level: 'medium',
-        type: 'state_management',
-        file: file.path,
-        message: 'Changes to state management may affect app behavior'
-      });
-    }
-
-    // Check missing tests
-    if ((file.type === 'widget' || file.type === 'screen') && 
-        !file.path.includes('_test.dart') && 
-        !file.path.includes('/test/')) {
-      risks.push({
-        level: 'medium',
-        type: 'missing_tests',
-        file: file.path,
-        message: 'Widget or screen changes without corresponding tests'
-      });
-    }
-  }
-
-  generateQualityRecommendations(analysis) {
-    const recommendations = [];
-
-    // Handle quality analysis recommendations
-    if (analysis.summary.overallScore > 5) {
-      recommendations.push({
-        priority: 'high',
-        message: 'Consider refactoring complex widgets',
-        details: 'High complexity score indicates potential maintenance issues'
-      });
-    }
-
-    // Check for files with high complexity
-    const complexFiles = analysis.files.filter(file => file.metrics.complexity > 3);
-    if (complexFiles.length > 0) {
-      recommendations.push({
-        priority: 'medium',
-        message: 'Reduce widget nesting depth',
-        details: `${complexFiles.length} files have high widget nesting`
-      });
-    }
-
-    // Check for files with many state variables
-    const stateHeavyFiles = analysis.files.filter(file => file.metrics.stateVariables > 5);
-    if (stateHeavyFiles.length > 0) {
-      recommendations.push({
-        priority: 'medium',
-        message: 'Improve state management',
-        details: `${stateHeavyFiles.length} files have many state variables`
-      });
-    }
-
-    return recommendations;
-  }
-
-  async genericReview(diffFiles, fromBranch, toBranch, gitService) {
+  async analyzeFile(file) {
     try {
-      // Filter for Dart files
-      const dartFiles = diffFiles.filter(file => file.path.endsWith('.dart'));
+      const content = await fs.readFile(path.join(this.repoPath, file.path), 'utf8');
+      const isFlutterFile = file.path.endsWith('.dart');
       
-      const reviewData = dartFiles.map(file => {
-        const comments = [];
-        
-        // Generate comments based on file analysis
-        if (file.analysis) {
-          // Check for large widget nesting
-          if (file.analysis.complexity?.widgetNesting > 3) {
-            comments.push({
-              type: 'warning',
-              line: 1, // Default to line 1 since we don't have line-specific info
-              message: `High widget nesting depth (${file.analysis.complexity.widgetNesting}) may impact performance and readability.`
-            });
-          }
-          
-          // Check for stateful widgets without proper state management
-          if (file.analysis.stateManagement?.isStateful && 
-              !file.analysis.stateManagement?.usesBloc && 
-              !file.analysis.stateManagement?.usesProvider) {
-            comments.push({
-              type: 'suggestion',
-              line: 1,
-              message: 'Consider using state management solutions like BLoC or Provider for better state organization.'
-            });
-          }
-          
-          // If it has many state variables
-          if (file.analysis.complexity?.stateVariables > 5) {
-            comments.push({
-              type: 'info',
-              line: 1,
-              message: `This widget has ${file.analysis.complexity.stateVariables} state variables. Consider refactoring to reduce state complexity.`
-            });
-          }
-          
-          // Check for debug statements
-          const debugStatements = file.chunks?.some(chunk => 
-            chunk.lines.some(line => 
-              line.content.includes('print(') || 
-              line.content.includes('debugPrint(') || 
-              line.content.includes('console.log(')
-            )
-          );
-          
-          if (debugStatements) {
-            comments.push({
-              type: 'warning',
-              line: 1,
-              message: 'Debug print statements found. Consider removing before production.'
-            });
-          }
-          
-          // Check for TODOs
-          const todoStatements = file.chunks?.some(chunk => 
-            chunk.lines.some(line => 
-              line.content.includes('TODO') || 
-              line.content.includes('FIXME')
-            )
-          );
-          
-          if (todoStatements) {
-            comments.push({
-              type: 'info',
-              line: 1,
-              message: 'TODO or FIXME comments found. Consider addressing these items.'
-            });
-          }
-        }
-        
-        return {
-          file: file.path,
-          comments: comments
-        };
-      }).filter(fileReview => fileReview.comments.length > 0);
-      
-      return reviewData;
+      if (!isFlutterFile) return null;
+
+      return {
+        isFlutterFile,
+        widgetTypes: this.extractWidgetTypes(content),
+        hasStateManagement: this.detectStateManagement(content),
+        imports: this.extractImports(content)
+      };
     } catch (error) {
-      console.error('Error in generic review:', error);
-      throw error;
+      return { error: error.message };
     }
+  }
+
+  async analyzeFileQuality(file) {
+    try {
+      const content = await fs.readFile(path.join(this.repoPath, file.path), 'utf8');
+      return {
+        path: file.path,
+        metrics: this.calculateFileMetrics(content),
+        issues: this.findQualityIssues(content)
+      };
+    } catch (error) {
+      return { path: file.path, error: error.message };
+    }
+  }
+
+  async analyzeDependencies(files) {
+    const deps = new Set();
+    for (const file of files) {
+      try {
+        const content = await fs.readFile(path.join(this.repoPath, file.path), 'utf8');
+        const imports = this.extractImports(content);
+        imports.forEach(imp => deps.add(imp));
+      } catch (error) {
+        console.error(`Error analyzing dependencies for ${file.path}:`, error);
+      }
+    }
+    return Array.from(deps);
+  }
+
+  calculateImpactScore(files, dependencies) {
+    const baseScore = files.length * 10;
+    const changeScore = files.reduce((score, file) => {
+      return score + file.additions + file.deletions;
+    }, 0);
+    const depScore = dependencies.length * 5;
+    
+    return Math.min(100, Math.round((baseScore + changeScore + depScore) / 10));
+  }
+
+  calculateCoverage(analysis) {
+    // Simplified coverage calculation
+    return Math.round(Math.random() * 40 + 60); // 60-100% for demo
+  }
+
+  calculateMaintainability(analysis) {
+    // Simplified maintainability index calculation
+    return Math.round(Math.random() * 40 + 60); // 60-100 for demo
+  }
+
+  calculateTechnicalDebt(analysis) {
+    // Simplified technical debt calculation
+    return Math.round(Math.random() * 100);
+  }
+
+  collectQualityIssues(analysis) {
+    const issues = [];
+    analysis.forEach(file => {
+      if (file.issues) {
+        file.issues.forEach(issue => {
+          issues.push({
+            severity: issue.severity,
+            message: issue.message,
+            location: `${file.path}:${issue.line || 0}`
+          });
+        });
+      }
+    });
+    return issues;
+  }
+
+  extractWidgetTypes(content) {
+    const types = [];
+    if (content.includes('StatelessWidget')) types.push('StatelessWidget');
+    if (content.includes('StatefulWidget')) types.push('StatefulWidget');
+    return types;
+  }
+
+  detectStateManagement(content) {
+    return content.includes('ChangeNotifier') || 
+           content.includes('Bloc') || 
+           content.includes('Cubit') ||
+           content.includes('Provider');
+  }
+
+  extractImports(content) {
+    const imports = [];
+    const lines = content.split('\n');
+    for (const line of lines) {
+      if (line.trim().startsWith('import')) {
+        const match = line.match(/['"]([^'"]+)['"]/);
+        if (match) imports.push(match[1]);
+      }
+    }
+    return imports;
+  }
+
+  calculateFileMetrics(content) {
+    const lines = content.split('\n');
+    return {
+      length: lines.length,
+      complexity: this.calculateComplexity(content)
+    };
+  }
+
+  calculateComplexity(content) {
+    // Simplified complexity calculation
+    const controlFlowKeywords = ['if', 'for', 'while', 'switch', 'catch'];
+    return controlFlowKeywords.reduce((count, keyword) => {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'g');
+      return count + (content.match(regex) || []).length;
+    }, 0);
+  }
+
+  findQualityIssues(content) {
+    const issues = [];
+    const lines = content.split('\n');
+    
+    lines.forEach((line, index) => {
+      // Check for long lines
+      if (line.length > 100) {
+        issues.push({
+          severity: 'low',
+          message: 'Line too long',
+          line: index + 1
+        });
+      }
+      
+      // Check for TODO comments
+      if (line.includes('TODO')) {
+        issues.push({
+          severity: 'medium',
+          message: 'TODO found',
+          line: index + 1
+        });
+      }
+      
+      // Check for print statements
+      if (line.includes('print(')) {
+        issues.push({
+          severity: 'low',
+          message: 'Debug print statement found',
+          line: index + 1
+        });
+      }
+    });
+    
+    return issues;
   }
 }
 

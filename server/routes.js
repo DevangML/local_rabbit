@@ -91,7 +91,7 @@ const findGitRootFromPaths = async (dirName, samplePaths) => {
   return null;
 };
 
-// Set repository path
+// Repository Management Routes
 router.post('/set-repo', async (req, res) => {
   try {
     const { name, samplePaths } = req.body;
@@ -156,7 +156,6 @@ router.post('/set-repo', async (req, res) => {
   }
 });
 
-// Get repository info
 router.get('/repo-info', async (req, res) => {
   try {
     if (!currentRepoPath) {
@@ -178,136 +177,122 @@ router.get('/repo-info', async (req, res) => {
   }
 });
 
-// Get diff between branches
-router.get('/diff', async (req, res) => {
+// Analysis Routes
+router.post('/diff', async (req, res) => {
   try {
-    const { fromBranch, toBranch } = req.query;
+    const { fromBranch, toBranch } = req.body;
     
     if (!currentRepoPath) {
-      return res.status(400).json({ error: 'Repository path not set' });
+      return res.status(400).json({ error: 'No repository selected' });
     }
     
     if (!fromBranch || !toBranch) {
-      return res.status(400).json({ error: 'Both fromBranch and toBranch are required' });
+      return res.status(400).json({ error: 'Both branches must be specified' });
     }
-    
-    const gitService = new GitService(currentRepoPath);
-    const diffResult = await gitService.getDiff(fromBranch, toBranch);
-    
-    return res.json(diffResult);
-  } catch (error) {
-    console.error('Error getting diff:', error);
-    return res.status(500).json({ error: 'Failed to get diff between branches' });
-  }
-});
 
-// Run impact analysis
-router.get('/analyze/impact', async (req, res) => {
-  try {
-    const { fromBranch, toBranch } = req.query;
-    
-    if (!currentRepoPath) {
-      return res.status(400).json({ error: 'Repository path not set' });
-    }
-    
-    if (!fromBranch || !toBranch) {
-      return res.status(400).json({ error: 'Both fromBranch and toBranch are required' });
-    }
-    
     const gitService = new GitService(currentRepoPath);
-    const diffResult = await gitService.getDiff(fromBranch, toBranch);
-    
-    if (!diffResult.files || !Array.isArray(diffResult.files)) {
-      return res.status(500).json({ error: 'Invalid diff result structure' });
-    }
-    
     const analyzer = new CodeAnalyzer(currentRepoPath);
-    const analysisResult = await analyzer.analyzeImpact(diffResult.files, fromBranch, toBranch, gitService);
     
-    return res.json(analysisResult);
-  } catch (error) {
-    console.error('Error analyzing impact:', error);
-    return res.status(500).json({ error: 'Failed to analyze impact' });
-  }
-});
-
-// Run quality analysis
-router.get('/analyze/quality', async (req, res) => {
-  try {
-    const { fromBranch, toBranch } = req.query;
-    
-    if (!currentRepoPath) {
-      return res.status(400).json({ error: 'Repository path not set' });
-    }
-    
-    if (!fromBranch || !toBranch) {
-      return res.status(400).json({ error: 'Both fromBranch and toBranch are required' });
-    }
-    
-    const gitService = new GitService(currentRepoPath);
     const diffResult = await gitService.getDiff(fromBranch, toBranch);
+    const analyzedDiff = await analyzer.analyzeDiff(diffResult);
     
-    if (!diffResult.files || !Array.isArray(diffResult.files)) {
-      return res.status(500).json({ error: 'Invalid diff result structure' });
-    }
-    
-    const analyzer = new CodeAnalyzer(currentRepoPath);
-    const analysisResult = await analyzer.analyzeQuality(diffResult.files, fromBranch, toBranch, gitService);
-    
-    return res.json(analysisResult);
+    res.json(analyzedDiff);
   } catch (error) {
-    console.error('Error analyzing quality:', error);
-    return res.status(500).json({ error: 'Failed to analyze code quality' });
+    console.error('Error in diff endpoint:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Run generic review
-router.get('/analyze/review', async (req, res) => {
+router.post('/impact-analysis', async (req, res) => {
   try {
-    const { fromBranch, toBranch } = req.query;
+    const { fromBranch, toBranch } = req.body;
     
     if (!currentRepoPath) {
-      return res.status(400).json({ error: 'Repository path not set' });
+      return res.status(400).json({ error: 'No repository selected' });
     }
     
     if (!fromBranch || !toBranch) {
-      return res.status(400).json({ error: 'Both fromBranch and toBranch are required' });
+      return res.status(400).json({ error: 'Both branches must be specified' });
     }
-    
+
     const gitService = new GitService(currentRepoPath);
-    const diffResult = await gitService.getDiff(fromBranch, toBranch);
-    
-    if (!diffResult.files || !Array.isArray(diffResult.files)) {
-      return res.status(500).json({ error: 'Invalid diff result structure' });
-    }
-    
     const analyzer = new CodeAnalyzer(currentRepoPath);
-    const reviewResult = await analyzer.genericReview(diffResult.files, fromBranch, toBranch, gitService);
     
-    return res.json(reviewResult);
+    const diffResult = await gitService.getDiff(fromBranch, toBranch);
+    const impactAnalysis = await analyzer.analyzeImpact(diffResult);
+    
+    res.json(impactAnalysis);
   } catch (error) {
-    console.error('Error running generic review:', error);
-    return res.status(500).json({ error: 'Failed to run code review' });
+    console.error('Error in impact analysis endpoint:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// NEW: Flutter Analysis endpoint
-router.get('/analyze/flutter', async (req, res) => {
+router.post('/quality-analysis', async (req, res) => {
   try {
-    const { fromBranch, toBranch } = req.query;
+    const { fromBranch, toBranch } = req.body;
     
     if (!currentRepoPath) {
-      return res.status(400).json({ error: 'Repository path not set' });
+      return res.status(400).json({ error: 'No repository selected' });
     }
     
     if (!fromBranch || !toBranch) {
-      return res.status(400).json({ error: 'Both fromBranch and toBranch are required' });
+      return res.status(400).json({ error: 'Both branches must be specified' });
+    }
+
+    const gitService = new GitService(currentRepoPath);
+    const analyzer = new CodeAnalyzer(currentRepoPath);
+    
+    const diffResult = await gitService.getDiff(fromBranch, toBranch);
+    const qualityAnalysis = await analyzer.analyzeQuality(diffResult);
+    
+    res.json(qualityAnalysis);
+  } catch (error) {
+    console.error('Error in quality analysis endpoint:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/review', async (req, res) => {
+  try {
+    const { fromBranch, toBranch } = req.body;
+    
+    if (!currentRepoPath) {
+      return res.status(400).json({ error: 'No repository selected' });
+    }
+    
+    if (!fromBranch || !toBranch) {
+      return res.status(400).json({ error: 'Both branches must be specified' });
+    }
+
+    const gitService = new GitService(currentRepoPath);
+    const analyzer = new CodeAnalyzer(currentRepoPath);
+    
+    const diffResult = await gitService.getDiff(fromBranch, toBranch);
+    const reviewResult = await analyzer.genericReview(diffResult);
+    
+    res.json(reviewResult);
+  } catch (error) {
+    console.error('Error in review endpoint:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/flutter-analysis', async (req, res) => {
+  try {
+    const { fromBranch, toBranch } = req.body;
+    
+    if (!currentRepoPath) {
+      return res.status(400).json({ error: 'No repository selected' });
+    }
+    
+    if (!fromBranch || !toBranch) {
+      return res.status(400).json({ error: 'Both branches must be specified' });
     }
     
     const gitService = new GitService(currentRepoPath);
     
     try {
-      // Validate Flutter repository
       await gitService.validateFlutterRepo();
     } catch (error) {
       return res.status(400).json({ error: error.message });
@@ -315,7 +300,6 @@ router.get('/analyze/flutter', async (req, res) => {
     
     const diffResult = await gitService.getDiff(fromBranch, toBranch);
     
-    // Format the response to match what the frontend expects
     const analysisResult = {
       summary: diffResult.summary,
       files: diffResult.files.filter(file => file.path.endsWith('.dart')).map(file => ({
@@ -331,7 +315,8 @@ router.get('/analyze/flutter', async (req, res) => {
             content: line.content
           }))
         ).slice(0, 10) || []
-      }))
+      })),
+      errors: []
     };
     
     return res.json(analysisResult);
@@ -341,14 +326,13 @@ router.get('/analyze/flutter', async (req, res) => {
   }
 });
 
-// Get comments for a file
+// Comments Routes
 router.get('/comments/:fileId', (req, res) => {
   const { fileId } = req.params;
   const fileComments = comments.get(fileId) || [];
   return res.json(fileComments);
 });
 
-// Add a comment
 router.post('/comments/:fileId', (req, res) => {
   try {
     const { fileId } = req.params;
@@ -377,7 +361,6 @@ router.post('/comments/:fileId', (req, res) => {
   }
 });
 
-// Delete a comment
 router.delete('/comments/:fileId/:commentId', (req, res) => {
   try {
     const { fileId, commentId } = req.params;

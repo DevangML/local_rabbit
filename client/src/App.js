@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
 import { API_BASE_URL } from './config';
@@ -65,28 +65,6 @@ function App() {
       setSelectedBranches({ from: '', to: '' });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const fetchRepoInfo = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/repo-info`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Fetched repo info:', data);
-        setRepoInfo(data);
-        
-        // Set default branches if available
-        if (data.branches && data.branches.length > 0) {
-          setSelectedBranches({
-            from: data.branches[0],
-            to: data.currentBranch || data.branches[0]
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching repository info:', error);
-      setError('Failed to fetch repository information');
     }
   };
 

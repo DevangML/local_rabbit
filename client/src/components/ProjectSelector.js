@@ -1,5 +1,4 @@
 import React from 'react';
-import { FaFolder, FaCodeBranch, FaExchangeAlt } from 'react-icons/fa';
 import './ProjectSelector.css';
 
 const ProjectSelector = ({ 

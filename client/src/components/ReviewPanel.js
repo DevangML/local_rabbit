@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '../config';
 import './ReviewPanel.css';
 import DiffViewer from './DiffViewer';
@@ -9,18 +9,18 @@ const ReviewPanel = ({ fromBranch, toBranch }) => {
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   
-  useEffect(() => {
-    if (fromBranch && toBranch) {
-      fetchReview();
-    }
-  }, [fromBranch, toBranch]);
-  
-  const fetchReview = async () => {
+  const fetchReview = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/analyze/review?fromBranch=${fromBranch}&toBranch=${toBranch}`);
+      const response = await fetch(`${API_BASE_URL}/api/review`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ fromBranch, toBranch }),
+      });
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -41,7 +41,13 @@ const ReviewPanel = ({ fromBranch, toBranch }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fromBranch, toBranch]);
+  
+  useEffect(() => {
+    if (fromBranch && toBranch) {
+      fetchReview();
+    }
+  }, [fromBranch, toBranch, fetchReview]);
   
   const getCommentTypeClass = (type) => {
     switch (type) {

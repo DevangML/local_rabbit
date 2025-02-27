@@ -1,32 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '../config';
+import { cacheInstance, CACHE_TYPES } from '../utils/cache';
 import './DiffViewer.css';
 import CommentsPanel from './CommentsPanel';
 
 const DiffViewer = ({ fromBranch, toBranch }) => {
-  const [diffData, setDiffData] = useState({ files: [], errors: null });
+  const [diffData, setDiffData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   
-  const fetchDiff = async () => {
-    if (!fromBranch || !toBranch) {
-      setError('Please select both branches before starting the analysis');
-      return;
-    }
+  const fetchDiffData = useCallback(async () => {
+    if (!fromBranch || !toBranch) return;
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/diff?fromBranch=${fromBranch}&toBranch=${toBranch}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch diff');
-      }
-      
-      const data = await response.json();
+      const params = { fromBranch, toBranch };
+      const data = await cacheInstance.getOrFetch(
+        CACHE_TYPES.DIFF,
+        params,
+        async () => {
+          const response = await fetch(`${API_BASE_URL}/api/diff`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(params),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to fetch diff');
+          }
+
+          return response.json();
+        }
+      );
+
       setDiffData(data);
       
       // Select the first file by default if available
@@ -37,11 +49,15 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
       }
     } catch (error) {
       setError(error.message);
-      setDiffData({ files: [], errors: null });
+      setDiffData(null);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fromBranch, toBranch]);
+
+  useEffect(() => {
+    fetchDiffData();
+  }, [fetchDiffData]);
 
   const renderStartButton = () => {
     if (!fromBranch || !toBranch) {
@@ -58,7 +74,7 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
       <div className="start-button-container">
         <button 
           className="start-button"
-          onClick={fetchDiff}
+          onClick={fetchDiffData}
           disabled={isLoading}
         >
           {isLoading ? 'Analyzing...' : 'Start Analysis'}
@@ -135,7 +151,7 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
   };
 
   const renderErrors = () => {
-    if (!diffData.errors) return null;
+    if (!diffData?.errors) return null;
 
     return (
       <div className="diff-errors">
@@ -211,10 +227,10 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
     <div className="diff-viewer">
       {renderStartButton()}
       <div className="file-list">
-        <h3>Changed Files ({diffData.files?.length || 0})</h3>
+        <h3>Changed Files ({diffData?.files?.length || 0})</h3>
         {renderErrors()}
         <ul>
-          {diffData.files?.map((file, index) => (
+          {diffData?.files?.map((file, index) => (
             <li 
               key={index} 
               className={selectedFile === file ? 'selected' : ''}
@@ -299,7 +315,7 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
           </>
         ) : (
           <div className="no-file-selected">
-            {diffData.files?.length > 0 
+            {diffData?.files?.length > 0 
               ? 'Select a file from the list to view diff' 
               : 'No changes found between selected branches'}
           </div>
