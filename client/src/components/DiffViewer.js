@@ -1,15 +1,82 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { API_BASE_URL } from '../config';
 import { cacheInstance, CACHE_TYPES } from '../utils/cache';
-import './DiffViewer.css';
-import CommentsPanel from './CommentsPanel';
-import DiffSearch from './DiffSearch';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { dark as darkTheme, light as lightTheme } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import { stateManager } from '../services/StateManager';
+import CommentsPanel from './CommentsPanel';
+import DiffSearch from './DiffSearch';
 import RecoveryOptions from './RecoveryOptions';
+import './DiffViewer.css';
 
 const STORAGE_KEY = 'localCodeRabbit_viewMode';
 const DIFF_STATE_KEY = 'diffViewerState';
+
+class DiffViewerErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('DiffViewer Error:', error, errorInfo);
+    stateManager.saveState('appState', 'lastError', {
+      error: error.message,
+      info: errorInfo,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="error-boundary">
+          <h3>Something went wrong displaying the diff</h3>
+          <p>{this.state.error.toString()}</p>
+          <button onClick={this.props.onReset}>Try Again</button>
+          <button onClick={this.props.onRecover}>Restore Previous State</button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+const getFileLanguage = (filePath) => {
+  const ext = filePath.split('.').pop().toLowerCase();
+  const languageMap = {
+    js: 'javascript',
+    jsx: 'javascript',
+    ts: 'typescript',
+    tsx: 'typescript',
+    html: 'html',
+    css: 'css',
+    scss: 'scss',
+    dart: 'dart',
+    yaml: 'yaml',
+    json: 'json',
+    md: 'markdown'
+  };
+  return languageMap[ext] || 'plaintext';
+};
+
+const getLineBackground = (file, lineNumber) => {
+  if (!file.lineChanges) return 'transparent';
+  const change = file.lineChanges[lineNumber];
+  if (!change) return 'transparent';
+  
+  return {
+    added: 'var(--addition)',
+    deleted: 'var(--deletion)',
+    modified: 'var(--warning)'
+  }[change] || 'transparent';
+};
 
 const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
   const [diffData, setDiffData] = useState(null);
@@ -23,6 +90,7 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
     return savedMode || 'unified';
   });
   const [showRecovery, setShowRecovery] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Load persisted state
   useEffect(() => {
@@ -489,6 +557,34 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
     );
   };
 
+  const renderFileContent = useCallback((file) => {
+    if (!file.content) {
+      return (
+        <div className="empty-content">
+          <div className="empty-content-message">
+            No content available
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <SyntaxHighlighter
+        language={getFileLanguage(file.path)}
+        style={isDarkMode ? darkTheme : lightTheme}
+        showLineNumbers
+        wrapLines
+        lineProps={lineNumber => ({
+          style: {
+            backgroundColor: getLineBackground(file, lineNumber)
+          }
+        })}
+      >
+        {file.content}
+      </SyntaxHighlighter>
+    );
+  }, [isDarkMode]);
+
   const handleRecovery = useCallback(async () => {
     setError(null);
     setShowRecovery(false);
@@ -544,113 +640,115 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
   }
 
   return (
-    <div className="diff-container">
-      <div className="diff-header">
-        <div className="file-count">
-          <span className="count-badge">{filteredFiles.length}</span> file{filteredFiles.length !== 1 ? 's' : ''}
-          {searchParams.query && <span className="filtering-indicator"> (filtered)</span>}
-        </div>
-        <div className="header-actions">
-          <button
-            className="refresh-button"
-            onClick={fetchDiffData}
-            disabled={isLoading}
-          >
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-            </svg>
-            {isLoading ? 'Refreshing...' : 'Refresh'}
-          </button>
-        </div>
-        <DiffSearch 
-          onSearch={handleSearch}
-          initialFilters={searchParams.filters}
-          initialQuery={searchParams.query}
-        />
-      </div>
-
-      <div className="diff-viewer">
-        <div className="file-list">
-          <div className="file-list-header">
-            <h3>Changed Files ({filteredFiles.length})</h3>
+    <DiffViewerErrorBoundary onReset={fetchDiffData} onRecover={handleRecovery}>
+      <div className="diff-container">
+        <div className="diff-header">
+          <div className="file-count">
+            <span className="count-badge">{filteredFiles.length}</span> file{filteredFiles.length !== 1 ? 's' : ''}
+            {searchParams.query && <span className="filtering-indicator"> (filtered)</span>}
           </div>
-          {renderErrors()}
-          <ul className="file-items">
-            {filteredFiles.map((file, index) => (
-              <li
-                key={index}
-                className={selectedFile === file ? 'selected' : ''}
-                onClick={() => setSelectedFile(file)}
-              >
-                <span className="file-icon">{getFileIcon(file)}</span>
-                <span className="file-info">
-                  <span className="file-path">{file.path}</span>
-                  <div className="file-meta">
-                    {getFileStatusBadge(file)}
-                    <span className="file-type">{getFileTypeLabel(file)}</span>
-                  </div>
-                  {file.metadata?.error && (
-                    <span className="file-error-indicator">⚠️</span>
-                  )}
-                </span>
-                <span className="file-stats">
-                  <span className="additions">+{file.additions}</span>
-                  <span className="deletions">-{file.deletions}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="header-actions">
+            <button
+              className="refresh-button"
+              onClick={fetchDiffData}
+              disabled={isLoading}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+              </svg>
+              {isLoading ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
+          <DiffSearch 
+            onSearch={handleSearch}
+            initialFilters={searchParams.filters}
+            initialQuery={searchParams.query}
+          />
         </div>
 
-        <div className="diff-content-container">
-          {selectedFile ? (
-            <>
-              <div className="file-header">
-                <div className="file-title">
-                  <span className="file-icon">{getFileIcon(selectedFile)}</span>
-                  <h3>{selectedFile.path}</h3>
-                  {getFileStatusBadge(selectedFile)}
-                  {selectedFile.metadata?.error && (
-                    <span className="file-error-badge" title={selectedFile.metadata.error}>
-                      ⚠️ Analysis Error
-                    </span>
-                  )}
-                </div>
-                <div className="file-actions">
-                  <button
-                    className="btn btn-secondary view-mode-toggle"
-                    onClick={() => setViewMode(viewMode === 'unified' ? 'split' : 'unified')}
-                    title={`Switch to ${viewMode === 'unified' ? 'split' : 'unified'} view`}
-                  >
-                    {viewMode === 'unified' ? 'Split View' : 'Unified View'}
-                  </button>
-                  <div className="file-stats">
-                    <span className="additions">+{selectedFile.additions}</span>
-                    <span className="deletions">-{selectedFile.deletions}</span>
+        <div className="diff-viewer">
+          <div className="file-list">
+            <div className="file-list-header">
+              <h3>Changed Files ({filteredFiles.length})</h3>
+            </div>
+            {renderErrors()}
+            <ul className="file-items">
+              {filteredFiles.map((file, index) => (
+                <li
+                  key={index}
+                  className={selectedFile === file ? 'selected' : ''}
+                  onClick={() => setSelectedFile(file)}
+                >
+                  <span className="file-icon">{getFileIcon(file)}</span>
+                  <span className="file-info">
+                    <span className="file-path">{file.path}</span>
+                    <div className="file-meta">
+                      {getFileStatusBadge(file)}
+                      <span className="file-type">{getFileTypeLabel(file)}</span>
+                    </div>
+                    {file.metadata?.error && (
+                      <span className="file-error-indicator">⚠️</span>
+                    )}
+                  </span>
+                  <span className="file-stats">
+                    <span className="additions">+{file.additions}</span>
+                    <span className="deletions">-{file.deletions}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="diff-content-container">
+            {selectedFile ? (
+              <>
+                <div className="file-header">
+                  <div className="file-title">
+                    <span className="file-icon">{getFileIcon(selectedFile)}</span>
+                    <h3>{selectedFile.path}</h3>
+                    {getFileStatusBadge(selectedFile)}
+                    {selectedFile.metadata?.error && (
+                      <span className="file-error-badge" title={selectedFile.metadata.error}>
+                        ⚠️ Analysis Error
+                      </span>
+                    )}
+                  </div>
+                  <div className="file-actions">
+                    <button
+                      className="btn btn-secondary view-mode-toggle"
+                      onClick={() => setViewMode(viewMode === 'unified' ? 'split' : 'unified')}
+                      title={`Switch to ${viewMode === 'unified' ? 'split' : 'unified'} view`}
+                    >
+                      {viewMode === 'unified' ? 'Split View' : 'Unified View'}
+                    </button>
+                    <div className="file-stats">
+                      <span className="additions">+{selectedFile.additions}</span>
+                      <span className="deletions">-{selectedFile.deletions}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {renderFileMetadata(selectedFile)}
-              <div className="diff-content">
-                {viewMode === 'unified' ? renderUnifiedView(selectedFile) : renderSplitView(selectedFile)}
-              </div>
+                {renderFileMetadata(selectedFile)}
+                <div className="diff-content">
+                  {viewMode === 'unified' ? renderUnifiedView(selectedFile) : renderSplitView(selectedFile)}
+                </div>
 
-              <CommentsPanel
-                fileId={`${fromBranch}-${toBranch}-${selectedFile.path}`}
-                selectedFile={selectedFile}
-              />
-            </>
-          ) : (
-            <div className="no-file-selected">
-              {filteredFiles.length > 0
-                ? 'Select a file from the list to view diff'
-                : 'No changes found between selected branches'}
-            </div>
-          )}
+                <CommentsPanel
+                  fileId={`${fromBranch}-${toBranch}-${selectedFile.path}`}
+                  selectedFile={selectedFile}
+                />
+              </>
+            ) : (
+              <div className="no-file-selected">
+                {filteredFiles.length > 0
+                  ? 'Select a file from the list to view diff'
+                  : 'No changes found between selected branches'}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </DiffViewerErrorBoundary>
   );
 };
 

@@ -1,13 +1,24 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import { store, persistor } from './store';
+import { ThemeProvider } from './contexts/ThemeContext';
+import ErrorBoundary from './components/ErrorBoundary';
+import LoadingIndicator from './components/LoadingIndicator';
 import './App.css';
+import './styles/global.css';
 import { API_BASE_URL } from './config';
 import ProjectSelector from './components/ProjectSelector';
-import DiffViewer from './components/DiffViewer';
 import ReviewPanel from './components/ReviewPanel';
 import AnalysisReport from './components/AnalysisReport';
 import AIAnalyzer from './components/AIAnalyzer';
 import ThemeToggle from './components/ThemeToggle';
+
+// Route components
+const DiffViewer = React.lazy(() => import('./components/DiffViewer'));
+const ImpactView = React.lazy(() => import('./components/ImpactView'));
+const QualityView = React.lazy(() => import('./components/QualityView'));
 
 // Constants for localStorage keys
 const STORAGE_KEYS = {
@@ -227,109 +238,117 @@ function App() {
   };
 
   return (
-    <Router>
-      <div className="app">
-        <header className="app-header">
-          <div className="header-content">
-            <div className="logo">
-              <span className="logo-icon">🐰</span>
-              <h1>Local CodeRabbit</h1>
-            </div>
-            <p className="header-subtitle">PR Review Tool for Local Git Repositories</p>
-          </div>
-        </header>
+    <Provider store={store}>
+      <PersistGate loading={<LoadingIndicator />} persistor={persistor}>
+        <ErrorBoundary>
+          <ThemeProvider>
+            <Suspense fallback={<LoadingIndicator />}>
+              <Router>
+                <div className="app">
+                  <header className="app-header">
+                    <div className="header-content">
+                      <div className="logo">
+                        <span className="logo-icon">🐰</span>
+                        <h1>Local CodeRabbit</h1>
+                      </div>
+                      <p className="header-subtitle">PR Review Tool for Local Git Repositories</p>
+                    </div>
+                  </header>
 
-        <ProjectSelector
-          repoInfo={repoInfo}
-          onSelectProject={handleProjectSelect}
-          selectedBranches={selectedBranches}
-          onBranchesChange={setSelectedBranches}
-          isLoading={isLoading}
-        />
+                  <ProjectSelector
+                    repoInfo={repoInfo}
+                    onSelectProject={handleProjectSelect}
+                    selectedBranches={selectedBranches}
+                    onBranchesChange={setSelectedBranches}
+                    isLoading={isLoading}
+                  />
 
-        <Navigation />
+                  <Navigation />
 
-        {error && (
-          <div className="error-message" role="alert">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12" y2="16" />
-            </svg>
-            {error}
-          </div>
-        )}
+                  {error && (
+                    <div className="error-message" role="alert">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12" y2="16" />
+                      </svg>
+                      {error}
+                    </div>
+                  )}
 
-        {isLoading && !diffData && (
-          <div className="loading-message" role="status">
-            <div className="loading-spinner" aria-hidden="true"></div>
-            Loading repository information...
-          </div>
-        )}
+                  {isLoading && !diffData && (
+                    <div className="loading-message" role="status">
+                      <div className="loading-spinner" aria-hidden="true"></div>
+                      Loading repository information...
+                    </div>
+                  )}
 
-        {repoInfo && (
-          <main className="app-main">
-            <div className="content-container">
-              <Routes>
-                <Route 
-                  path="/" 
-                  element={
-                    <DiffViewer 
-                      diffData={diffData} 
-                      isLoading={isLoading}
-                      fromBranch={selectedBranches.from}
-                      toBranch={selectedBranches.to}
-                    />
-                  } 
-                />
-                <Route 
-                  path="/impact" 
-                  element={
-                    <AnalysisReport 
-                      diffData={diffData}
-                      type="impact"
-                      fromBranch={selectedBranches.from}
-                      toBranch={selectedBranches.to}
-                    />
-                  } 
-                />
-                <Route 
-                  path="/quality" 
-                  element={
-                    <AnalysisReport 
-                      diffData={diffData}
-                      type="quality"
-                      fromBranch={selectedBranches.from}
-                      toBranch={selectedBranches.to}
-                    />
-                  } 
-                />
-                <Route 
-                  path="/review" 
-                  element={
-                    <ReviewPanel 
-                      diffData={diffData}
-                      fromBranch={selectedBranches.from}
-                      toBranch={selectedBranches.to}
-                    />
-                  } 
-                />
-                <Route 
-                  path="/ai-analysis" 
-                  element={
-                    <AIAnalyzer 
-                      diffData={diffData}
-                      fromBranch={selectedBranches.from}
-                      toBranch={selectedBranches.to}
-                    />
-                  } 
-                />
-              </Routes>
-            </div>
-          </main>
-        )}
-      </div>
-    </Router>
+                  {repoInfo && (
+                    <main className="app-main">
+                      <div className="content-container">
+                        <Routes>
+                          <Route 
+                            path="/" 
+                            element={
+                              <DiffViewer 
+                                diffData={diffData} 
+                                isLoading={isLoading}
+                                fromBranch={selectedBranches.from}
+                                toBranch={selectedBranches.to}
+                              />
+                            } 
+                          />
+                          <Route 
+                            path="/impact" 
+                            element={
+                              <ImpactView 
+                                diffData={diffData}
+                                fromBranch={selectedBranches.from}
+                                toBranch={selectedBranches.to}
+                              />
+                            } 
+                          />
+                          <Route 
+                            path="/quality" 
+                            element={
+                              <QualityView 
+                                diffData={diffData}
+                                fromBranch={selectedBranches.from}
+                                toBranch={selectedBranches.to}
+                              />
+                            } 
+                          />
+                          <Route 
+                            path="/review" 
+                            element={
+                              <ReviewPanel 
+                                diffData={diffData}
+                                fromBranch={selectedBranches.from}
+                                toBranch={selectedBranches.to}
+                              />
+                            } 
+                          />
+                          <Route 
+                            path="/ai-analysis" 
+                            element={
+                              <AIAnalyzer 
+                                diffData={diffData}
+                                fromBranch={selectedBranches.from}
+                                toBranch={selectedBranches.to}
+                              />
+                            } 
+                          />
+                        </Routes>
+                      </div>
+                    </main>
+                  )}
+                </div>
+              </Router>
+            </Suspense>
+          </ThemeProvider>
+        </ErrorBoundary>
+      </PersistGate>
+    </Provider>
   );
 }
 

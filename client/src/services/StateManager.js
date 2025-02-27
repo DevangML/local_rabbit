@@ -130,6 +130,71 @@ class StateManager {
       return false;
     }
   }
+
+  async migrateState(oldVersion, newVersion) {
+    try {
+      const db = await this.dbPromise;
+      const currentState = {
+        appState: await db.getAll('appState'),
+        diffState: await db.getAll('diffState'),
+        analyzerState: await db.getAll('analyzerState')
+      };
+
+      // Implement migration logic here based on versions
+      // For now, we'll just maintain the existing state
+      
+      return true;
+    } catch (error) {
+      console.error('Error migrating state:', error);
+      return false;
+    }
+  }
+
+  async validateState(state) {
+    try {
+      const requiredKeys = ['appState', 'diffState', 'analyzerState', 'timestamp'];
+      const hasAllKeys = requiredKeys.every(key => key in state);
+      if (!hasAllKeys) return false;
+
+      // Add more validation as needed
+      return true;
+    } catch (error) {
+      console.error('Error validating state:', error);
+      return false;
+    }
+  }
+
+  async createBackup() {
+    try {
+      const state = await this.exportState();
+      if (!state) throw new Error('Failed to export state');
+
+      const backup = {
+        ...state,
+        backupDate: new Date().toISOString(),
+        version: DB_VERSION
+      };
+
+      await this.saveState('appState', 'lastBackup', backup);
+      return true;
+    } catch (error) {
+      console.error('Error creating backup:', error);
+      return false;
+    }
+  }
+
+  async restoreFromBackup() {
+    try {
+      const backup = await this.getState('appState', 'lastBackup');
+      if (!backup) throw new Error('No backup found');
+
+      const success = await this.importState(backup);
+      return success;
+    } catch (error) {
+      console.error('Error restoring from backup:', error);
+      return false;
+    }
+  }
 }
 
-export const stateManager = new StateManager(); 
+export const stateManager = new StateManager();

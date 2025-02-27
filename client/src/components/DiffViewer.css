@@ -92,6 +92,10 @@ body {
   flex: 1;
   overflow: hidden;
   height: calc(100vh - 80px); /* Adjust based on header height */
+  background-color: var(--bgPrimary);
+  color: var(--textPrimary);
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1.6;
 }
 
 .file-list {
@@ -101,6 +105,8 @@ body {
   flex-direction: column;
   overflow: hidden;
   background: var(--background-secondary);
+  background-color: var(--bgSecondary);
+  border-color: var(--border);
 }
 
 .file-list-header {
@@ -148,14 +154,20 @@ body {
   align-items: center;
   gap: 0.5rem;
   transition: background-color 0.2s ease, transform 0.2s ease;
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
 }
 
 .file-items li:hover {
   transform: translateX(4px);
+  background-color: var(--surfaceHover);
+  border-left-color: var(--accent);
 }
 
 .file-items li.selected {
   position: relative;
+  background-color: var(--surface);
+  border-left-color: var(--accent);
 }
 
 .file-items li.selected::before {
@@ -1126,4 +1138,13 @@ body {
   .no-content-message h4 {
     font-size: 1rem;
   }
+}
+
+.error-boundary {
+  padding: 2rem;
+  background-color: var(--bgSecondary);
+  border: 1px solid var(--error);
+  border-radius: 8px;
+  margin: 1rem;
+  color: var(--textPrimary);
 }
