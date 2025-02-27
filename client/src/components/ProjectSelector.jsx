@@ -1,184 +1,105 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { config } from '../config.js';
+import React, { useState, useEffect } from 'react';
+import { config } from '../config';
 import './ProjectSelector.css';
 
-const ProjectSelector = ({ 
-  onProjectSelect,
-  selectedBranches,
-  onBranchesChange,
-  isLoading,
-  onRefresh
-}) => {
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(false);
+const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, isLoading }) => {
+  const [branches, setBranches] = useState([]);
   const [error, setError] = useState(null);
-  const [fromSearch, setFromSearch] = useState('');
-  const [toSearch, setToSearch] = useState('');
-  const [fromDropdownOpen, setFromDropdownOpen] = useState(false);
-  const [toDropdownOpen, setToDropdownOpen] = useState(false);
-  const [isSelecting, setIsSelecting] = useState(false);
-  const fromRef = useRef(null);
-  const toRef = useRef(null);
 
-  useEffect(() => {
-    fetchProjects();
-  }, []);
-
-  useEffect(() => {
-    setFromSearch('');
-    setToSearch('');
-    setFromDropdownOpen(false);
-    setToDropdownOpen(false);
-  }, [selectedBranches.from, selectedBranches.to]);
-
-  const fetchProjects = async () => {
-    setLoading(true);
+  const fetchBranches = async () => {
     try {
-      const response = await fetch(`${config.API_BASE_URL}/api/projects`);
-      if (!response.ok) throw new Error('Failed to fetch projects');
+      // Try primary endpoint first
+      let response = await fetch(`${config.API_BASE_URL}/api/branches`);
+      
+      // If primary endpoint fails, try fallback
+      if (!response.ok) {
+        response = await fetch(`${config.API_BASE_URL}${config.FALLBACK_API_ROUTE}`);
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
-      setProjects(data);
+      setBranches(data.branches || []);
+      setError(null);
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      setBranches([]);
+      setError('Unable to load branches. Please ensure the backend server is running.');
+      console.error('Branch fetch error:', err);
     }
   };
+
+  useEffect(() => {
+    fetchBranches();
+  }, []);
 
   const handleDirectorySelect = async () => {
-    if (isSelecting) return;
-    
-    setIsSelecting(true);
     try {
-      const response = await fetch(`${config.API_BASE_URL}/api/projects/select`, {
+      const response = await fetch(`${config.API_BASE_URL}/api/select-directory`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
-
+      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to select directory');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      const project = await response.json();
-      if (project.branches?.length > 0) {
-        onBranchesChange({
-          from: project.current || project.branches[0],
-          to: project.branches[0]
-        });
-      }
-      onProjectSelect(project);
+      
+      const data = await response.json();
+      onProjectSelect(data);
+      await fetchBranches(); // Refresh branches after selection
     } catch (err) {
-      setError('Error selecting directory: ' + err.message);
+      setError('Failed to select directory. Please try again.');
       console.error('Directory selection error:', err);
-    } finally {
-      setIsSelecting(false);
     }
   };
-
-  const handleClickOutside = (event) => {
-    if (fromRef.current && !fromRef.current.contains(event.target)) {
-      setFromDropdownOpen(false);
-    }
-    if (toRef.current && !toRef.current.contains(event.target)) {
-      setToDropdownOpen(false);
-    }
-  };
-
-  useEffect(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const getFilteredBranches = (searchQuery) => {
-    return projects.filter(project => 
-      project.branches?.some(branch => 
-        branch.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
-  };
-
-  const handleRefreshClick = async (e) => {
-    e.preventDefault();
-    setFromSearch('');
-    setToSearch('');
-    setFromDropdownOpen(false);
-    setToDropdownOpen(false);
-    onBranchesChange({ from: '', to: '' });
-    if (onRefresh) await onRefresh();
-  };
-
-  const handleBranchSelect = (type, branch) => {
-    const newBranches = { ...selectedBranches };
-    
-    if (type === 'from') {
-      if (branch === selectedBranches.to) newBranches.to = '';
-      newBranches.from = branch;
-      setFromDropdownOpen(false);
-    } else {
-      if (branch === selectedBranches.from) newBranches.from = '';
-      newBranches.to = branch;
-      setToDropdownOpen(false);
-    }
-    
-    onBranchesChange(newBranches);
-  };
-
-  if (loading) return <div className="loading">Loading projects...</div>;
-  if (error) return <div className="error">{error}</div>;
 
   return (
     <div className="project-selector">
-      <div className="project-selector-header">
-        <h2>Select Project</h2>
-        <button
-          className="btn btn-primary"
+      <div className="selector-header">
+        <h2>Repository Selection</h2>
+        <button 
+          className="select-btn"
           onClick={handleDirectorySelect}
-          disabled={isSelecting || isLoading}
+          disabled={isLoading}
         >
-          {isSelecting ? 'Selecting...' : 'Select Directory'}
+          {isLoading ? 'Selecting...' : 'Select Repository'}
         </button>
       </div>
 
-      {projects.length > 0 && (
-        <div className="branch-selector">
-          <div className="branch-select" ref={fromRef}>
-            <label>From:</label>
-            <select
-              value={selectedBranches.from}
-              onChange={e => handleBranchSelect('from', e.target.value)}
-              disabled={isLoading}
-            >
-              <option value="">Select branch</option>
-              {getFilteredBranches(fromSearch).map(branch => (
-                <option key={branch} value={branch}>{branch}</option>
-              ))}
-            </select>
-          </div>
+      {error && <div className="error-message">{error}</div>}
 
-          <div className="branch-select" ref={toRef}>
-            <label>To:</label>
-            <select
-              value={selectedBranches.to}
-              onChange={e => handleBranchSelect('to', e.target.value)}
-              disabled={isLoading}
-            >
-              <option value="">Select branch</option>
-              {getFilteredBranches(toSearch).map(branch => (
-                <option key={branch} value={branch}>{branch}</option>
-              ))}
-            </select>
-          </div>
-
-          <button 
-            className="refresh-button"
-            onClick={handleRefreshClick}
-            disabled={isLoading}
+      <div className="branch-selectors">
+        <div className="branch-select">
+          <label>Base Branch:</label>
+          <select
+            value={selectedBranches.from}
+            onChange={(e) => onBranchesChange({ ...selectedBranches, from: e.target.value })}
+            disabled={isLoading || branches.length === 0}
           >
-            Refresh Branches
-          </button>
+            <option value="">Select base branch</option>
+            {branches.map(branch => (
+              <option key={branch} value={branch}>{branch}</option>
+            ))}
+          </select>
         </div>
-      )}
+
+        <div className="branch-select">
+          <label>Compare Branch:</label>
+          <select
+            value={selectedBranches.to}
+            onChange={(e) => onBranchesChange({ ...selectedBranches, to: e.target.value })}
+            disabled={isLoading || branches.length === 0}
+          >
+            <option value="">Select compare branch</option>
+            {branches.map(branch => (
+              <option key={branch} value={branch}>{branch}</option>
+            ))}
+          </select>
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,31 +1,39 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { themes } from '../themes';
 
-const initialState = {
-  isDark: window.matchMedia('(prefers-color-scheme: dark)').matches,
-  currentTheme: localStorage.getItem('theme') || 'light-default',
-  availableThemes: Object.keys(themes).map(key => ({
-    id: key,
-    ...themes[key]
-  }))
+const getInitialTheme = () => {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme && themes[savedTheme]) return savedTheme;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark-default' : 'light-default';
 };
 
 const themeSlice = createSlice({
   name: 'theme',
-  initialState,
+  initialState: {
+    currentTheme: getInitialTheme(),
+    isDark: getInitialTheme().includes('dark'),
+    themes: Object.keys(themes).map(key => ({
+      id: key,
+      name: themes[key].name
+    }))
+  },
   reducers: {
-    toggleTheme: (state) => {
-      state.isDark = !state.isDark;
-      state.currentTheme = state.isDark ? 'dark-default' : 'light-default';
-      localStorage.setItem('theme', state.currentTheme);
-    },
     setTheme: (state, action) => {
-      state.currentTheme = action.payload;
-      state.isDark = action.payload.includes('dark');
-      localStorage.setItem('theme', action.payload);
+      const themeId = action.payload;
+      if (themes[themeId]) {
+        state.currentTheme = themeId;
+        state.isDark = themeId.includes('dark');
+        localStorage.setItem('theme', themeId);
+      }
+    },
+    toggleTheme: (state) => {
+      const newTheme = state.isDark ? 'light-default' : 'dark-default';
+      state.currentTheme = newTheme;
+      state.isDark = !state.isDark;
+      localStorage.setItem('theme', newTheme);
     }
   }
 });
 
-export const { toggleTheme, setTheme } = themeSlice.actions;
+export const { setTheme, toggleTheme } = themeSlice.actions;
 export default themeSlice.reducer;

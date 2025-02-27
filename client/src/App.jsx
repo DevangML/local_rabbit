@@ -1,77 +1,72 @@
-import React, { Suspense, useState } from "react";
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import ThemeToggle from "./components/ThemeToggle";
-import ProjectSelector from "./components/ProjectSelector";
-import { themes } from './themes';  // Update import path
-
-const DiffViewer = React.lazy(() => import("./components/DiffViewer"));
-const ImpactView = React.lazy(() => import("./components/ImpactView"));
-const QualityView = React.lazy(() => import("./components/QualityView"));
+import { setTheme } from './store/themeSlice';
+import { themes } from './themes';
+import ProjectSelector from './components/ProjectSelector';
+import ThemeToggle from './components/ThemeToggle';
+import DiffViewer from './components/DiffViewer';
+import './App.css';
 
 function App() {
   const dispatch = useDispatch();
-  const { isDark, currentTheme } = useSelector(state => state.theme);
-  const { activeView } = useSelector(state => state.diffView);
+  const { currentTheme, isDark } = useSelector(state => state.theme);
+  const [selectedBranches, setSelectedBranches] = useState({ from: '', to: '' });
   const [selectedProject, setSelectedProject] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const theme = themes[currentTheme || (isDark ? 'dark-default' : 'light-default')];
+  // Apply theme
+  useEffect(() => {
+    const theme = themes[currentTheme];
+    if (theme) {
+      Object.entries(theme.colors).forEach(([key, value]) => {
+        document.documentElement.style.setProperty(`--${key}`, value);
+      });
+    }
+  }, [currentTheme]);
 
-  // Apply theme variables to document root
-  React.useEffect(() => {
-    Object.entries(theme.colors).forEach(([key, value]) => {
-      document.documentElement.style.setProperty(`--${key}`, value);
-    });
-  }, [theme]);
-
-  const toggleTheme = () => {
-    dispatch({ type: 'theme/toggleTheme' });
+  const handleThemeChange = (themeId) => {
+    dispatch(setTheme(themeId));
   };
 
   const handleProjectSelect = (project) => {
     setSelectedProject(project);
-    // Optional: Save to localStorage or redux store
-    localStorage.setItem('lastProject', JSON.stringify(project));
-  };
-
-  const handleViewChange = (view) => {
-    dispatch({ type: 'diffView/setActiveView', payload: view });
+    setSelectedBranches({ from: '', to: '' });
   };
 
   return (
-    <div className={`app ${isDark ? 'dark' : 'light'}`}>
+    <div className={`app ${isDark ? 'theme-dark' : 'theme-light'}`}>
       <header className="app-header">
-        <div className="header-content">
+        <div className="header-content"></div>
           <h1>Local CodeRabbit</h1>
-          <nav className="main-nav">
-            <button 
-              className={`nav-btn ${activeView === 'diff' ? 'active' : ''}`}
-              onClick={() => handleViewChange('diff')}
+          <div className="theme-selector">
+            <select 
+              value={currentTheme}
+              onChange={(e) => handleThemeChange(e.target.value)}
             >
-              Diff View
-            </button>
-            <button 
-              className={`nav-btn ${activeView === 'impact' ? 'active' : ''}`}
-              onClick={() => handleViewChange('impact')}
-            >
-              Impact Analysis
-            </button>
-            <button 
-              className={`nav-btn ${activeView === 'quality' ? 'active' : ''}`}
-              onClick={() => handleViewChange('quality')}
-            >
-              Quality Metrics
-            </button>
-          </nav>
-          <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} />
+              {Object.entries(themes).map(([id, theme]) => (
+                <option key={id} value={id}>{theme.name}</option>
+              ))}
+            </select>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
       <main className="app-main">
-        <Suspense fallback={<div className="loading">Loading view...</div>}>
-          {activeView === 'diff' && <DiffViewer repository={selectedRepo} />}
-          {activeView === 'impact' && <ImpactView repository={selectedRepo} />}
-          {activeView === 'quality' && <QualityView repository={selectedRepo} />}
-        </Suspense>
+        <ProjectSelector
+          onProjectSelect={handleProjectSelect}
+          selectedBranches={selectedBranches}
+          onBranchesChange={setSelectedBranches}
+          isLoading={isLoading}
+        />
+
+        {selectedProject && selectedBranches.from && selectedBranches.to && (
+          <DiffViewer
+            projectId={selectedProject.id}
+            fromBranch={selectedBranches.from}
+            toBranch={selectedBranches.to}
+          />
+        )}
       </main>
     </div>
   );
