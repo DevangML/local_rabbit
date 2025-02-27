@@ -1,7 +1,83 @@
 .project-selector {
-  background-color: var(--bgSecondary);
-  border-bottom: 1px solid var(--border);
+  max-width: 800px;
+  margin: 2rem auto;
   padding: var(--space-4);
+  background-color: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.project-selector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.project-item {
+  padding: var(--space-4);
+  background-color: var(--bgSecondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.project-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+
+.project-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.project-name {
+  font-weight: 600;
+  color: var(--textPrimary);
+}
+
+.project-path {
+  font-size: 0.875rem;
+  color: var(--textSecondary);
+}
+
+.project-meta {
+  margin-top: var(--space-2);
+  font-size: 0.75rem;
+  color: var(--textSecondary);
+}
+
+.no-projects {
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--textSecondary);
+}
+
+.btn {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--accent);
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: var(--accentHover);
 }
 
 .project-select {
@@ -11,82 +87,6 @@
 }
 
 .select-button {
-  padding: var(--space-3) var(--space-6);
-  font-size: 1rem;
-  font-weight: 500;
-  color: white;
-  background-color: var(--accent);
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: background-color var(--transition-fast);
-}
-
-.select-button:hover:not(:disabled) {
-  background-color: var(--accentHover);
-}
-
-.select-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.project-info {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.repo-details {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.repo-name {
-  font-weight: 500;
-  color: var(--textPrimary);
-}
-
-.change-button {
-  padding: var(--space-2) var(--space-4);
-  font-size: 0.875rem;
-  color: var(--textPrimary);
-  background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.change-button:hover:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.branch-selector {
-  display: flex;
-  gap: var(--space-4);
-}
-
-.branch-select {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.branch-select label {
-  color: var(--textSecondary);
-  font-size: 0.875rem;
-}
-
-.branch-select select {
-  padding: var(--space-2) var(--space-4);
-  font-size: 0.875rem;
-  color: var(--textPrimary);
   background-color: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
