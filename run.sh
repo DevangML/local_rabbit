@@ -861,13 +861,21 @@ parse_args() {
             --no-sound)
                 NO_SOUND=true
                 ;;
+            --test-mode)
+                TEST_MODE=true
+                ;;
+            --test-option=*)
+                TEST_OPTION="${arg#*=}"
+                ;;
             --help)
                 echo "Usage: $0 [options]"
                 echo
                 echo "Options:"
-                echo "  --no-animation  Disable animations"
-                echo "  --no-sound      Disable sound effects"
-                echo "  --help          Show this help message"
+                echo "  --no-animation    Disable animations"
+                echo "  --no-sound        Disable sound effects"
+                echo "  --test-mode       Run in test mode"
+                echo "  --test-option=N   Run specific option in test mode"
+                echo "  --help            Show this help message"
                 exit 0
                 ;;
         esac
@@ -882,6 +890,20 @@ main() {
     # Show intro unless disabled
     if [ "$NO_ANIMATION" != "true" ]; then
         show_intro
+    fi
+    
+    # Test mode execution
+    if [ "$TEST_MODE" = "true" ]; then
+        if [ -n "$TEST_OPTION" ]; then
+            process_choice "$TEST_OPTION"
+            exit 0
+        else
+            # Run all options in sequence
+            for choice in {1..12}; do
+                process_choice "$choice"
+            done
+            exit 0
+        fi
     fi
     
     # Main menu loop
