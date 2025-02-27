@@ -46,18 +46,31 @@ const ProjectSelector = ({
   };
 
   const handleDirectorySelect = async () => {
+    if (isSelecting) return;
+    
+    setIsSelecting(true);
     try {
-      setIsSelecting(true);
       const response = await fetch(`${config.API_BASE_URL}/api/projects/select`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
 
-      if (!response.ok) throw new Error('Failed to select directory');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to select directory');
+      }
+
       const project = await response.json();
+      if (project.branches?.length > 0) {
+        onBranchesChange({
+          from: project.current || project.branches[0],
+          to: project.branches[0]
+        });
+      }
       onProjectSelect(project);
     } catch (err) {
       setError('Error selecting directory: ' + err.message);
+      console.error('Directory selection error:', err);
     } finally {
       setIsSelecting(false);
     }
