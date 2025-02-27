@@ -34,4 +34,9 @@ export default defineConfig({
       clientPort: 3000,
     },
   },
+  esbuild: {
+    loader: "jsx",
+    include: /\.[jt]sx?$/,
+    exclude: /node_modules/,
+  },
 })
