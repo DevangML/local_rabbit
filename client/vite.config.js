@@ -8,6 +8,7 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    extensions: ['.js', '.jsx', '.ts', '.tsx']
   },
   server: {
     port: 3000,
@@ -34,9 +35,28 @@ export default defineConfig({
       clientPort: 3000,
     },
   },
-  esbuild: {
-    loader: "jsx",
-    include: /\.[jt]sx?$/,
-    exclude: /node_modules/,
+  build: {
+    rollupOptions: {
+      onwarn(warning, warn) {
+        // Skip certain warnings
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return
+        warn(warning)
+      }
+    }
   },
+  optimizeDeps: {
+    exclude: ['react-syntax-highlighter'],
+    esbuildOptions: {
+      target: 'esnext',
+      supported: { 
+        'top-level-await': true 
+      },
+    }
+  },
+  esbuild: {
+    logOverride: { 'this-is-undefined-in-esm': 'silent' },
+    loader: 'jsx',
+    include: /\.(jsx|js)$/,
+    exclude: /node_modules/,
+  }
 })

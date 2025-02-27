@@ -21,3 +21,16 @@
 .quality-content {
   margin-top: 1rem;
 }
+
+.code-block {
+  background-color: #f5f5f5;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-family: monospace;
+}
+
+.dark .code-block {
+  background-color: #282c34;
+  color: #abb2bf;
+}
