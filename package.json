@@ -6,17 +6,15 @@
   "engines": {
     "node": ">=16.0.0"
   },
+  "packageManager": "yarn@4.6.0",
   "scripts": {
     "start": "concurrently \"yarn server\" \"yarn client\"",
     "server": "nodemon server/index.js",
     "client": "cd client && yarn start",
     "build": "cd client && yarn build",
     "install-all": "yarn install && cd client && yarn install",
-    "security-audit": "bash security_audit.sh",
-    "security-fix": "yarn audit fix && cd client && yarn audit fix && cd ../server && yarn audit fix",
-    "update-deps": "yarn upgrade-interactive --latest",
-    "preinstall": "node -e \"if(process.env.npm_execpath.indexOf('yarn') === -1) throw new Error('Please use Yarn instead of NPM')\"",
-    "postinstall": "yarn security-audit"
+    "security-check": "yarn npm audit",
+    "update-deps": "yarn upgrade-interactive"
   },
   "dependencies": {
     "cors": "^2.8.5",
