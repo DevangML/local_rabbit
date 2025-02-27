@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '../config';
 import { cacheInstance, CACHE_TYPES } from '../utils/cache';
 import './DiffViewer.css';
@@ -13,7 +13,6 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [localFilters, setLocalFilters] = useState({});
-  const [isRepoLoaded, setIsRepoLoaded] = useState(false);
   
   const fetchDiffData = useCallback(async () => {
     if (!fromBranch || !toBranch || propsDiffData) return;
@@ -45,7 +44,6 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
       );
 
       setDiffData(data);
-      setIsRepoLoaded(true);
       
       // Select the first file by default if available
       if (data.files && data.files.length > 0) {
@@ -56,31 +54,14 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
     } catch (error) {
       setError(error.message);
       setDiffData(null);
-      setIsRepoLoaded(false);
     } finally {
       setIsLoading(false);
     }
   }, [fromBranch, toBranch, propsDiffData]);
 
-  const handleReset = () => {
-    setDiffData(null);
-    setSelectedFile(null);
-    setError(null);
-    setIsLoading(false);
-    setIsRepoLoaded(false);
-  };
-
-  const handleBranchChange = useCallback(() => {
-    setIsRepoLoaded(false);
-    setDiffData(null);
-    setSelectedFile(null);
-    setError(null);
-  }, []);
-
-  // Handle branch changes
   useEffect(() => {
-    handleBranchChange();
-  }, [fromBranch, toBranch, handleBranchChange]);
+    fetchDiffData();
+  }, [fetchDiffData]);
 
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -295,64 +276,7 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
   if (!fromBranch || !toBranch) {
     return (
       <div className="empty-state">
-        <h3>Repository Analysis</h3>
-        <p>Please select both branches to view differences</p>
-      </div>
-    );
-  }
-
-  if (!isRepoLoaded) {
-    return (
-      <div className="start-analysis-container">
-        <div className="start-analysis-content">
-          <h3>Load Repository</h3>
-          <p>Selected branches for comparison:</p>
-          <div className="branch-info">
-            <div className="branch">
-              <span className="branch-label">From:</span>
-              <span className="branch-name">{fromBranch}</span>
-            </div>
-            <div className="branch">
-              <span className="branch-label">To:</span>
-              <span className="branch-name">{toBranch}</span>
-            </div>
-          </div>
-          <button 
-            className="load-repo-button"
-            onClick={fetchDiffData}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Loading Repository...' : 'Load Repository'}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!diffData && !isLoading) {
-    return (
-      <div className="start-analysis-container">
-        <div className="start-analysis-content">
-          <h3>Ready to Analyze Changes</h3>
-          <p>Compare changes between:</p>
-          <div className="branch-info">
-            <div className="branch">
-              <span className="branch-label">From:</span>
-              <span className="branch-name">{fromBranch}</span>
-            </div>
-            <div className="branch">
-              <span className="branch-label">To:</span>
-              <span className="branch-name">{toBranch}</span>
-            </div>
-          </div>
-          <button 
-            className="start-analysis-button"
-            onClick={fetchDiffData}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Analyzing...' : 'Start Analysis'}
-          </button>
-        </div>
+        Please select both branches to view differences
       </div>
     );
   }
@@ -377,13 +301,6 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
           {searchQuery && <span className="filtering-indicator"> (filtered)</span>}
         </div>
         <div className="header-actions">
-          <button 
-            className="reset-button"
-            onClick={handleReset}
-            style={{ marginRight: '10px' }}
-          >
-            Reset
-          </button>
           <button 
             className="refresh-button"
             onClick={fetchDiffData}

@@ -28,24 +28,65 @@
   text-align: left;
 }
 
+.analyze-button-container {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.analyze-button {
+  background: #48bb78;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  max-width: 300px;
+}
+
+.analyze-button:hover:not(:disabled) {
+  background: #38a169;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.analyze-button:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .select-button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  margin: 1.5rem auto;
-  padding: 1rem 2rem;
-  font-size: 1.1rem;
-  color: white;
   background: #4a90e2;
+  color: white;
   border: none;
   border-radius: 8px;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 }
 
-.select-button:hover {
+.select-button:hover:not(:disabled) {
   background: #357abd;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.select-button:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .helper-text {
@@ -155,4 +196,165 @@
 
 .icon {
   font-size: 1.2rem;
+}
+
+.branch-select {
+  flex: 1;
+  position: relative;
+}
+
+.select-container {
+  position: relative;
+  width: 100%;
+}
+
+.branch-display {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  color: #2d3748;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.2s;
+}
+
+.branch-display:hover {
+  border-color: #4a90e2;
+}
+
+.dropdown-arrow {
+  font-size: 0.8rem;
+  color: #718096;
+  transition: transform 0.2s;
+}
+
+.dropdown-container {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.branch-search {
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 6px 6px 0 0;
+  background: white;
+  color: #2d3748;
+  font-size: 1rem;
+  outline: none;
+}
+
+.branch-search:focus {
+  background-color: #f7fafc;
+}
+
+.branch-options {
+  max-height: 200px;
+  overflow-y: auto;
+  border-radius: 0 0 6px 6px;
+}
+
+.branch-option {
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.branch-option:hover {
+  background-color: #f7fafc;
+}
+
+.branch-option.selected {
+  background-color: #ebf8ff;
+  color: #4a90e2;
+  font-weight: 500;
+}
+
+/* Scrollbar styling */
+.branch-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.branch-options::-webkit-scrollbar-track {
+  background: #f7fafc;
+}
+
+.branch-options::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 3px;
+}
+
+.branch-options::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+.branch-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.refresh-button {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.refresh-button:hover {
+  background: #f8fafc;
+  border-color: #4a90e2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-52%);
+}
+
+.refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: translateY(-50%);
+  box-shadow: none;
+}
+
+.refresh-button.loading .refresh-icon {
+  animation: spin 1s linear infinite;
+}
+
+.refresh-icon {
+  fill: #4a90e2;
+  width: 20px;
+  height: 20px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 } 
