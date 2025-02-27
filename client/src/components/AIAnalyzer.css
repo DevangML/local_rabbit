@@ -1,0 +1,246 @@
+.ai-analyzer {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+}
+
+.analyzer-header {
+  margin-bottom: 1.5rem;
+}
+
+.analyzer-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+}
+
+.analyzer-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.prompt-section {
+  margin-bottom: 1.5rem;
+}
+
+.prompt-section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.prompt-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 1rem;
+}
+
+.analyze-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.analyze-button:hover:not(:disabled) {
+  background-color: var(--secondary-color);
+}
+
+.analyze-button:disabled {
+  background-color: #cbd5e0;
+  cursor: not-allowed;
+}
+
+.loading-animation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top-color: var(--primary-color);
+  animation: spin 1s infinite linear;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.analysis-results {
+  margin-top: 1.5rem;
+}
+
+.results-summary {
+  padding: 1.25rem;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.results-summary h4 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  color: var(--text-color);
+}
+
+.summary-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 1.25rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+.findings-list h4 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--text-color);
+}
+
+.no-findings {
+  padding: 1rem;
+  background-color: #f8fafc;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.findings-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.finding-item {
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 4px solid transparent;
+  background-color: #f8fafc;
+  margin-bottom: 1rem;
+}
+
+.severity-border-high {
+  border-left-color: #e53e3e;
+}
+
+.severity-border-medium {
+  border-left-color: #dd6b20;
+}
+
+.severity-border-low {
+  border-left-color: #3182ce;
+}
+
+.finding-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.finding-file {
+  font-weight: 500;
+  color: var(--text-color);
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.finding-line {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-right: 0.75rem;
+}
+
+.severity-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.severity-high {
+  background-color: #fed7d7;
+  color: #c53030;
+}
+
+.severity-medium {
+  background-color: #feebc8;
+  color: #c05621;
+}
+
+.severity-low {
+  background-color: #bee3f8;
+  color: #2c5282;
+}
+
+.finding-description {
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--text-color);
+}
+
+.finding-impact {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .finding-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .finding-line {
+    margin-right: 0;
+    margin-bottom: 0.25rem;
+  }
+  
+  .summary-stats {
+    justify-content: center;
+  }
+}

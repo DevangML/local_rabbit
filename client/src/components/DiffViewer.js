@@ -3,15 +3,20 @@ import { API_BASE_URL } from '../config';
 import { cacheInstance, CACHE_TYPES } from '../utils/cache';
 import './DiffViewer.css';
 import CommentsPanel from './CommentsPanel';
+import SearchBar from './SearchBar';
+import FilterPanel from './FilterPanel';
 
-const DiffViewer = ({ fromBranch, toBranch }) => {
+const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
   const [diffData, setDiffData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [localFilters, setLocalFilters] = useState({});
+  const [hasStartedAnalysis, setHasStartedAnalysis] = useState(false);
   
   const fetchDiffData = useCallback(async () => {
-    if (!fromBranch || !toBranch) return;
+    if (!fromBranch || !toBranch || propsDiffData) return;
 
     setIsLoading(true);
     setError(null);
@@ -53,36 +58,102 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
     } finally {
       setIsLoading(false);
     }
+  }, [fromBranch, toBranch, propsDiffData]);
+
+  // Reset analysis state when branches change
+  useEffect(() => {
+    setHasStartedAnalysis(false);
+    setDiffData(null);
+    setSelectedFile(null);
+    setError(null);
   }, [fromBranch, toBranch]);
 
   useEffect(() => {
-    fetchDiffData();
-  }, [fetchDiffData]);
-
-  const renderStartButton = () => {
-    if (!fromBranch || !toBranch) {
-      return (
-        <div className="start-button-container">
-          <button className="start-button" disabled>
-            Please select both branches to start
-          </button>
-        </div>
-      );
+    if (hasStartedAnalysis) {
+      fetchDiffData();
     }
+  }, [fetchDiffData, hasStartedAnalysis]);
 
-    return (
-      <div className="start-button-container">
-        <button 
-          className="start-button"
-          onClick={fetchDiffData}
-          disabled={isLoading}
-        >
-          {isLoading ? 'Analyzing...' : 'Start Analysis'}
-        </button>
-      </div>
-    );
+  const handleStartAnalysis = () => {
+    setHasStartedAnalysis(true);
   };
-  
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+  };
+
+  const handleFilterChange = (filters) => {
+    setLocalFilters(filters);
+  };
+
+  const filterOptions = [
+    {
+      id: 'fileType',
+      label: 'File Type',
+      type: 'select',
+      options: [
+        { value: 'widget', label: 'Widget' },
+        { value: 'screen', label: 'Screen' },
+        { value: 'model', label: 'Model' },
+        { value: 'service', label: 'Service' },
+        { value: 'test', label: 'Test' },
+        { value: 'other', label: 'Other' }
+      ]
+    },
+    {
+      id: 'fileStatus',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: 'added', label: 'Added' },
+        { value: 'modified', label: 'Modified' },
+        { value: 'deleted', label: 'Deleted' }
+      ]
+    },
+    {
+      id: 'changes',
+      label: 'Changes',
+      type: 'checkbox-group',
+      options: [
+        { value: 'hasAdditions', label: 'Has Additions' },
+        { value: 'hasDeletions', label: 'Has Deletions' }
+      ]
+    }
+  ];
+
+  const getFilteredFiles = () => {
+    if (!diffData || !diffData.files) return [];
+
+    return diffData.files.filter(file => {
+      // Search filter
+      if (searchQuery && !file.path.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+
+      // Type filter
+      if (localFilters.fileType && file.type !== localFilters.fileType) {
+        return false;
+      }
+
+      // Status filter
+      if (localFilters.fileStatus && file.status !== localFilters.fileStatus) {
+        return false;
+      }
+
+      // Changes filter
+      if (localFilters.changes) {
+        if (localFilters.changes.includes('hasAdditions') && file.additions === 0) {
+          return false;
+        }
+        if (localFilters.changes.includes('hasDeletions') && file.deletions === 0) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  };
+
   const getLineClass = (line) => {
     switch (line.type) {
       case 'addition': return 'line-addition';
@@ -181,7 +252,7 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
           <>
             <div className="metadata-section">
               <h4>Widget Info</h4>
-              {file.metadata.widgetTypes.length > 0 ? (
+              {file.metadata.widgetTypes?.length > 0 ? (
                 <ul>
                   {file.metadata.widgetTypes.map((type, index) => (
                     <li key={index}>{type}</li>
@@ -199,7 +270,7 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
               </div>
             )}
 
-            {file.metadata.imports.length > 0 && (
+            {file.metadata.imports?.length > 0 && (
               <div className="metadata-section">
                 <h4>Imports ({file.metadata.imports.length})</h4>
                 <ul className="imports-list">
@@ -214,112 +285,180 @@ const DiffViewer = ({ fromBranch, toBranch }) => {
       </div>
     );
   };
+
+  const filteredFiles = getFilteredFiles();
   
-  if (isLoading) {
-    return <div className="loading">Loading diff...</div>;
+  if (!fromBranch || !toBranch) {
+    return (
+      <div className="empty-state">
+        Please select both branches to view differences
+      </div>
+    );
   }
-  
+
+  if (!hasStartedAnalysis) {
+    return (
+      <div className="start-analysis-container">
+        <div className="start-analysis-content">
+          <h3>Ready to Analyze Changes</h3>
+          <p>Compare changes between:</p>
+          <div className="branch-info">
+            <div className="branch">
+              <span className="branch-label">From:</span>
+              <span className="branch-name">{fromBranch}</span>
+            </div>
+            <div className="branch">
+              <span className="branch-label">To:</span>
+              <span className="branch-name">{toBranch}</span>
+            </div>
+          </div>
+          <button 
+            className="start-analysis-button"
+            onClick={handleStartAnalysis}
+          >
+            Start Analysis
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return <div className="loading">Analyzing changes...</div>;
+  }
+
   if (error) {
     return <div className="error">Error: {error}</div>;
   }
+
+  if (!diffData || !diffData.files || diffData.files.length === 0) {
+    return <div className="no-diff">No changes found between selected branches</div>;
+  }
   
   return (
-    <div className="diff-viewer">
-      {renderStartButton()}
-      <div className="file-list">
-        <h3>Changed Files ({diffData?.files?.length || 0})</h3>
-        {renderErrors()}
-        <ul>
-          {diffData?.files?.map((file, index) => (
-            <li 
-              key={index} 
-              className={selectedFile === file ? 'selected' : ''}
-              onClick={() => setSelectedFile(file)}
-            >
-              <span className="file-icon">{getFileIcon(file)}</span>
-              <span className="file-info">
-                <span className="file-path">{file.path}</span>
-                <div className="file-meta">
-                  {getFileStatusBadge(file)}
-                  <span className="file-type">{getFileTypeLabel(file)}</span>
-                </div>
-                {file.metadata?.error && (
-                  <span className="file-error-indicator">⚠️</span>
-                )}
-              </span>
-              <span className="file-stats">
-                <span className="additions">+{file.additions}</span>
-                <span className="deletions">-{file.deletions}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
+    <div className="diff-container">
+      <div className="diff-header">
+        <div className="file-count">
+          <span className="count-badge">{filteredFiles.length}</span> file{filteredFiles.length !== 1 ? 's' : ''} 
+          {searchQuery && <span className="filtering-indicator"> (filtered)</span>}
+        </div>
+        <div className="header-actions">
+          <button 
+            className="refresh-button"
+            onClick={fetchDiffData}
+            disabled={isLoading}
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+            </svg>
+            {isLoading ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
       </div>
-      
-      <div className="diff-content">
-        {selectedFile ? (
-          <>
-            <div className="file-header">
-              <div className="file-title">
-                <span className="file-icon">{getFileIcon(selectedFile)}</span>
-                <h3>{selectedFile.path}</h3>
-                {getFileStatusBadge(selectedFile)}
-                {selectedFile.metadata?.error && (
-                  <span className="file-error-badge" title={selectedFile.metadata.error}>
-                    ⚠️ Analysis Error
-                  </span>
-                )}
-              </div>
-              <div className="file-stats">
-                <span className="additions">+{selectedFile.additions}</span>
-                <span className="deletions">-{selectedFile.deletions}</span>
-              </div>
-            </div>
-            
-            {renderFileMetadata(selectedFile)}
-            
-            <div className="diff-code">
-              {selectedFile.chunks?.map((chunk, chunkIndex) => (
-                <div key={chunkIndex} className="diff-chunk">
-                  <div className="chunk-header">
-                    @@ -{chunk.oldStart},{chunk.oldLines} +{chunk.newStart},{chunk.newLines} @@
-                  </div>
-                  
-                  <table className="diff-table">
-                    <tbody>
-                      {chunk.lines.map((line, lineIndex) => {
-                        const lineNumber = line.type === 'deletion' 
-                          ? chunk.oldStart + lineIndex 
-                          : chunk.newStart + lineIndex;
-                          
-                        return (
-                          <tr key={lineIndex} className={getLineClass(line)}>
-                            <td className="line-number">{lineNumber}</td>
-                            <td className="line-content">
-                              <span className="line-prefix">{getLinePrefix(line)}</span>
-                              <span className="line-text">{line.content}</span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              ))}
-            </div>
-            
-            <CommentsPanel 
-              fileId={`${fromBranch}-${toBranch}-${selectedFile.path}`} 
-              selectedFile={selectedFile}
-            />
-          </>
-        ) : (
-          <div className="no-file-selected">
-            {diffData?.files?.length > 0 
-              ? 'Select a file from the list to view diff' 
-              : 'No changes found between selected branches'}
+
+      <div className="search-filter-bar">
+        <SearchBar onSearch={handleSearch} placeholder="Search files..." />
+        <FilterPanel filters={filterOptions} onFilterChange={handleFilterChange} />
+      </div>
+
+      <div className="diff-viewer">
+        <div className="file-list">
+          <div className="file-list-header">
+            <h3>Changed Files ({filteredFiles.length})</h3>
           </div>
-        )}
+          {renderErrors()}
+          <ul className="file-items">
+            {filteredFiles.map((file, index) => (
+              <li 
+                key={index} 
+                className={selectedFile === file ? 'selected' : ''}
+                onClick={() => setSelectedFile(file)}
+              >
+                <span className="file-icon">{getFileIcon(file)}</span>
+                <span className="file-info">
+                  <span className="file-path">{file.path}</span>
+                  <div className="file-meta">
+                    {getFileStatusBadge(file)}
+                    <span className="file-type">{getFileTypeLabel(file)}</span>
+                  </div>
+                  {file.metadata?.error && (
+                    <span className="file-error-indicator">⚠️</span>
+                  )}
+                </span>
+                <span className="file-stats">
+                  <span className="additions">+{file.additions}</span>
+                  <span className="deletions">-{file.deletions}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        
+        <div className="diff-content">
+          {selectedFile ? (
+            <>
+              <div className="file-header">
+                <div className="file-title">
+                  <span className="file-icon">{getFileIcon(selectedFile)}</span>
+                  <h3>{selectedFile.path}</h3>
+                  {getFileStatusBadge(selectedFile)}
+                  {selectedFile.metadata?.error && (
+                    <span className="file-error-badge" title={selectedFile.metadata.error}>
+                      ⚠️ Analysis Error
+                    </span>
+                  )}
+                </div>
+                <div className="file-stats">
+                  <span className="additions">+{selectedFile.additions}</span>
+                  <span className="deletions">-{selectedFile.deletions}</span>
+                </div>
+              </div>
+              
+              {renderFileMetadata(selectedFile)}
+              
+              <div className="diff-code">
+                {selectedFile.chunks?.map((chunk, chunkIndex) => (
+                  <div key={chunkIndex} className="diff-chunk">
+                    <div className="chunk-header">
+                      @@ -{chunk.oldStart},{chunk.oldLines} +{chunk.newStart},{chunk.newLines} @@
+                    </div>
+                    
+                    <table className="diff-table">
+                      <tbody>
+                        {chunk.lines.map((line, lineIndex) => {
+                          const lineNumber = line.type === 'deletion' 
+                            ? chunk.oldStart + lineIndex 
+                            : chunk.newStart + lineIndex;
+                            
+                          return (
+                            <tr key={lineIndex} className={getLineClass(line)}>
+                              <td className="line-number">{lineNumber}</td>
+                              <td className="line-content">
+                                <span className="line-prefix">{getLinePrefix(line)}</span>
+                                <span className="line-text">{line.content}</span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ))}
+              </div>
+              
+              <CommentsPanel 
+                fileId={`${fromBranch}-${toBranch}-${selectedFile.path}`} 
+                selectedFile={selectedFile}
+              />
+            </>
+          ) : (
+            <div className="no-file-selected">
+              {filteredFiles.length > 0 
+                ? 'Select a file from the list to view diff' 
+                : 'No changes found between selected branches'}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
