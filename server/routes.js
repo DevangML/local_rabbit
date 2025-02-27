@@ -291,6 +291,56 @@ router.get('/analyze/review', async (req, res) => {
   }
 });
 
+// NEW: Flutter Analysis endpoint
+router.get('/analyze/flutter', async (req, res) => {
+  try {
+    const { fromBranch, toBranch } = req.query;
+    
+    if (!currentRepoPath) {
+      return res.status(400).json({ error: 'Repository path not set' });
+    }
+    
+    if (!fromBranch || !toBranch) {
+      return res.status(400).json({ error: 'Both fromBranch and toBranch are required' });
+    }
+    
+    const gitService = new GitService(currentRepoPath);
+    
+    try {
+      // Validate Flutter repository
+      await gitService.validateFlutterRepo();
+    } catch (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    
+    const diffResult = await gitService.getDiff(fromBranch, toBranch);
+    
+    // Format the response to match what the frontend expects
+    const analysisResult = {
+      summary: diffResult.summary,
+      files: diffResult.files.filter(file => file.path.endsWith('.dart')).map(file => ({
+        path: file.path,
+        type: file.type,
+        status: file.status,
+        additions: file.additions,
+        deletions: file.deletions,
+        analysis: file.analysis,
+        changes: file.chunks?.flatMap(chunk => 
+          chunk.lines.map(line => ({
+            type: line.type,
+            content: line.content
+          }))
+        ).slice(0, 10) || []
+      }))
+    };
+    
+    return res.json(analysisResult);
+  } catch (error) {
+    console.error('Error analyzing Flutter changes:', error);
+    return res.status(500).json({ error: 'Failed to analyze Flutter changes' });
+  }
+});
+
 // Get comments for a file
 router.get('/comments/:fileId', (req, res) => {
   const { fileId } = req.params;

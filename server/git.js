@@ -262,54 +262,65 @@ class GitService {
         content = await this.git.show([`${toBranch}:${newPath}`]);
       }
 
-      if (!content) return null;
+      if (!content || !newPath.endsWith('.dart')) return null;
 
       const analysis = {
         imports: [],
         widgets: [],
         stateManagement: {
-          type: null,
           isStateful: false,
           usesBloc: false,
           usesProvider: false
         },
-        dependencies: new Set(),
         complexity: {
           widgetNesting: 0,
           stateVariables: 0
-        },
-        status: fileStatus
+        }
       };
 
       const lines = content.split('\n');
-      let inClassDefinition = false;
+      let classDepth = 0;
       let bracketCount = 0;
+      let inStateClass = false;
 
       for (const line of lines) {
         // Analyze imports
         if (line.trim().startsWith('import')) {
-          const importPath = line.match(/'([^']+)'/)?.[1];
-          if (importPath) {
+          const importMatch = line.match(/['"]([^'"]+)['"]/);
+          if (importMatch) {
+            const importPath = importMatch[1];
             analysis.imports.push(importPath);
-            if (importPath.includes('package:flutter_bloc')) {
+            
+            if (importPath.includes('bloc') || importPath.includes('cubit')) {
               analysis.stateManagement.usesBloc = true;
             }
-            if (importPath.includes('package:provider')) {
+            if (importPath.includes('provider')) {
               analysis.stateManagement.usesProvider = true;
             }
           }
         }
 
-        // Analyze class definitions
+        // Analyze widget classes
         if (line.includes('class')) {
           if (line.includes('extends StatefulWidget')) {
-            analysis.stateManagement.isStateful = true;
             analysis.widgets.push('StatefulWidget');
+            analysis.stateManagement.isStateful = true;
           }
           if (line.includes('extends StatelessWidget')) {
             analysis.widgets.push('StatelessWidget');
           }
-          inClassDefinition = true;
+          classDepth++;
+        }
+
+        // Track state class
+        if (line.includes('class _') && line.includes('State<')) {
+          inStateClass = true;
+        }
+
+        // Count state variables
+        if (inStateClass && (line.includes('final ') || line.includes(' var ')) && 
+            !line.trimStart().startsWith('//')) {
+          analysis.complexity.stateVariables++;
         }
 
         // Count brackets for nesting analysis
@@ -319,21 +330,12 @@ class GitService {
         if (bracketCount > analysis.complexity.widgetNesting) {
           analysis.complexity.widgetNesting = bracketCount;
         }
-
-        // Look for state variables
-        if (inClassDefinition && line.includes('final') || line.includes('var')) {
-          analysis.complexity.stateVariables++;
-        }
       }
 
       return analysis;
-
     } catch (error) {
       console.error(`Error analyzing file ${newPath}:`, error);
-      return {
-        status: fileStatus,
-        error: `Failed to analyze file: ${error.message}`
-      };
+      return { error: `Failed to analyze: ${error.message}` };
     }
   }
 
@@ -358,16 +360,16 @@ class GitService {
       summary.byType[file.type] = (summary.byType[file.type] || 0) + 1;
 
       if (file.analysis) {
-        if (file.analysis.stateManagement.isStateful) {
+        if (file.analysis.stateManagement?.isStateful) {
           summary.stateManagement.stateful++;
         }
-        if (file.analysis.widgets.includes('StatelessWidget')) {
+        if (file.analysis.widgets?.includes('StatelessWidget')) {
           summary.stateManagement.stateless++;
         }
-        if (file.analysis.stateManagement.usesBloc) {
+        if (file.analysis.stateManagement?.usesBloc) {
           summary.stateManagement.bloc++;
         }
-        if (file.analysis.stateManagement.usesProvider) {
+        if (file.analysis.stateManagement?.usesProvider) {
           summary.stateManagement.provider++;
         }
       }

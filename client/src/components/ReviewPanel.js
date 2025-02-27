@@ -28,12 +28,15 @@ const ReviewPanel = ({ fromBranch, toBranch }) => {
       }
       
       const data = await response.json();
-      setReviewData(data);
+      setReviewData(Array.isArray(data) ? data : []);
       
       if (data.length > 0) {
         setSelectedFile(data[0]);
+      } else {
+        setSelectedFile(null);
       }
     } catch (error) {
+      console.error('Error fetching review:', error);
       setError(error.message);
     } finally {
       setIsLoading(false);
@@ -55,6 +58,10 @@ const ReviewPanel = ({ fromBranch, toBranch }) => {
   
   if (error) {
     return <div className="error">Error: {error}</div>;
+  }
+  
+  if (reviewData.length === 0) {
+    return <div className="empty-review">No review comments found for the selected branches.</div>;
   }
   
   return (
