@@ -643,6 +643,69 @@ show_menu() {
     printf "${YELLOW}Select an option [1-${#options[@]}]:${NC} "
 }
 
+# Utility Functions
+validate_node_modules() {
+    local dir=$1
+    print_step "Validating node_modules in $dir..."
+    
+    if [ ! -d "$dir/node_modules" ]; then
+        print_warning "node_modules not found in $dir"
+        return 1
+    fi
+    
+    # Check for common issues
+    if [ ! -f "$dir/node_modules/.yarn-integrity" ]; then
+        print_warning "Yarn integrity file missing"
+        return 1
+    fi
+    
+    return 0
+}
+
+validate_env_files() {
+    local dir=$1
+    if [ ! -f "$dir/.env" ]; then
+        if [ -f "$dir/.env.example" ]; then
+            print_step "Creating .env from example..."
+            cp "$dir/.env.example" "$dir/.env"
+        else
+            print_warning "No .env or .env.example found in $dir"
+            return 1
+        fi
+    fi
+    return 0
+}
+
+check_db_status() {
+    print_step "Checking database status..."
+    
+    if [ ! -f "server/db.sqlite" ]; then
+        print_warning "Database file not found, initializing..."
+        touch server/db.sqlite
+        return 1
+    fi
+    
+    return 0
+}
+
+run_vite_dev() {
+    cd client
+    if [ ! -f "vite.config.js" ]; then
+        print_error "Vite config not found!"
+        return 1
+    fi
+    yarn dev
+}
+
+run_server_dev() {
+    cd server
+    if [ ! -f "index.js" ]; then
+        print_error "Server entry point not found!"
+        return 1
+    fi
+    yarn dev
+}
+
 # Process menu choice
 process_choice() {
     local choice=$1
@@ -655,78 +718,123 @@ process_choice() {
     printf "${CYAN}╚═══════════════════════════════════════════════════════════════╝${NC}\n\n"
     
     case $choice in
-        1) check_system_requirements && success=true ;;
-        2) clean_install && success=true ;;
-        3) install_dependencies && success=true ;;
-        4) update_package_scripts && success=true ;;
-        5) create_missing_files && success=true ;;
-        6) clear_cache && success=true ;;
-        7) optimize_db && success=true ;;
-        8) run_lint && success=true ;;
-        9) run_tests && success=true ;;
-        10) run_security_audit && success=true ;;
-        11) start_app && success=true ;;
-        12) 
-            # Run complete setup with progress tracking
-            local total_steps=10
+        1) check_system_requirements && {
+                validate_env_files "client" &&
+                validate_env_files "server" &&
+                success=true
+            }
+            ;;
+            
+        2) clean_install && {
+                validate_node_modules "client" || yarn install --force &&
+                validate_node_modules "server" || yarn install --force &&
+                success=true
+            }
+            ;;
+            
+        3) (cd client && yarn install) && 
+            (cd server && yarn install) && 
+            success=true
+            ;;
+            
+        4) update_package_scripts && {
+                (cd client && yarn install) &&
+                (cd server && yarn install) &&
+                success=true
+            }
+            ;;
+            
+        5) create_missing_files && {
+                validate_env_files "client" &&
+                validate_env_files "server" &&
+                check_db_status &&
+                success=true
+            }
+            ;;
+            
+        6) clear_cache && {
+                rm -rf client/.cache client/node_modules/.cache &&
+                rm -rf server/.cache server/node_modules/.cache &&
+                success=true
+            }
+            ;;
+            
+        7) optimize_db && {
+                check_db_status &&
+                (cd client && node scripts/optimize-db.js) &&
+                success=true
+            }
+            ;;
+            
+        8) run_lint && {
+                (cd client && yarn lint --fix) &&
+                (cd server && yarn lint --fix) &&
+                success=true
+            }
+            ;;
+            
+        9) run_tests && {
+                (cd client && yarn test --watchAll=false) &&
+                (cd server && yarn test) &&
+                success=true
+            }
+            ;;
+            
+        10) run_security_audit && {
+                (cd client && yarn audit) &&
+                (cd server && yarn audit) &&
+                success=true
+            }
+            ;;
+            
+        11) print_step "Starting development servers..."
+            
+            # Start both servers in parallel
+            (run_server_dev) & 
+            local server_pid=$!
+            
+            sleep 2  # Give the server time to start
+            
+            (run_vite_dev) &
+            local client_pid=$!
+            
+            # Wait for both processes
+            wait $server_pid
+            wait $client_pid
+            
+            success=true
+            ;;
+            
+        12) local total_steps=10
             local current_step=0
             
-            print_step "Running complete setup ($(($current_step+1))/$total_steps)..."
-            check_system_requirements && ((current_step++)) || return 1
+            # Run all steps with proper validation
+            for step in {1..11}; do
+                print_step "Complete setup progress: $current_step/$total_steps"
+                process_choice $step || break
+                ((current_step++))
+            done
             
-            print_step "Running complete setup ($(($current_step+1))/$total_steps)..."
-            clean_install && ((current_step++)) || return 1
-            
-            print_step "Running complete setup ($(($current_step+1))/$total_steps)..."
-            install_dependencies && ((current_step++)) || return 1
-            
-            print_step "Running complete setup ($(($current_step+1))/$total_steps)..."
-            update_package_scripts && ((current_step++)) || return 1
-            
-            print_step "Running complete setup ($(($current_step+1))/$total_steps)..."
-            create_missing_files && ((current_step++)) || return 1
-            
-            print_step "Running complete setup ($(($current_step+1))/$total_steps)..."
-            clear_cache && ((current_step++)) || return 1
-            
-            print_step "Running complete setup ($(($current_step+1))/$total_steps)..."
-            optimize_db && ((current_step++)) || return 1
-            
-            print_step "Running complete setup ($(($current_step+1))/$total_steps)..."
-            run_lint && ((current_step++)) || return 1
-            
-            print_step "Running complete setup ($(($current_step+1))/$total_steps)..."
-            run_tests && ((current_step++)) || return 1
-            
-            print_step "Running complete setup ($(($current_step+1))/$total_steps)..."
-            run_security_audit && ((current_step++)) || return 1
-            
-            success=true 
+            [ $current_step -eq $total_steps ] && success=true
             ;;
-        13) 
-            clear
-            # Exit animation
+            
+        13) clear
             local farewell="Thank you for using LocalCodeRabbit!"
             printf "\n\n"
-            
-            # Center the message
             local center_pos=$(( (TERM_WIDTH - ${#farewell}) / 2 ))
             printf "%${center_pos}s" ""
-            
-            # Print with typing effect
             for (( i=0; i<${#farewell}; i++ )); do
                 echo -n -e "${YELLOW}${farewell:$i:1}${NC}"
                 sleep 0.03
             done
             printf "\n\n"
-            
             play_sound "success"
             sleep 1
-            exit 0 
+            exit 0
             ;;
-        *) 
-            print_error "Invalid option. Please try again."
-            success=false 
+            
+        *) print_error "Invalid option. Please try again."
+            success=false
             ;;
     esac
     
