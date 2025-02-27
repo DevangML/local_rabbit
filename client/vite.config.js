@@ -18,5 +18,20 @@ export default defineConfig({
         secure: false,
       },
     },
+    // Add security headers
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Resource-Policy': 'same-site',
+      'Access-Control-Allow-Origin': 'http://localhost:3000',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'X-XSS-Protection': '1; mode=block',
+    },
+    // Restrict host access
+    hmr: {
+      host: 'localhost',
+      clientPort: 3000,
+    },
   },
 })
