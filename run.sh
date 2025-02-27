@@ -205,21 +205,19 @@ retry_command() {
                 rm -rf node_modules
                 rm -rf .yarn/cache
                 yarn cache clean
-                if [ ! -f ".yarnrc.yml" ]; then
-                    bash ../setup-yarn.sh
-                fi
+                yarn install --mode=update-lockfile
                 ;;
             *"yarn test"*)
                 print_step "Fixing test environment..."
                 yarn cache clean
                 rm -rf node_modules/.cache
-                yarn install
+                yarn install --mode=update-lockfile
                 ;;
             *"yarn build"*)
                 print_step "Fixing build issues..."
                 rm -rf build dist
                 rm -rf node_modules/.cache
-                yarn install
+                yarn install --mode=update-lockfile
                 ;;
             *"yarn lint"*)
                 print_step "Fixing lint issues..."
@@ -650,13 +648,8 @@ validate_node_modules() {
     
     if [ ! -d "$dir/node_modules" ]; then
         print_warning "node_modules not found in $dir"
-        return 1
-    fi
-    
-    # Check for common issues
-    if [ ! -f "$dir/node_modules/.yarn-integrity" ]; then
-        print_warning "Yarn integrity file missing"
-        return 1
+        (cd "$dir" && yarn install --mode=update-lockfile)
+        return $?
     fi
     
     return 0
@@ -726,8 +719,8 @@ process_choice() {
             ;;
             
         2) clean_install && {
-                validate_node_modules "client" || yarn install --force &&
-                validate_node_modules "server" || yarn install --force &&
+                validate_node_modules "client" || yarn install --mode=update-lockfile &&
+                validate_node_modules "server" || yarn install --mode=update-lockfile &&
                 success=true
             }
             ;;

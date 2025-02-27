@@ -1,63 +1,54 @@
-require('fake-indexeddb/auto');
-const { openDB } = require('idb');
+import 'fake-indexeddb/auto';
+import { openDB } from 'idb';
 
-const DB_NAME = 'localCodeRabbitDB';
-const DB_VERSION = 1;
-
-async function optimizeDatabase() {
+const optimizeIndexedDB = async () => {
   try {
-    console.log('Starting database optimization...');
-
-    const db = await openDB(DB_NAME, DB_VERSION);
-    const stores = ['appState', 'diffState', 'analyzerState'];
-
-    for (const store of stores) {
-      console.log(`\nOptimizing store: ${store}`);
-      
-      // Get all records
-      const allRecords = await db.getAll(store);
-      console.log(`Found ${allRecords.length} records`);
-
-      // Clear the store
-      await db.clear(store);
-      console.log('Store cleared');
-
-      // Remove expired or invalid records
-      const validRecords = allRecords.filter(record => {
-        if (!record) return false;
-        if (record.timestamp) {
-          const age = Date.now() - new Date(record.timestamp).getTime();
-          // Remove records older than 30 days
-          if (age > 30 * 24 * 60 * 60 * 1000) return false;
+    const db = await openDB('localCodeRabbit', 1, {
+      upgrade(db) {
+        // Define object stores if they don't exist
+        if (!db.objectStoreNames.contains('cache')) {
+          db.createObjectStore('cache');
         }
-        return true;
+      },
+    });
+
+    // List of stores to optimize
+    const stores = [...db.objectStoreNames];
+
+    // Optimize each store
+    for (const store of stores) {
+      const tx = db.transaction(store, 'readwrite');
+      const objectStore = tx.objectStore(store);
+
+      // Clear old data (older than 7 days)
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      const request = objectStore.openCursor();
+
+      request.then(cursor => {
+        while (cursor) {
+          if (cursor.value.timestamp < sevenDaysAgo) {
+            cursor.delete();
+          }
+          cursor.continue();
+        }
       });
 
-      // Reinsert valid records
-      for (const record of validRecords) {
-        await db.add(store, record);
-      }
-
-      console.log(`Reinserted ${validRecords.length} valid records`);
-      console.log(`Removed ${allRecords.length - validRecords.length} invalid/expired records`);
+      await tx.done;
     }
 
-    // Compact the database
-    console.log('\nCompacting database...');
-    await db.close();
-    
-    // Reopen to ensure changes are persisted
-    const newDb = await openDB(DB_NAME, DB_VERSION);
-    await newDb.close();
-
-    console.log('\nDatabase optimization completed successfully!');
+    console.log('Database optimization completed successfully');
+    return true;
   } catch (error) {
-    console.error('Error optimizing database:', error);
-    process.exit(1);
+    console.error('Database optimization failed:', error);
+    return false;
   }
-}
+};
 
 // Run optimization
-optimizeDatabase().then(() => {
-  process.exit(0);
-});
+optimizeIndexedDB()
+  .then(success => {
+    process.exit(success ? 0 : 1);
+  })
+  .catch(() => {
+    process.exit(1);
+  });
