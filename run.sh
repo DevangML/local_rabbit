@@ -203,7 +203,7 @@ retry_command() {
             *"yarn install"*)
                 print_step "Fixing yarn installation..."
                 rm -rf node_modules
-                rm -rf yarn.lock
+                rm -rf .yarn/cache
                 yarn cache clean
                 if [ ! -f ".yarnrc.yml" ]; then
                     bash ../setup-yarn.sh
@@ -213,13 +213,13 @@ retry_command() {
                 print_step "Fixing test environment..."
                 yarn cache clean
                 rm -rf node_modules/.cache
-                yarn install --force
+                yarn install
                 ;;
             *"yarn build"*)
                 print_step "Fixing build issues..."
                 rm -rf build dist
                 rm -rf node_modules/.cache
-                yarn install --force
+                yarn install
                 ;;
             *"yarn lint"*)
                 print_step "Fixing lint issues..."
