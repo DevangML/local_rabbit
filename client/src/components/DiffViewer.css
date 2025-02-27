@@ -1148,3 +1148,32 @@ body {
   margin: 1rem;
   color: var(--textPrimary);
 }
+
+.code-block {
+  background: var(--code-bg);
+  border-radius: 4px;
+  padding: 1rem;
+  margin: 0;
+  overflow-x: auto;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  tab-size: 2;
+}
+
+.diff-line {
+  display: flex;
+  white-space: pre;
+}
+
+.line-number {
+  color: var(--line-number-color);
+  padding-right: 1em;
+  user-select: none;
+  text-align: right;
+  min-width: 3em;
+}
+
+.line-content {
+  font-family: inherit;
+}
