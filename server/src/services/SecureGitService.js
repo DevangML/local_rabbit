@@ -172,7 +172,7 @@ class SecureGitService {
 
           const subdirs = stdout.split('\n')
             .filter(Boolean)
-            .map(subdir => path.join(dir, subdir));
+            .map((subdir) => path.join(dir, subdir));
 
           // Check each subdirectory for .git folder in parallel
           await Promise.all(subdirs.map(async (subdir) => {
@@ -206,4 +206,4 @@ class SecureGitService {
   }
 }
 
-module.exports = SecureGitService; 
+module.exports = SecureGitService;

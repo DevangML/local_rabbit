@@ -55,13 +55,6 @@
     "dependent": "client",
     "location": "/Users/devang/Documents/local_rabbit/client/node_modules/eslint"
   },
-  "eslint-plugin-react-hooks": {
-    "current": "4.6.2",
-    "wanted": "4.6.2",
-    "latest": "5.2.0",
-    "dependent": "client",
-    "location": "/Users/devang/Documents/local_rabbit/client/node_modules/eslint-plugin-react-hooks"
-  },
   "idb": {
     "current": "7.1.1",
     "wanted": "7.1.1",

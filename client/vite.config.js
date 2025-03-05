@@ -5,7 +5,7 @@ import path from 'path'
 export default defineConfig(({ mode }) => {
   // Load env files
   const env = loadEnv(mode, process.cwd(), '');
-  
+
   return {
     plugins: [
       react({
@@ -61,8 +61,8 @@ export default defineConfig(({ mode }) => {
       exclude: ['react-syntax-highlighter'],
       esbuildOptions: {
         target: 'esnext',
-        supported: { 
-          'top-level-await': true 
+        supported: {
+          'top-level-await': true
         },
         // Configure esbuild to handle JSX in .js files
         loader: {
@@ -74,15 +74,10 @@ export default defineConfig(({ mode }) => {
     esbuild: {
       logOverride: { 'this-is-undefined-in-esm': 'silent' },
       // Configure esbuild to handle JSX in .js files
-      loader: { 
-        '.js': 'jsx', 
-        '.jsx': 'jsx' 
-      },
-      include: /\.(jsx|js)$/,
-      exclude: /node_modules/,
-      target: 'es2020',
+      loader: 'jsx',
       jsxFactory: 'React.createElement',
-      jsxFragment: 'React.Fragment'
+      jsxFragment: 'React.Fragment',
+      target: 'es2020'
     },
     define: {
       'process.env': {}, // This ensures process.env is defined but empty
