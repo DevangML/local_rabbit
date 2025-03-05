@@ -29,7 +29,7 @@
   font-weight: 600;
 }
 
-.refresh-btn, .select-folder-btn, .native-select-btn {
+.refresh-btn, .select-folder-btn {
   background-color: var(--accent);
   color: white;
   border: none;
@@ -41,11 +41,11 @@
   transition: background-color 0.2s ease;
 }
 
-.refresh-btn:hover, .select-folder-btn:hover, .native-select-btn:hover {
+.refresh-btn:hover, .select-folder-btn:hover {
   background-color: var(--accentHover);
 }
 
-.refresh-btn:disabled, .select-folder-btn:disabled, .native-select-btn:disabled {
+.refresh-btn:disabled, .select-folder-btn:disabled {
   background-color: var(--border);
   cursor: not-allowed;
 }
@@ -106,18 +106,6 @@
 .folder-path-input:disabled {
   background-color: var(--bgSecondary);
   cursor: not-allowed;
-}
-
-.native-selector {
-  margin-top: 15px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-}
-
-.native-select-btn {
-  display: block;
-  width: 100%;
-  margin-top: 10px;
 }
 
 .selected-repo-info {
@@ -297,4 +285,25 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Replace with path examples styling */
+.path-examples {
+  margin: 10px 0 15px;
+}
+
+.path-examples .info-message {
+  font-size: 0.85rem;
+}
+
+.path-examples code {
+  display: inline-block;
+  background-color: var(--bgPrimary);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 2px 6px;
+  margin: 2px 0;
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: var(--accent);
 } 

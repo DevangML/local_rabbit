@@ -175,24 +175,6 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
     }
   };
 
-  // Used for native folder selection (only works in some environments)
-  const handleNativeFolderSelect = async () => {
-    try {
-      // Using the directory picker API if available
-      // Note: This is experimental and may not work in all browsers
-      const dirHandle = await window.showDirectoryPicker();
-      const folderPath = dirHandle.name; // This is just the folder name, not the full path
-
-      // In a real app, you would need to handle this differently
-      // as browsers don't provide the full system path for security reasons
-      alert('Native folder selection is not fully supported in web browsers. Please use the manual path input instead.');
-
-    } catch (err) {
-      console.error('Native folder selection error:', err);
-      setError('Native folder selection is not supported in this browser. Please use the manual path input.');
-    }
-  };
-
   // Combined loading state
   const isLoading = loading || externalLoading;
 
@@ -212,7 +194,7 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
               type="text"
               id="folderPath"
               name="folderPath"
-              placeholder="Enter full path to git repository"
+              placeholder="Enter full path to git repository (e.g., /Users/username/Documents/my-repo)"
               defaultValue={selectedRepository ? selectedRepository.path : ''}
               disabled={isLoading}
               className="folder-path-input"
@@ -226,6 +208,16 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
             </button>
           </div>
         </form>
+
+        <div className="path-examples">
+          <p className="info-message">
+            <strong>Examples:</strong>
+            <br />
+            macOS/Linux: <code>/Users/username/Documents/my-repo</code>
+            <br />
+            Windows: <code>C:\Users\username\Documents\my-repo</code>
+          </p>
+        </div>
 
         {recentRepositories.length > 0 && (
           <div className="recent-repositories">
@@ -254,20 +246,6 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
             <br />
             ~/Documents, ~/Projects, ~/Development, ~/Code, ~/Github, ~/repos, ~/git, ~/workspace, ~/dev
           </p>
-        </div>
-
-        <div className="native-selector">
-          <p className="info-message">
-            Or try using the native folder selector (may not work in all browsers):
-          </p>
-          <button
-            type="button"
-            onClick={handleNativeFolderSelect}
-            className="native-select-btn"
-            disabled={isLoading}
-          >
-            Browse for folder
-          </button>
         </div>
       </div>
 
