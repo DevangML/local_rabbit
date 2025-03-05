@@ -24,28 +24,21 @@ gitService.loadState().then((repoPath) => {
  */
 exports.getDiff = async (req, res) => {
   try {
-    const { fromBranch, toBranch } = req.body;
+    const { from: fromBranch, to: toBranch } = req.query;
+
+    if (!fromBranch || !toBranch) {
+      return res.status(400).json({ error: 'Both from and to branches are required' });
+    }
 
     if (!gitService.repoPath) {
       return res.status(400).json({ error: 'No repository selected' });
     }
 
-    if (!fromBranch || !toBranch) {
-      return res.status(400).json({ error: 'Both branches must be specified' });
-    }
-
-    // Get diff between branches
     const diff = await gitService.getDiff(fromBranch, toBranch);
-
-    return res.json({
-      diff,
-      fromBranch,
-      toBranch,
-      repository: gitService.repoPath,
-    });
+    return res.json({ diff });
   } catch (error) {
     logger.error('Error getting diff:', error);
-    return res.status(500).json({ error: 'Failed to get diff', details: error.message });
+    return res.status(500).json({ error: 'Failed to get diff' });
   }
 };
 

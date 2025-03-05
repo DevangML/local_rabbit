@@ -34,7 +34,6 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
     setError(null);
 
     try {
-      const params = { fromBranch, toBranch };
       const cacheKey = `diff:${fromBranch}:${toBranch}`;
 
       // Try to get from cache first
@@ -54,14 +53,12 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
       // Fetch from API if not in cache
       const data = await cacheInstance.getOrFetch(
         CACHE_TYPES.DIFF,
-        params,
+        { fromBranch, toBranch },
         async () => {
           try {
-            // Use the correct endpoint that exists in the server
-            const response = await fetch(`${config.API_BASE_URL}/api/git/diff?from=${fromBranch}&to=${toBranch}`, {
+            const response = await fetch(`${config.API_BASE_URL}/api/git/diff?from=${encodeURIComponent(fromBranch)}&to=${encodeURIComponent(toBranch)}`, {
               method: 'GET',
               headers: {
-                'Content-Type': 'application/json',
                 'Accept': 'application/json',
               }
             });
@@ -79,9 +76,20 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
             }
 
             const responseData = await response.json();
-            // Cache the result in localStorage as well
-            localStorage.setItem(cacheKey, JSON.stringify(responseData));
-            return responseData;
+            if (!responseData.diff) {
+              throw new Error('Invalid diff data received from server');
+            }
+
+            const processedData = {
+              files: responseData.diff.split('\n').filter(Boolean).map(line => ({
+                path: line,
+                content: line
+              }))
+            };
+
+            // Cache the result in localStorage
+            localStorage.setItem(cacheKey, JSON.stringify(processedData));
+            return processedData;
           } catch (error) {
             console.error('Error fetching diff:', error);
             throw error;
