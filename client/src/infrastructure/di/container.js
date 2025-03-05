@@ -19,6 +19,10 @@ import { GetBranchesUseCase } from '../../core/application/useCases/repository/G
 import { GetDiffUseCase } from '../../core/application/useCases/diff/GetDiffUseCase';
 import { AnalyzeDiffUseCase } from '../../core/application/useCases/diff/AnalyzeDiffUseCase';
 
+// AI Service and Use Case
+import geminiService from '../services/GeminiService';
+import { AnalyzeDiffWithAIUseCase } from '../../core/application/useCases/ai/AnalyzeDiffWithAIUseCase';
+
 /**
  * Dependency Injection Container
  */
@@ -35,6 +39,9 @@ class Container {
     // Repositories
     this.register('repositoryRepository', new ApiRepositoryRepository());
     this.register('diffRepository', new ApiDiffRepository());
+
+    // Services
+    this.register('aiService', geminiService);
 
     // Use Cases - Repository
     this.register(
@@ -58,6 +65,15 @@ class Container {
     this.register(
       'analyzeDiffUseCase',
       new AnalyzeDiffUseCase(this.resolve('diffRepository'))
+    );
+
+    // Use Cases - AI
+    this.register(
+      'analyzeDiffWithAIUseCase',
+      new AnalyzeDiffWithAIUseCase(
+        this.resolve('aiService'),
+        this.resolve('diffRepository')
+      )
     );
   }
 

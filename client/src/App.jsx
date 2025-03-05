@@ -1,5 +1,6 @@
 import React from 'react';
 import { AppProvider } from './presentation/contexts/AppContext';
+import { ToastProvider } from './presentation/contexts/ToastContext';
 import DiffPage from './presentation/pages/DiffPage';
 import './App.css';
 
@@ -9,9 +10,11 @@ import './App.css';
  */
 function App() {
   return (
-    <AppProvider>
-      <DiffPage />
-    </AppProvider>
+    <ToastProvider>
+      <AppProvider>
+        <DiffPage />
+      </AppProvider>
+    </ToastProvider>
   );
 }
 

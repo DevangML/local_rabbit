@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import container from '../../infrastructure/di/container';
+import config from '../../core/application/config';
 
 // Create context
 const AppContext = createContext(null);
@@ -30,6 +31,9 @@ export const AppProvider = ({ children }) => {
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [aiError, setAiError] = useState(null);
+  const [isAiEnabled] = useState(config.ENABLE_AI_FEATURES && !!config.GEMINI_API_KEY);
 
   // Use cases
   const getRepositoriesUseCase = container.resolve('getRepositoriesUseCase');
@@ -37,6 +41,7 @@ export const AppProvider = ({ children }) => {
   const getBranchesUseCase = container.resolve('getBranchesUseCase');
   const getDiffUseCase = container.resolve('getDiffUseCase');
   const analyzeDiffUseCase = container.resolve('analyzeDiffUseCase');
+  const analyzeDiffWithAIUseCase = container.resolve('analyzeDiffWithAIUseCase');
 
   // Load repositories on mount
   useEffect(() => {
@@ -127,6 +132,52 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Analyze diff with AI
+  const analyzeDiffWithAI = async (fromBranch, toBranch, prompt) => {
+    if (!isAiEnabled) {
+      setAiError('AI features are disabled or API key is missing');
+      return null;
+    }
+
+    try {
+      setLoading(true);
+      setAiError(null);
+      
+      if (!currentRepository) {
+        throw new Error('No repository selected');
+      }
+      
+      const result = await analyzeDiffWithAIUseCase.execute(
+        currentRepository.id,
+        fromBranch,
+        toBranch,
+        prompt
+      );
+      
+      setAiAnalysis(result.analysis);
+      return result.analysis;
+    } catch (err) {
+      setAiError(err.message || 'Failed to analyze diff with AI');
+      console.error('Error analyzing diff with AI:', err);
+      
+      // If we have a partial result, still return it
+      if (err.partial) {
+        setAiAnalysis(err);
+        return err;
+      }
+      
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Clear AI analysis
+  const clearAiAnalysis = () => {
+    setAiAnalysis(null);
+    setAiError(null);
+  };
+
   // Context value
   const value = {
     // State
@@ -135,12 +186,17 @@ export const AppProvider = ({ children }) => {
     branches,
     loading,
     error,
+    aiAnalysis,
+    aiError,
+    isAiEnabled,
     
     // Actions
     fetchRepositories,
     selectRepository,
     getDiff,
     analyzeDiff,
+    analyzeDiffWithAI,
+    clearAiAnalysis,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

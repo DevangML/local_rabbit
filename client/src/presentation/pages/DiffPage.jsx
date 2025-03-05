@@ -3,6 +3,7 @@ import RepositorySelector from '../components/repository/RepositorySelector';
 import BranchSelector from '../components/repository/BranchSelector';
 import DiffViewer from '../components/diff/DiffViewer';
 import DiffAnalyzer from '../components/diff/DiffAnalyzer';
+import AIAnalyzer from '../components/ai/AIAnalyzer';
 import { useAppContext } from '../contexts/AppContext';
 
 /**
@@ -10,7 +11,7 @@ import { useAppContext } from '../contexts/AppContext';
  * @returns {JSX.Element} - Component
  */
 const DiffPage = () => {
-  const { loading } = useAppContext();
+  const { loading, isAiEnabled } = useAppContext();
   const [fromBranch, setFromBranch] = useState('');
   const [toBranch, setToBranch] = useState('');
   const [activeTab, setActiveTab] = useState('view');
@@ -69,6 +70,15 @@ const DiffPage = () => {
               >
                 Analyze Diff
               </button>
+              {isAiEnabled && (
+                <button
+                  className={activeTab === 'ai' ? 'active' : ''}
+                  onClick={() => setActiveTab('ai')}
+                  disabled={loading}
+                >
+                  AI Analysis
+                </button>
+              )}
             </div>
             
             {/* Diff content */}
@@ -79,6 +89,10 @@ const DiffPage = () => {
               
               {activeTab === 'analyze' && (
                 <DiffAnalyzer fromBranch={fromBranch} toBranch={toBranch} />
+              )}
+              
+              {activeTab === 'ai' && isAiEnabled && (
+                <AIAnalyzer fromBranch={fromBranch} toBranch={toBranch} />
               )}
             </div>
           </section>
