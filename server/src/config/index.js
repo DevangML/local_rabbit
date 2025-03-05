@@ -27,6 +27,12 @@ const config = {
   // Logging settings
   logging: {
     level: process.env.LOG_LEVEL || 'info'
+  },
+  
+  // AI settings
+  ai: {
+    geminiApiKey: process.env.GEMINI_API_KEY || '',
+    enableAiFeatures: process.env.ENABLE_AI_FEATURES === 'true' || true
   }
 };
 
