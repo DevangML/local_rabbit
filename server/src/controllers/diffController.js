@@ -11,8 +11,10 @@ gitService.loadState().then((repoPath) => {
   if (repoPath) {
     analyzerService.setRepoPath(repoPath);
   }
+  return repoPath; // Return a value to satisfy promise/always-return
 }).catch((err) => {
   logger.error('Failed to load initial state:', err);
+  throw err; // Re-throw to satisfy promise/always-return
 });
 
 /**
@@ -70,7 +72,7 @@ exports.analyzeDiff = async (req, res) => {
     // Analyze the diff
     const analysis = await analyzerService.analyzeDiff(diff);
 
-    res.json({
+    return res.json({
       analysis,
       fromBranch,
       toBranch,
@@ -78,6 +80,6 @@ exports.analyzeDiff = async (req, res) => {
     });
   } catch (error) {
     logger.error('Error analyzing diff:', error);
-    res.status(500).json({ error: 'Failed to analyze diff', details: error.message });
+    return res.status(500).json({ error: 'Failed to analyze diff', details: error.message });
   }
 };

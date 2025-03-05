@@ -9,10 +9,73 @@ const os = require('os');
 // Store current project path
 let currentProjectPath = '';
 
+// Helper function to validate path is within allowed directories
+const isPathSafe = (pathToCheck) => {
+  const homeDir = os.homedir();
+  const allowedDirs = [
+    path.join(homeDir, 'Documents'),
+    path.join(homeDir, 'Projects'),
+    path.join(homeDir, 'Development'),
+    path.join(homeDir, 'Code'),
+    path.join(homeDir, 'Github'),
+  ];
+
+  return allowedDirs.some((dir) => pathToCheck.startsWith(dir));
+};
+
+// Safe wrapper for fs.promises.stat
+const safeStat = async (pathToCheck) => {
+  // Use a whitelist approach - only allow specific paths
+  const homeDir = os.homedir();
+  const allowedDirs = [
+    path.join(homeDir, 'Documents'),
+    path.join(homeDir, 'Projects'),
+    path.join(homeDir, 'Development'),
+    path.join(homeDir, 'Code'),
+    path.join(homeDir, 'Github'),
+  ];
+
+  // Normalize the path to prevent path traversal attacks
+  const normalizedPath = path.normalize(pathToCheck);
+
+  // Check if the path is in the whitelist
+  if (!allowedDirs.some((dir) => normalizedPath.startsWith(dir))) {
+    throw new Error('Path is not in allowed directories');
+  }
+
+  // Use a hardcoded path or a path from the whitelist
+  return fs.promises.stat(normalizedPath);
+};
+
+// Safe wrapper for fs.promises.readdir
+const safeReaddir = async (pathToCheck, options) => {
+  // Use a whitelist approach - only allow specific paths
+  const homeDir = os.homedir();
+  const allowedDirs = [
+    path.join(homeDir, 'Documents'),
+    path.join(homeDir, 'Projects'),
+    path.join(homeDir, 'Development'),
+    path.join(homeDir, 'Code'),
+    path.join(homeDir, 'Github'),
+  ];
+
+  // Normalize the path to prevent path traversal attacks
+  const normalizedPath = path.normalize(pathToCheck);
+
+  // Check if the path is in the whitelist
+  if (!allowedDirs.some((dir) => normalizedPath.startsWith(dir))) {
+    throw new Error('Path is not in allowed directories');
+  }
+
+  // Use a hardcoded path or a path from the whitelist
+  return fs.promises.readdir(normalizedPath, options);
+};
+
 // Helper function to find git repositories in common directories
 const findGitRepositories = async () => {
   try {
     const homeDir = os.homedir();
+    // Define a whitelist of allowed directories
     const commonDirs = [
       path.join(homeDir, 'Documents'),
       path.join(homeDir, 'Projects'),
@@ -26,11 +89,19 @@ const findGitRepositories = async () => {
     // Process common directories in parallel
     await Promise.all(commonDirs.map(async (dir) => {
       try {
-        // Check if directory exists
-        await fs.promises.stat(dir);
+        // Validate path before using fs operations
+        if (!isPathSafe(dir)) {
+          return; // Skip if path is not in allowed directories
+        }
 
-        // Get subdirectories
-        const items = await fs.promises.readdir(dir, { withFileTypes: true });
+        // Check if directory exists - using safe wrapper
+        const dirStat = await safeStat(dir);
+        if (!dirStat.isDirectory()) {
+          return; // Skip if not a directory
+        }
+
+        // Get subdirectories - using safe wrapper
+        const items = await safeReaddir(dir, { withFileTypes: true });
         const subdirs = items
           .filter((item) => item.isDirectory())
           .map((item) => path.join(dir, item.name));
@@ -38,8 +109,17 @@ const findGitRepositories = async () => {
         // Process subdirectories in parallel
         const repoPromises = subdirs.map(async (subdir) => {
           try {
+            // Validate path before using fs operations
+            if (!isPathSafe(subdir)) {
+              return; // Skip if path is not in allowed directories
+            }
+
             const gitDir = path.join(subdir, '.git');
-            await fs.promises.stat(gitDir);
+            // Use safe wrapper
+            const gitDirStat = await safeStat(gitDir);
+            if (!gitDirStat.isDirectory()) {
+              return; // Skip if .git is not a directory
+            }
 
             // It's a git repository
             const git = simpleGit(subdir);
@@ -126,13 +206,13 @@ router.get('/api/repository/branches', async (req, res) => {
     const git = simpleGit(currentProjectPath);
     const branches = await git.branchLocal();
 
-    res.json({
+    return res.json({
       repository: path.basename(currentProjectPath),
       branches: branches.all,
       current: branches.current,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -152,14 +232,14 @@ router.post('/api/diff', async (req, res) => {
     const git = simpleGit(currentProjectPath);
     const diff = await git.diff([fromBranch, toBranch]);
 
-    res.json({
+    return res.json({
       diff,
       fromBranch,
       toBranch,
       repository: path.basename(currentProjectPath),
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 

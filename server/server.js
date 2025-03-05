@@ -19,15 +19,19 @@ const server = app.listen(config.port, () => {
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
   logger.error('Unhandled Promise Rejection:', err);
-  // Close server & exit process
-  server.close(() => process.exit(1));
+  // Close server & throw error
+  server.close(() => {
+    throw new Error('Unhandled Promise Rejection: Server closed');
+  });
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
   logger.error('Uncaught Exception:', err);
-  // Close server & exit process
-  server.close(() => process.exit(1));
+  // Close server & throw error
+  server.close(() => {
+    throw new Error('Uncaught Exception: Server closed');
+  });
 });
 
 // Handle SIGTERM

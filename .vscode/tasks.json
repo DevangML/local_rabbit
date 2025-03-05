@@ -49,6 +49,65 @@
           "message": 5
         }
       }
+    },
+    {
+      "label": "Run ESLint (Watch Mode)",
+      "type": "shell",
+      "command": "./run.sh lint-vscode",
+      "isBackground": true,
+      "problemMatcher": [
+        {
+          "owner": "eslint-client",
+          "fileLocation": ["relative", "${workspaceFolder}"],
+          "pattern": {
+            "regexp": "^(.+):(\\d+):(\\d+):\\s+(warning|error)\\s+(.+)\\s+\\[(.+)\\]$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5,
+            "code": 6
+          },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "Starting client linting in watch mode...",
+            "endsPattern": "Watching for changes..."
+          }
+        },
+        {
+          "owner": "eslint-server",
+          "fileLocation": ["relative", "${workspaceFolder}"],
+          "pattern": {
+            "regexp": "^(.+):(\\d+):(\\d+):\\s+(warning|error)\\s+(.+)\\s+\\[(.+)\\]$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5,
+            "code": 6
+          }
+        }
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "showReuseMessage": false,
+        "clear": true,
+        "focus": false
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Start Development with Linting",
+      "dependsOn": ["Start Client", "Start Server", "Run ESLint (Watch Mode)"],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
     }
   ]
 }

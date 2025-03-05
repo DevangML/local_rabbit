@@ -619,6 +619,7 @@ show_menu() {
         "Clear Cache" 
         "Optimize Database" 
         "Run Linter" 
+        "Run VS Code Linter"
         "Run Tests" 
         "Run Security Audit" 
         "Start Application" 
@@ -841,6 +842,43 @@ fix_client_package_issues() {
     return 0
 }
 
+# Function to run linting for both client and server and output in VS Code compatible format
+run_lint_for_vscode() {
+    echo -e "${BLUE}${BOLD}Setting up real-time linting for client and server...${NC}"
+    
+    # Create reports directory if it doesn't exist
+    mkdir -p reports
+    
+    # Clear any existing reports
+    > reports/client-lint.txt
+    > reports/server-lint.txt
+    > reports/combined-lint.txt
+    
+    # Run client linting in watch mode in the background using nodemon
+    echo -e "${CYAN}Starting client linting in watch mode...${NC}"
+    (cd client && npx nodemon --watch src --ext js,jsx,ts,tsx --exec "yarn eslint --format unix src/ | tee ../reports/client-lint.txt") &
+    CLIENT_PID=$!
+    
+    # Run server linting in watch mode in the background using nodemon
+    echo -e "${CYAN}Starting server linting in watch mode...${NC}"
+    (cd server && npx nodemon --watch . --ext js --ignore node_modules/ --exec "yarn eslint --format unix ./ | tee ../reports/server-lint.txt") &
+    SERVER_PID=$!
+    
+    # Display instructions
+    echo -e "${GREEN}${BOLD}Real-time linting started!${NC}"
+    echo -e "${YELLOW}Lint errors will appear in VS Code's Problems tab as you type.${NC}"
+    echo -e "${YELLOW}Press Ctrl+C to stop the linting process.${NC}"
+    
+    # Create a trap to kill background processes when this script is terminated
+    trap "kill $CLIENT_PID $SERVER_PID 2>/dev/null; echo -e '\n${RED}Linting stopped.${NC}'; exit" INT TERM EXIT
+    
+    # Keep the script running to maintain the background processes
+    echo -e "\n${CYAN}Watching for changes...${NC}"
+    
+    # Wait for both processes
+    wait $CLIENT_PID $SERVER_PID
+}
+
 # Process menu choice
 process_choice() {
     local choice=$1
@@ -901,28 +939,27 @@ process_choice() {
             }
             ;;
             
-        8) run_lint && {
-                (cd client && yarn lint --fix) &&
-                (cd server && yarn lint --fix) &&
-                success=true
-            }
+        8) (cd client && yarn lint) && 
+            (cd server && yarn lint) && 
+            success=true
             ;;
             
-        9) run_tests && {
-                (cd client && yarn test --watchAll=false) &&
-                (cd server && yarn test) &&
-                success=true
-            }
+        9) run_lint_for_vscode && success=true
             ;;
             
-        10) run_security_audit && {
+        10) (cd client && yarn test) && 
+            (cd server && yarn test) && 
+            success=true
+            ;;
+            
+        11) run_security_audit && {
                 (cd client && yarn audit) &&
                 (cd server && yarn audit) &&
                 success=true
             }
             ;;
             
-        11) print_step "Starting development servers..."
+        12) print_step "Starting development servers..."
             
             # Start both servers in parallel
             (run_server_dev) & 
@@ -940,16 +977,16 @@ process_choice() {
             success=true
             ;;
             
-        12) run_complete_setup && success=true
+        13) run_complete_setup && success=true
             ;;
             
-        13) fix_server_package_issues && success=true
+        14) fix_server_package_issues && success=true
             ;;
             
-        14) fix_client_package_issues && success=true
+        15) fix_client_package_issues && success=true
             ;;
             
-        15) exit 0
+        16) exit 0
             ;;
             
         *) print_error "Invalid option"
@@ -985,6 +1022,10 @@ parse_args() {
             --test-option=*)
                 TEST_OPTION="${arg#*=}"
                 ;;
+            lint-vscode)
+                run_lint_for_vscode
+                exit $?
+                ;;
             --help)
                 echo "Usage: $0 [options]"
                 echo
@@ -993,6 +1034,7 @@ parse_args() {
                 echo "  --no-sound        Disable sound effects"
                 echo "  --test-mode       Run in test mode"
                 echo "  --test-option=N   Run specific option in test mode"
+                echo "  lint-vscode       Run ESLint for VS Code problems tab"
                 echo "  --help            Show this help message"
                 exit 0
                 ;;
@@ -1017,7 +1059,7 @@ main() {
             exit 0
         else
             # Run all options in sequence
-            for choice in {1..14}; do
+            for choice in {1..15}; do
                 process_choice "$choice"
             done
             exit 0
@@ -1035,6 +1077,7 @@ main() {
             "Clear Cache" 
             "Optimize Database" 
             "Run Linter" 
+            "Run VS Code Linter"
             "Run Tests" 
             "Run Security Audit" 
             "Start Application" 

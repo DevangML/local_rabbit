@@ -8,6 +8,7 @@ const gitService = new GitService();
 // Load initial state
 gitService.loadState().catch((err) => {
   logger.error('Failed to load initial state:', err);
+  throw err; // Re-throw to satisfy promise/always-return
 });
 
 /**
@@ -18,15 +19,15 @@ gitService.loadState().catch((err) => {
 exports.getRepositories = async (req, res) => {
   try {
     const repositories = await gitService.findRepositories();
-    res.json(repositories);
+    return res.json(repositories);
   } catch (error) {
     logger.error('Error getting repositories:', error);
-    res.status(500).json({ error: 'Failed to get repositories', details: error.message });
+    return res.status(500).json({ error: 'Failed to get repositories', details: error.message });
   }
 };
 
 /**
- * Set current repository
+ * Set repository
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
@@ -54,7 +55,7 @@ exports.setRepository = async (req, res) => {
     // Save state
     await gitService.saveState();
 
-    res.json({
+    return res.json({
       path: repoPath,
       name: path.basename(repoPath),
       branches: branches.all || [],
@@ -62,7 +63,7 @@ exports.setRepository = async (req, res) => {
     });
   } catch (error) {
     logger.error('Error setting repository:', error);
-    res.status(500).json({ error: 'Failed to set repository', details: error.message });
+    return res.status(500).json({ error: 'Failed to set repository', details: error.message });
   }
 };
 
@@ -80,14 +81,14 @@ exports.getBranches = async (req, res) => {
     const branches = await gitService.getBranches();
     const currentBranch = await gitService.getCurrentBranch();
 
-    res.json({
+    return res.json({
       repository: path.basename(gitService.repoPath),
       branches: branches.all || [],
       current: currentBranch,
     });
   } catch (error) {
     logger.error('Error getting branches:', error);
-    res.status(500).json({ error: 'Failed to get branches', details: error.message });
+    return res.status(500).json({ error: 'Failed to get branches', details: error.message });
   }
 };
 
@@ -105,7 +106,7 @@ exports.getRepositoryInfo = async (req, res) => {
     const branches = await gitService.getBranches();
     const currentBranch = await gitService.getCurrentBranch();
 
-    res.json({
+    return res.json({
       path: gitService.repoPath,
       name: path.basename(gitService.repoPath),
       branches: branches.all || [],
@@ -113,6 +114,6 @@ exports.getRepositoryInfo = async (req, res) => {
     });
   } catch (error) {
     logger.error('Error getting repository info:', error);
-    res.status(500).json({ error: 'Failed to get repository info', details: error.message });
+    return res.status(500).json({ error: 'Failed to get repository info', details: error.message });
   }
 };

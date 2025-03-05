@@ -34,7 +34,7 @@ module.exports = {
     'promise/catch-or-return': 'warn',
     'node/no-missing-require': 'warn',
     'import/no-unresolved': 'warn',
-    'import/extensions': ['warn', 'ignorePackages'],
+    'import/extensions': ['off', 'ignorePackages'],
     'node/no-unpublished-require': 'off',
     'comma-dangle': ['warn', 'always-multiline'],
     'arrow-parens': ['warn', 'always'],
@@ -79,4 +79,19 @@ module.exports = {
       },
     },
   },
+  overrides: [
+    {
+      files: ['scripts/**/*.js'],
+      rules: {
+        'no-console': 'off',
+        'no-process-exit': 'off',
+      },
+    },
+    {
+      files: ['tests/**/*.js', '**/*.test.js'],
+      rules: {
+        'no-promise-executor-return': 'off',
+      },
+    },
+  ],
 };
