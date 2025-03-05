@@ -1,3 +1,6 @@
+// Import path module
+import path from 'path';
+
 /**
  * Repository entity representing a Git repository
  */

@@ -16,7 +16,7 @@ export class RepositoryRepository {
    * @param {string} id - Repository ID
    * @returns {Promise<Object>} - Repository
    */
-  async getById(id) {
+  async getById(_id) {
     throw new Error('Method not implemented');
   }
 
@@ -25,7 +25,7 @@ export class RepositoryRepository {
    * @param {string} path - Repository path
    * @returns {Promise<Object>} - Repository
    */
-  async setCurrent(path) {
+  async setCurrent(_path) {
     throw new Error('Method not implemented');
   }
 
@@ -34,7 +34,7 @@ export class RepositoryRepository {
    * @param {string} id - Repository ID
    * @returns {Promise<Array>} - List of branches
    */
-  async getBranches(id) {
+  async getBranches(_id) {
     throw new Error('Method not implemented');
   }
 

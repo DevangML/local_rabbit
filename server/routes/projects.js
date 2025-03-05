@@ -23,7 +23,8 @@ const findGitRepositories = async () => {
 
     const repositories = [];
 
-    for (const dir of commonDirs) {
+    // Process common directories in parallel
+    await Promise.all(commonDirs.map(async (dir) => {
       try {
         // Check if directory exists
         await fs.promises.stat(dir);
@@ -34,8 +35,8 @@ const findGitRepositories = async () => {
           .filter((item) => item.isDirectory())
           .map((item) => path.join(dir, item.name));
 
-        // Check each subdirectory for .git folder
-        for (const subdir of subdirs) {
+        // Process subdirectories in parallel
+        const repoPromises = subdirs.map(async (subdir) => {
           try {
             const gitDir = path.join(subdir, '.git');
             await fs.promises.stat(gitDir);
@@ -53,11 +54,14 @@ const findGitRepositories = async () => {
           } catch (err) {
             // Not a git repository, continue
           }
-        }
+        });
+
+        // Wait for all subdirectory checks to complete
+        await Promise.all(repoPromises);
       } catch (err) {
         // Directory doesn't exist, continue
       }
-    }
+    }));
 
     return repositories;
   } catch (error) {
@@ -98,7 +102,7 @@ router.post('/api/repository/set', async (req, res) => {
       const branches = await git.branchLocal();
       currentProjectPath = repoPath;
 
-      res.json({
+      return res.json({
         path: repoPath,
         name: path.basename(repoPath),
         branches: branches.all,
@@ -108,7 +112,7 @@ router.post('/api/repository/set', async (req, res) => {
       return res.status(400).json({ error: 'Invalid repository path' });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 

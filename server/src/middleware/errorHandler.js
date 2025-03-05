@@ -8,7 +8,7 @@ const config = require('../config');
  * @param {Object} res - Express response object
  * @param {Function} next - Express next function
  */
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, _next) => {
   // Log the error
   logger.error('Unhandled error:', {
     error: err.message,

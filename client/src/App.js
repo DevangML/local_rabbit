@@ -11,7 +11,6 @@ import './styles/global.css';
 import { API_BASE_URL } from './config';
 import ProjectSelector from './components/ProjectSelector';
 import ReviewPanel from './components/ReviewPanel';
-import AnalysisReport from './components/AnalysisReport';
 import AIAnalyzer from './components/AIAnalyzer';
 import ThemeToggle from './components/ThemeToggle';
 
@@ -65,7 +64,7 @@ function App() {
   const handleProjectSelect = async (dirInfo) => {
     setError(null);
     setIsLoading(true);
-    console.log('Selecting project:', dirInfo);
+    console.info('Selecting project:', dirInfo);
     
     try {
       const response = await fetch(`${API_BASE_URL}/api/set-repo`, {
@@ -86,7 +85,7 @@ function App() {
       }
       
       const data = await response.json();
-      console.log('Server response:', data);
+      console.info('Server response:', data);
       
       if (!data.branches || data.branches.length === 0) {
         throw new Error('No branches found in repository');
@@ -101,7 +100,7 @@ function App() {
         to: data.currentBranch || data.branches[0]
       };
       
-      console.log('Setting default branches:', defaultBranches);
+      console.info('Setting default branches:', defaultBranches);
       setSelectedBranches(defaultBranches);
       
     } catch (error) {

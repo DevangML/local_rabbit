@@ -1,0 +1,54 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Development",
+      "dependsOn": ["Start Client", "Start Server"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Start Client",
+      "type": "shell",
+      "command": "cd client && yarn dev",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "client",
+        "fileLocation": ["relative", "${workspaceFolder}/client"],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error|info)\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^VITE.*started",
+          "endsPattern": "^VITE.*ready"
+        }
+      }
+    },
+    {
+      "label": "Start Server",
+      "type": "shell",
+      "command": "cd server && yarn dev",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "server",
+        "fileLocation": ["relative", "${workspaceFolder}/server"],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error|info)\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      }
+    }
+  ]
+}

@@ -131,21 +131,21 @@ class StateManager {
     }
   }
 
-  async migrateState(oldVersion, newVersion) {
+  async migrateState(_oldVersion, _newVersion) {
     try {
-      const db = await this.dbPromise;
-      const currentState = {
-        appState: await db.getAll('appState'),
-        diffState: await db.getAll('diffState'),
-        analyzerState: await db.getAll('analyzerState')
-      };
-
-      // Implement migration logic here based on versions
-      // For now, we'll just maintain the existing state
+      const _db = await this.dbPromise;
+      // const currentState = {
+      //   appState: await _db.getAll('appState'),
+      //   diffState: await _db.getAll('diffState'),
+      //   analyzerState: await _db.getAll('analyzerState')
+      // };
       
+      // Migration logic would go here
+      
+      console.info('State migration completed');
       return true;
     } catch (error) {
-      console.error('Error migrating state:', error);
+      console.error('Failed to migrate state:', error);
       return false;
     }
   }

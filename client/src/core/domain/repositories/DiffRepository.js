@@ -10,7 +10,7 @@ export class DiffRepository {
    * @param {string} toBranch - Target branch
    * @returns {Promise<Object>} - Diff
    */
-  async getDiff(repositoryId, fromBranch, toBranch) {
+  async getDiff(_repositoryId, _fromBranch, _toBranch) {
     throw new Error('Method not implemented');
   }
 
@@ -21,7 +21,7 @@ export class DiffRepository {
    * @param {string} toBranch - Target branch
    * @returns {Promise<Object>} - Analyzed diff
    */
-  async analyzeDiff(repositoryId, fromBranch, toBranch) {
+  async analyzeDiff(_repositoryId, _fromBranch, _toBranch) {
     throw new Error('Method not implemented');
   }
 } 

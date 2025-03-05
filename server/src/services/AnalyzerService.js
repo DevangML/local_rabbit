@@ -1,4 +1,5 @@
 const path = require('path');
+// eslint-disable-next-line no-unused-vars
 const fs = require('fs').promises;
 const logger = require('../utils/logger');
 

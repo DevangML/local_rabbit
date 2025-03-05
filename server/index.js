@@ -1,8 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const path = require('path');
-const routes = require('./routes');
+// const path = require('path'); // Commented out unused import
+const routes = require('./routes/index.js'); // Added file extension
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -38,7 +38,7 @@ app.use((err, req, res, next) => {
       details: err.message,
     });
   }
-  next();
+  return next();
 });
 
 // API Routes
@@ -50,9 +50,9 @@ app.use((req, res) => {
 });
 
 // Global error handler
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error('Global error:', err);
-  res.status(500).json({
+  return res.status(500).json({
     error: 'Internal Server Error',
     details: process.env.NODE_ENV === 'development' ? err.message : undefined,
   });
@@ -62,12 +62,12 @@ app.use((err, req, res, next) => {
 const startServer = (port) => {
   try {
     const server = app.listen(port, () => {
-      console.log(`Server running on port ${port}`);
+      console.info(`Server running on port ${port}`);
     });
 
     server.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
-        console.log(`Port ${port} is busy, trying ${port + 1}...`);
+        console.info(`Port ${port} is busy, trying ${port + 1}...`);
         startServer(port + 1);
       } else {
         console.error('Server error:', err);

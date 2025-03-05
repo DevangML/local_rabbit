@@ -35,7 +35,7 @@ exports.getDiff = async (req, res) => {
     // Get diff between branches
     const diff = await gitService.getDiff(fromBranch, toBranch);
 
-    res.json({
+    return res.json({
       diff,
       fromBranch,
       toBranch,
@@ -43,7 +43,7 @@ exports.getDiff = async (req, res) => {
     });
   } catch (error) {
     logger.error('Error getting diff:', error);
-    res.status(500).json({ error: 'Failed to get diff', details: error.message });
+    return res.status(500).json({ error: 'Failed to get diff', details: error.message });
   }
 };
 

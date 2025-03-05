@@ -3,6 +3,7 @@ const chalk = require('chalk');
 const config = require('../config');
 
 // Define log format
+// eslint-disable-next-line no-unused-vars
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.errors({ stack: true }),
@@ -48,10 +49,29 @@ const consoleFormat = winston.format.combine(
   }),
 );
 
+// Add a new format for machine-readable output
+const machineFormat = winston.format.printf(({
+  level, message, _timestamp, file, line, column, ...meta
+}) => {
+  // Default to logger.js if no file is specified
+  const sourceFile = file || 'logger.js';
+  const sourceLine = line || '1';
+  const sourceColumn = column || '1';
+
+  return `${sourceFile}:${sourceLine}:${sourceColumn}: ${level} ${message} ${
+    Object.keys(meta).length ? JSON.stringify(meta) : ''
+  }`;
+});
+
 // Create the logger
 const logger = winston.createLogger({
   level: config.logging.level || 'info',
-  format: logFormat,
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.splat(),
+    machineFormat,
+  ),
   defaultMeta: { service: 'local-coderabbit' },
   transports: [
     // Write logs with level 'error' and below to error.log
@@ -74,6 +94,36 @@ if (config.nodeEnv !== 'production') {
     format: consoleFormat,
   }));
 }
+
+// Add source location tracking
+const addSourceLocation = (file, line, column) => (message, meta = {}) => ({
+  ...meta,
+  file,
+  line,
+  column,
+  message,
+});
+
+// Enhance logging methods with source tracking
+const enhanceLogger = (originalLogger) => {
+  const enhanced = { ...originalLogger };
+
+  ['error', 'warn', 'info', 'debug'].forEach((level) => {
+    enhanced[level] = (message, meta = {}) => {
+      const error = new Error();
+      const stack = error.stack.split('\n')[2];
+      const match = stack.match(/\((.+):(\d+):(\d+)\)$/);
+      if (match) {
+        const [, file, line, column] = match;
+        const sourceLocation = addSourceLocation(file, line, column);
+        return originalLogger[level](message, sourceLocation(message, meta));
+      }
+      return originalLogger[level](message, meta);
+    };
+  });
+
+  return enhanced;
+};
 
 // Add convenience methods for colorized logging
 logger.success = (message, meta = {}) => {
@@ -99,7 +149,9 @@ logger.table = (data, columns) => {
     return;
   }
 
+  // eslint-disable-next-line no-console
   console.table(data, columns);
 };
 
-module.exports = logger;
+// Export the enhanced logger
+module.exports = enhanceLogger(logger);
