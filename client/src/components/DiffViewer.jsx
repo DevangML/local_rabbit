@@ -58,10 +58,12 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
         async () => {
           try {
             // Use the correct endpoint that exists in the server
-            const response = await fetch(`${config.API_BASE_URL}/api/diff`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(params),
+            const response = await fetch(`${config.API_BASE_URL}/api/git/diff?from=${fromBranch}&to=${toBranch}`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              }
             });
 
             if (!response.ok) {

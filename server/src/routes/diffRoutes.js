@@ -4,17 +4,17 @@ const diffController = require('../controllers/diffController');
 const router = express.Router();
 
 /**
- * @route   POST /api/diff
+ * @route   GET /api/git/diff
  * @desc    Get diff between two branches
  * @access  Public
  */
-router.post('/diff', diffController.getDiff);
+router.get('/git/diff', diffController.getDiff);
 
 /**
- * @route   POST /api/diff/analyze
+ * @route   POST /api/git/diff/analyze
  * @desc    Analyze diff between two branches
  * @access  Public
  */
-router.post('/diff/analyze', diffController.analyzeDiff);
+router.post('/git/diff/analyze', diffController.analyzeDiff);
 
 module.exports = router;

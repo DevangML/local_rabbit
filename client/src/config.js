@@ -6,7 +6,7 @@ const getEnvVar = (key, defaultValue) => {
 // Using Vite environment variables for frontend
 export const config = {
   API_BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
-  FALLBACK_API_ROUTE: '/api/repository/branches',
+  FALLBACK_API_ROUTE: '/api/git/repository/branches',
   NODE_ENV: getEnvVar('VITE_NODE_ENV', 'development'),
   isDevelopment: getEnvVar('VITE_NODE_ENV', 'development') === 'development',
   isProduction: getEnvVar('VITE_NODE_ENV', 'development') === 'production',

@@ -62,13 +62,12 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/repo/branches`, {
-        method: 'POST',
+      const response = await fetch(`${config.API_BASE_URL}/api/git/repository/branches`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-        },
-        body: JSON.stringify({ path: selectedRepository.path }),
+        }
       });
 
       // Add null/undefined check before accessing response.ok
@@ -124,7 +123,7 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
       cacheInstance.clear();
 
       // Use relative URL to let Vite proxy handle the request
-      const response = await fetch(`/api/repository/set`, {
+      const response = await fetch(`/api/git/repository/set`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -170,7 +169,7 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
       cacheInstance.clear();
 
       // Use relative URL to let Vite proxy handle the request
-      const response = await fetch(`/api/repository/set`, {
+      const response = await fetch(`/api/git/repository/set`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

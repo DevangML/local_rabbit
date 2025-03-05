@@ -36,6 +36,11 @@ class GitService {
   constructor(repoPath = '') {
     this.repoPath = repoPath;
     this.git = simpleGit(repoPath);
+    // Ensure the state directory exists
+    const stateDir = path.join(__dirname, '..', '..', path.dirname(config.git.statePath));
+    if (!fsSync.existsSync(stateDir)) {
+      fsSync.mkdirSync(stateDir, { recursive: true });
+    }
     this.stateFilePath = path.join(__dirname, '..', '..', config.git.statePath);
   }
 
@@ -117,17 +122,20 @@ class GitService {
         return '';
       }
 
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
-      if (fsSync.existsSync(this.stateFilePath)) {
-        // eslint-disable-next-line security/detect-non-literal-fs-filename
-        const data = await fs.readFile(this.stateFilePath, 'utf8');
-        const state = JSON.parse(data);
-        this.repoPath = state.repoPath || '';
-        this.git = simpleGit(this.repoPath);
-        logger.info('Loaded repository path:', this.repoPath);
-        return this.repoPath;
+      // Check if file exists
+      if (!fsSync.existsSync(this.stateFilePath)) {
+        logger.info('State file does not exist, creating empty state');
+        await this.saveState();
+        return '';
       }
-      logger.info('No state file exists yet');
+
+      // Read and parse state file
+      const stateContent = await fs.readFile(this.stateFilePath, 'utf8');
+      const state = JSON.parse(stateContent);
+      if (state && state.repoPath) {
+        this.setRepoPath(state.repoPath);
+        return state.repoPath;
+      }
       return '';
     } catch (error) {
       logger.error('Error loading state:', error);

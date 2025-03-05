@@ -12,7 +12,8 @@ const logger = require('./src/utils/logger');
 
 const port = config.port || 3001;
 
-app.listen(port, () => {
+// Create HTTP server instance
+const server = app.listen(port, () => {
   logger.success(`Server is running on port ${port}`);
   logger.info(`Environment: ${config.nodeEnv}`);
   logger.info('Press CTRL-C to stop\n');
@@ -22,7 +23,7 @@ app.listen(port, () => {
 process.on('SIGTERM', () => {
   logger.info('SIGTERM signal received.');
   logger.info('Closing HTTP server...');
-  app.close(() => {
+  server.close(() => {
     logger.info('HTTP server closed.');
     process.exit(0);
   });
