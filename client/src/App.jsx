@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { setTheme } from './store/themeSlice';
-import { themes } from './themes';
+import { setTheme, toggleTheme } from './store/themeSlice';
+import { MdDarkMode, MdLightMode, MdBrightness6 } from 'react-icons/md';
 import ProjectSelector from './components/ProjectSelector';
-import ThemeToggle from './components/ThemeToggle';
 import DiffViewer from './components/DiffViewer';
 import './App.css';
 
 function App() {
   const dispatch = useDispatch();
-  const { currentTheme, isDark } = useSelector(state => state.theme);
+  const { currentTheme, isDark, themes } = useSelector(state => state.theme);
   const [selectedBranches, setSelectedBranches] = useState({ from: '', to: '' });
   const [selectedProject, setSelectedProject] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +27,10 @@ function App() {
     dispatch(setTheme(themeId));
   };
 
+  const handleThemeToggle = () => {
+    dispatch(toggleTheme());
+  };
+
   const handleProjectSelect = (project) => {
     setSelectedProject(project);
     setSelectedBranches({ from: '', to: '' });
@@ -36,38 +39,55 @@ function App() {
   return (
     <div className={`app ${isDark ? 'theme-dark' : 'theme-light'}`}>
       <header className="app-header">
-        <div className="header-content"></div>
+        <div className="header-content">
           <h1>Local CodeRabbit</h1>
-          <div className="theme-selector">
-            <select 
-              value={currentTheme}
-              onChange={(e) => handleThemeChange(e.target.value)}
+          <div className="theme-controls">
+            <div className="theme-selector">
+              <select 
+                value={currentTheme}
+                onChange={(e) => handleThemeChange(e.target.value)}
+                className="theme-select"
+              >
+                {themes.map(theme => (
+                  <option key={theme.id} value={theme.id}>{theme.name}</option>
+                ))}
+              </select>
+            </div>
+            <button 
+              className="theme-toggle-btn" 
+              onClick={handleThemeToggle}
+              aria-label="Toggle theme"
             >
-              {Object.entries(themes).map(([id, theme]) => (
-                <option key={id} value={id}>{theme.name}</option>
-              ))}
-            </select>
-            <ThemeToggle />
+              {isDark ? <MdLightMode /> : <MdDarkMode />}
+            </button>
           </div>
         </div>
       </header>
 
       <main className="app-main">
-        <ProjectSelector
-          onProjectSelect={handleProjectSelect}
-          selectedBranches={selectedBranches}
-          onBranchesChange={setSelectedBranches}
-          isLoading={isLoading}
-        />
-
-        {selectedProject && selectedBranches.from && selectedBranches.to && (
-          <DiffViewer
-            projectId={selectedProject.id}
-            fromBranch={selectedBranches.from}
-            toBranch={selectedBranches.to}
+        <div className="container">
+          <ProjectSelector
+            onProjectSelect={handleProjectSelect}
+            selectedBranches={selectedBranches}
+            onBranchesChange={setSelectedBranches}
+            isLoading={isLoading}
           />
-        )}
+
+          {selectedProject && selectedBranches.from && selectedBranches.to && (
+            <DiffViewer
+              projectId={selectedProject.id}
+              fromBranch={selectedBranches.from}
+              toBranch={selectedBranches.to}
+            />
+          )}
+        </div>
       </main>
+
+      <footer className="app-footer">
+        <div className="container">
+          <p>Local CodeRabbit © {new Date().getFullYear()}</p>
+        </div>
+      </footer>
     </div>
   );
 }

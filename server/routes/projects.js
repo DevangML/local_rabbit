@@ -2,63 +2,130 @@ const express = require('express');
 const router = express.Router();
 const simpleGit = require('simple-git');
 const path = require('path');
-const { dialog } = require('electron').remote;
+const fs = require('fs');
+const os = require('os');
 
 // Store current project path
 let currentProjectPath = '';
 
-// Get list of projects
-router.get('/api/projects', async (req, res) => {
+// Helper function to find git repositories in common directories
+const findGitRepositories = async () => {
   try {
-    // Return current project if exists
-    if (currentProjectPath) {
-      const git = simpleGit(currentProjectPath);
-      const branches = await git.branchLocal();
-      
-      return res.json([{
-        path: currentProjectPath,
-        name: path.basename(currentProjectPath),
-        branches: branches.all,
-        current: branches.current
-      }]);
+    const homeDir = os.homedir();
+    const commonDirs = [
+      path.join(homeDir, 'Documents'),
+      path.join(homeDir, 'Projects'),
+      path.join(homeDir, 'Development'),
+      path.join(homeDir, 'Code'),
+      path.join(homeDir, 'Github')
+    ];
+    
+    const repositories = [];
+    
+    for (const dir of commonDirs) {
+      try {
+        // Check if directory exists
+        await fs.promises.stat(dir);
+        
+        // Get subdirectories
+        const items = await fs.promises.readdir(dir, { withFileTypes: true });
+        const subdirs = items
+          .filter(item => item.isDirectory())
+          .map(item => path.join(dir, item.name));
+        
+        // Check each subdirectory for .git folder
+        for (const subdir of subdirs) {
+          try {
+            const gitDir = path.join(subdir, '.git');
+            await fs.promises.stat(gitDir);
+            
+            // It's a git repository
+            const git = simpleGit(subdir);
+            const isRepo = await git.checkIsRepo();
+            
+            if (isRepo) {
+              repositories.push({
+                path: subdir,
+                name: path.basename(subdir)
+              });
+            }
+          } catch (err) {
+            // Not a git repository, continue
+          }
+        }
+      } catch (err) {
+        // Directory doesn't exist, continue
+      }
     }
     
-    res.json([]);
+    return repositories;
+  } catch (error) {
+    console.error('Error finding repositories:', error);
+    return [];
+  }
+};
+
+// Get list of repositories
+router.get('/api/repositories', async (req, res) => {
+  try {
+    const repositories = await findGitRepositories();
+    res.json(repositories);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Select project directory
-router.post('/api/projects/select', async (req, res) => {
+// Set current repository
+router.post('/api/repository/set', async (req, res) => {
   try {
-    const result = await dialog.showOpenDialog({
-      properties: ['openDirectory']
-    });
-
-    if (!result.canceled && result.filePaths.length > 0) {
-      const selectedPath = result.filePaths[0];
-      const git = simpleGit(selectedPath);
-      
-      // Verify it's a git repository
+    const { path: repoPath } = req.body;
+    
+    if (!repoPath) {
+      return res.status(400).json({ error: 'Repository path is required' });
+    }
+    
+    // Verify it's a git repository
+    try {
+      const git = simpleGit(repoPath);
       const isRepo = await git.checkIsRepo();
+      
       if (!isRepo) {
-        throw new Error('Selected directory is not a git repository');
+        return res.status(400).json({ error: 'Not a valid git repository' });
       }
-
+      
       // Get branches
       const branches = await git.branchLocal();
-      currentProjectPath = selectedPath;
-
+      currentProjectPath = repoPath;
+      
       res.json({
-        path: selectedPath,
-        name: path.basename(selectedPath),
+        path: repoPath,
+        name: path.basename(repoPath),
         branches: branches.all,
         current: branches.current
       });
-    } else {
-      res.status(400).json({ error: 'No directory selected' });
+    } catch (error) {
+      return res.status(400).json({ error: 'Invalid repository path' });
     }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get branches for current repository
+router.get('/api/repository/branches', async (req, res) => {
+  try {
+    if (!currentProjectPath) {
+      return res.status(400).json({ error: 'No repository selected' });
+    }
+    
+    const git = simpleGit(currentProjectPath);
+    const branches = await git.branchLocal();
+    
+    res.json({
+      repository: path.basename(currentProjectPath),
+      branches: branches.all,
+      current: branches.current
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -70,7 +137,11 @@ router.post('/api/diff', async (req, res) => {
     const { fromBranch, toBranch } = req.body;
     
     if (!currentProjectPath) {
-      throw new Error('No project selected');
+      return res.status(400).json({ error: 'No repository selected' });
+    }
+    
+    if (!fromBranch || !toBranch) {
+      return res.status(400).json({ error: 'Both branches must be specified' });
     }
 
     const git = simpleGit(currentProjectPath);

@@ -1,20 +1,48 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { config } from '../config';
 import './ProjectSelector.css';
 
 const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, isLoading }) => {
+  const [repositories, setRepositories] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [selectedRepository, setSelectedRepository] = useState(null);
   const [error, setError] = useState(null);
+  const { isDark } = useSelector(state => state.theme);
+
+  // Fetch available repositories
+  useEffect(() => {
+    fetchRepositories();
+  }, []);
+
+  // Fetch branches when repository is selected
+  useEffect(() => {
+    if (selectedRepository) {
+      fetchBranches();
+    }
+  }, [selectedRepository]);
+
+  const fetchRepositories = async () => {
+    try {
+      setError(null);
+      const response = await fetch(`${config.API_BASE_URL}/api/repositories`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setRepositories(data);
+    } catch (err) {
+      setError('Unable to load repositories. Please ensure the backend server is running.');
+      console.error('Repository fetch error:', err);
+    }
+  };
 
   const fetchBranches = async () => {
     try {
-      // Try primary endpoint first
-      let response = await fetch(`${config.API_BASE_URL}/api/branches`);
-      
-      // If primary endpoint fails, try fallback
-      if (!response.ok) {
-        response = await fetch(`${config.API_BASE_URL}${config.FALLBACK_API_ROUTE}`);
-      }
+      setError(null);
+      const response = await fetch(`${config.API_BASE_URL}/api/repository/branches`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -22,7 +50,6 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
       
       const data = await response.json();
       setBranches(data.branches || []);
-      setError(null);
     } catch (err) {
       setBranches([]);
       setError('Unable to load branches. Please ensure the backend server is running.');
@@ -30,17 +57,15 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
     }
   };
 
-  useEffect(() => {
-    fetchBranches();
-  }, []);
-
-  const handleDirectorySelect = async () => {
+  const handleRepositorySelect = async (repositoryPath) => {
     try {
-      const response = await fetch(`${config.API_BASE_URL}/api/select-directory`, {
+      setError(null);
+      const response = await fetch(`${config.API_BASE_URL}/api/repository/set`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ path: repositoryPath }),
       });
       
       if (!response.ok) {
@@ -48,28 +73,44 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
       }
       
       const data = await response.json();
+      setSelectedRepository(data);
       onProjectSelect(data);
-      await fetchBranches(); // Refresh branches after selection
+      setBranches(data.branches || []);
+      onBranchesChange({ from: '', to: '' });
     } catch (err) {
-      setError('Failed to select directory. Please try again.');
-      console.error('Directory selection error:', err);
+      setError('Failed to select repository. Please try again.');
+      console.error('Repository selection error:', err);
     }
   };
 
   return (
-    <div className="project-selector">
+    <div className={`project-selector ${isDark ? 'dark' : 'light'}`}>
       <div className="selector-header">
         <h2>Repository Selection</h2>
         <button 
-          className="select-btn"
-          onClick={handleDirectorySelect}
+          className="refresh-btn"
+          onClick={fetchRepositories}
           disabled={isLoading}
         >
-          {isLoading ? 'Selecting...' : 'Select Repository'}
+          Refresh
         </button>
       </div>
 
       {error && <div className="error-message">{error}</div>}
+
+      <div className="repository-selector">
+        <label>Select Repository:</label>
+        <select
+          value={selectedRepository ? selectedRepository.path : ''}
+          onChange={(e) => handleRepositorySelect(e.target.value)}
+          disabled={isLoading || repositories.length === 0}
+        >
+          <option value="">Select a repository</option>
+          {repositories.map(repo => (
+            <option key={repo.path} value={repo.path}>{repo.name}</option>
+          ))}
+        </select>
+      </div>
 
       <div className="branch-selectors">
         <div className="branch-select">
