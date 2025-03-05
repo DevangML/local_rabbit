@@ -1,42 +1,42 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import themeReducer, { setTheme, toggleTheme } from '../../store/themeSlice';
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  clear: vi.fn()
-};
-
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
-  writable: true
-});
-
 describe('Theme Slice', () => {
-  let originalMatchMedia;
+  const mockLocalStorage = {
+    getItem: vi.fn(),
+    setItem: vi.fn(),
+    clear: vi.fn()
+  };
+
+  const mockMatchMedia = vi.fn();
 
   beforeEach(() => {
-    originalMatchMedia = window.matchMedia;
-    localStorage.clear();
+    // Mock localStorage
+    Object.defineProperty(window, 'localStorage', {
+      value: mockLocalStorage,
+      writable: true
+    });
+
+    // Mock matchMedia
+    Object.defineProperty(window, 'matchMedia', {
+      value: mockMatchMedia,
+      writable: true
+    });
+
+    // Clear mocks
+    mockLocalStorage.getItem.mockReset();
+    mockLocalStorage.setItem.mockReset();
+    mockLocalStorage.clear.mockReset();
+    mockMatchMedia.mockReset();
   });
 
   afterEach(() => {
-    window.matchMedia = originalMatchMedia;
-    localStorage.clear();
+    vi.clearAllMocks();
   });
 
   it('should use the default light theme when no theme is saved', () => {
-    window.matchMedia = vi.fn().mockImplementation(query => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    }));
+    mockLocalStorage.getItem.mockReturnValue(null);
+    mockMatchMedia.mockReturnValue({ matches: false });
 
     const initialState = themeReducer(undefined, { type: 'unknown' });
 
@@ -45,16 +45,8 @@ describe('Theme Slice', () => {
   });
 
   it('should use the default dark theme when dark mode is preferred', () => {
-    window.matchMedia = vi.fn().mockImplementation(query => ({
-      matches: query === '(prefers-color-scheme: dark)',
-      media: query,
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    }));
+    mockLocalStorage.getItem.mockReturnValue(null);
+    mockMatchMedia.mockReturnValue({ matches: true });
 
     const initialState = themeReducer(undefined, { type: 'unknown' });
 
@@ -63,7 +55,9 @@ describe('Theme Slice', () => {
   });
 
   it('should use the saved theme from localStorage if available', () => {
-    localStorage.setItem('theme', 'lunar-dark');
+    mockLocalStorage.getItem.mockReturnValue('lunar-dark');
+    mockMatchMedia.mockReturnValue({ matches: false });
+
     const initialState = themeReducer(undefined, { type: 'unknown' });
 
     expect(initialState.currentTheme).toBe('lunar-dark');
@@ -81,7 +75,7 @@ describe('Theme Slice', () => {
 
     expect(state.currentTheme).toBe('lunar-dark');
     expect(state.isDark).toBe(true);
-    expect(localStorage.getItem('theme')).toBe('lunar-dark');
+    expect(mockLocalStorage.setItem).toHaveBeenCalledWith('theme', 'lunar-dark');
   });
 
   it('should not change state for invalid theme', () => {
@@ -108,7 +102,7 @@ describe('Theme Slice', () => {
 
     expect(state.currentTheme).toBe('lunar-dark');
     expect(state.isDark).toBe(true);
-    expect(localStorage.getItem('theme')).toBe('lunar-dark');
+    expect(mockLocalStorage.setItem).toHaveBeenCalledWith('theme', 'lunar-dark');
   });
 
   it('should toggle from dark to light theme', () => {
@@ -122,15 +116,28 @@ describe('Theme Slice', () => {
 
     expect(state.currentTheme).toBe('lunar-light');
     expect(state.isDark).toBe(false);
-    expect(localStorage.getItem('theme')).toBe('lunar-light');
+    expect(mockLocalStorage.setItem).toHaveBeenCalledWith('theme', 'lunar-light');
   });
 
   it('should include all available themes in the initial state', () => {
+    mockLocalStorage.getItem.mockReturnValue(null);
+    mockMatchMedia.mockReturnValue({ matches: false });
+
     const initialState = themeReducer(undefined, { type: 'unknown' });
 
     expect(initialState.themes).toEqual([
-      { id: 'lunar-light', name: 'Light' },
-      { id: 'lunar-dark', name: 'Dark' }
+      { id: 'light-default', name: 'Light Default' },
+      { id: 'glance-light', name: 'Glance Light' },
+      { id: 'dark-default', name: 'Dark Default' },
+      { id: 'synthwave', name: 'Synthwave' },
+      { id: 'tomorrow-night-blue', name: 'Tomorrow Night Blue' },
+      { id: 'tinacious', name: 'Tinacious Design' },
+      { id: 'gloom', name: 'Gloom Dark' },
+      { id: 'azure', name: 'Azure Dark' },
+      { id: 'halflife', name: 'Half Life' },
+      { id: 'carbon', name: 'Carbon' },
+      { id: 'lunar-dark', name: 'Lunar Vim Dark' },
+      { id: 'lunar-light', name: 'Lunar Vim Light' }
     ]);
   });
 });

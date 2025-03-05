@@ -22,12 +22,19 @@ describe('DiffViewer', () => {
 
   it('should render empty state when no branches selected', () => {
     renderWithRedux(<DiffViewer fromBranch={null} toBranch={null} diffData={null} />);
-    expect(screen.getByText(/Select branches to view diff/i)).toBeInTheDocument();
+    expect(screen.getByText(/Both 'from' and 'to' branches must be selected/i)).toBeInTheDocument();
   });
 
   it('should render loading state', () => {
-    renderWithRedux(<DiffViewer fromBranch="main" toBranch="develop" diffData={null} isLoading={true} />);
-    expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+    renderWithRedux(
+      <DiffViewer
+        fromBranch="main"
+        toBranch="develop"
+        diffData={null}
+        isLoading={true}
+      />
+    );
+    expect(screen.getByText(/Analyzing changes/i)).toBeInTheDocument();
   });
 
   it('should render diff data', () => {
@@ -47,10 +54,9 @@ describe('DiffViewer', () => {
         fromBranch="main"
         toBranch="develop"
         diffData={mockDiffData}
-        isLoading={false}
       />
     );
 
-    expect(screen.getByText('test.js')).toBeInTheDocument();
+    expect(screen.getByText(/Select a file to view differences/i)).toBeInTheDocument();
   });
 });

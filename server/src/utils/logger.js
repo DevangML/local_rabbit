@@ -1,4 +1,5 @@
 const winston = require('winston');
+const path = require('path');
 const chalk = require('chalk');
 const config = require('../config');
 
@@ -64,33 +65,30 @@ const machineFormat = winston.format.printf(({
 
 // Create the logger
 const logger = winston.createLogger({
-  level: config.logging.level || 'info',
+  level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
     winston.format.splat(),
-    machineFormat,
+    winston.format.json()
   ),
-  defaultMeta: { service: 'local-coderabbit' },
   transports: [
-    // Write logs with level 'error' and below to error.log
     new winston.transports.File({
-      filename: 'logs/error.log',
-      level: 'error',
-      dirname: 'logs',
+      filename: path.join('logs', 'error.log'),
+      level: 'error'
     }),
-    // Write all logs to combined.log
     new winston.transports.File({
-      filename: 'logs/combined.log',
-      dirname: 'logs',
-    }),
-  ],
+      filename: path.join('logs', 'combined.log')
+    })
+  ]
 });
 
-// If we're not in production, also log to the console with a simpler format
-if (config.nodeEnv !== 'production') {
+if (process.env.NODE_ENV !== 'production') {
   logger.add(new winston.transports.Console({
-    format: consoleFormat,
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.simple()
+    )
   }));
 }
 
@@ -124,32 +122,29 @@ const enhanceLogger = (originalLogger) => {
   return enhanced;
 };
 
-// Add convenience methods for colorized logging
+// Add convenience methods for styled logging
 logger.success = (message, meta = {}) => {
-  logger.info(`${chalk.bold.green('✓')} ${message}`, meta);
+  logger.info(`✅ ${message}`, meta);
 };
 
 logger.important = (message, meta = {}) => {
-  logger.info(`${chalk.bold.yellow('!')} ${message}`, meta);
+  logger.info(`⚠️ ${message}`, meta);
 };
 
 logger.highlight = (message, meta = {}) => {
-  logger.info(`${chalk.bold.cyan('→')} ${message}`, meta);
+  logger.info(`🔍 ${message}`, meta);
 };
 
-logger.section = (title) => {
-  const line = chalk.gray('─'.repeat(80));
-  logger.info(`\n${line}\n${chalk.bold.white(title)}\n${line}`);
+logger.section = (title, meta = {}) => {
+  logger.info(`\n=== ${title} ===\n`, meta);
 };
 
-logger.table = (data, columns) => {
-  if (!data || !data.length) {
-    logger.info(chalk.gray('No data to display'));
-    return;
+logger.table = (data, meta = {}) => {
+  if (Array.isArray(data)) {
+    logger.info('\n' + JSON.stringify(data, null, 2), meta);
+  } else {
+    logger.info(data, meta);
   }
-
-  // eslint-disable-next-line no-console
-  console.table(data, columns);
 };
 
 // Export the enhanced logger

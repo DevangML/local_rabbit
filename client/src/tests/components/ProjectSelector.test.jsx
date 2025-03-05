@@ -1,7 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
+import { rest } from 'msw';
+import { setupServer } from 'msw/node';
 import ProjectSelector from '../../components/ProjectSelector';
 import { cacheInstance } from '../../utils/cache';
 
@@ -27,7 +29,21 @@ vi.mock('../../utils/cache', () => ({
 // Mock fetch API
 global.fetch = vi.fn();
 
+const server = setupServer(
+  rest.get('/api/branches', (req, res, ctx) => {
+    const path = req.url.searchParams.get('path');
+    if (path === '/invalid/path') {
+      return res(ctx.status(404), ctx.json({ message: 'Repository not found' }));
+    }
+    return res(ctx.json(['main', 'develop']));
+  })
+);
+
 describe('ProjectSelector Component', () => {
+  beforeAll(() => server.listen());
+  afterEach(() => server.resetHandlers());
+  afterAll(() => server.close());
+
   const mockOnProjectSelect = vi.fn();
   const mockOnBranchesChange = vi.fn();
 

@@ -2,34 +2,24 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import Logger from '../../utils/logger';
 
 describe('Logger Utility', () => {
-  let originalStack;
-
   beforeEach(() => {
-    // Store original stack getter
-    originalStack = Object.getOwnPropertyDescriptor(Error.prototype, 'stack');
-
     // Mock console methods
     console.error = vi.fn();
     console.warn = vi.fn();
     console.info = vi.fn();
     console.debug = vi.fn();
 
-    // Mock stack trace
+    // Mock Error constructor to provide a custom stack
     const mockStack = `Error
     at Object.<anonymous> (/src/utils/logger.test.js:10:10)
     at Object.asyncJestTest (/src/utils/logger.test.js:11:11)`;
 
-    Object.defineProperty(Error.prototype, 'stack', {
-      get: () => mockStack
-    });
+    vi.spyOn(Error.prototype, 'stack', 'get').mockReturnValue(mockStack);
   });
 
   afterEach(() => {
-    // Restore original stack getter
-    if (originalStack) {
-      Object.defineProperty(Error.prototype, 'stack', originalStack);
-    }
     vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('should format message with correct level and location', () => {
@@ -46,10 +36,7 @@ describe('Logger Utility', () => {
   });
 
   it('should handle missing stack trace information', () => {
-    // Temporarily override stack with invalid format
-    Object.defineProperty(Error.prototype, 'stack', {
-      get: () => 'Invalid stack trace'
-    });
+    vi.spyOn(Error.prototype, 'stack', 'get').mockReturnValue('Invalid stack trace');
     const message = 'Test message';
     const formattedMessage = Logger.formatMessage('info', message);
     expect(formattedMessage).toBe('logger.js:1:1: info Test message');
@@ -87,18 +74,20 @@ describe('Logger Utility', () => {
   });
 
   it('should extract relative file path from stack trace', () => {
+    const mockStackWithFullPath = `Error
+    at Object.<anonymous> (/absolute/path/src/utils/logger.test.js:10:10)`;
+    vi.spyOn(Error.prototype, 'stack', 'get').mockReturnValue(mockStackWithFullPath);
+
     const message = 'Test message';
     const formattedMessage = Logger.formatMessage('info', message);
     expect(formattedMessage).toBe('utils/logger.test.js:10:10: info Test message');
   });
 
   it('should handle stack traces without src directory', () => {
-    // Mock stack trace without src directory
-    Object.defineProperty(Error.prototype, 'stack', {
-      get: () => `Error
-      at Object.<anonymous> (utils/logger.test.js:10:10)
-      at Object.asyncJestTest (utils/logger.test.js:11:11)`
-    });
+    const mockStackWithoutSrc = `Error
+    at Object.<anonymous> (/absolute/path/utils/logger.test.js:10:10)`;
+    vi.spyOn(Error.prototype, 'stack', 'get').mockReturnValue(mockStackWithoutSrc);
+
     const message = 'Test message';
     const formattedMessage = Logger.formatMessage('info', message);
     expect(formattedMessage).toBe('utils/logger.test.js:10:10: info Test message');

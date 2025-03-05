@@ -67,7 +67,7 @@ class GitService {
    */
   async getBranches() {
     try {
-      return await this.git.branchLocal();
+      return await this.git.branch();
     } catch (error) {
       logger.error('Error getting branches:', error);
       throw error;
@@ -80,7 +80,8 @@ class GitService {
    */
   async getCurrentBranch() {
     try {
-      return (await this.git.branch()).current;
+      const { current } = await this.git.branch();
+      return current;
     } catch (error) {
       logger.error('Error getting current branch:', error);
       throw error;
@@ -251,6 +252,66 @@ class GitService {
     } catch (error) {
       logger.error('Error finding repositories:', error);
       return [];
+    }
+  }
+
+  /**
+   * Check if the given path is a valid Git repository
+   * @param {string} dirPath - Path to the directory
+   * @returns {Promise<boolean>} - True if valid Git repository
+   */
+  async isGitRepository(dirPath) {
+    try {
+      const git = simpleGit(dirPath);
+      return await git.checkIsRepo();
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Get the content of a file at a specific commit or branch
+   * @param {string} filePath - Path to the file
+   * @param {string} ref - Commit hash or branch name
+   * @returns {Promise<string>} - File content
+   */
+  async getFileContent(filePath, ref) {
+    try {
+      return await this.git.show([`${ref}:${filePath}`]);
+    } catch (error) {
+      logger.error(`Error getting file content for ${filePath} at ${ref}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get the commit history of a branch
+   * @param {string} branch - Branch name
+   * @param {number} [maxCount=100] - Maximum number of commits to retrieve
+   * @returns {Promise<Object>} - Commit history
+   */
+  async getCommitHistory(branch, maxCount = 100) {
+    try {
+      return await this.git.log({
+        maxCount,
+        branch
+      });
+    } catch (error) {
+      logger.error('Error getting commit history:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get the status of the repository
+   * @returns {Promise<Object>} - Repository status
+   */
+  async getStatus() {
+    try {
+      return await this.git.status();
+    } catch (error) {
+      logger.error('Error getting git status:', error);
+      throw error;
     }
   }
 }
