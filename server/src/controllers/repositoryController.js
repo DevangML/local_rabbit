@@ -41,10 +41,10 @@ const expandTilde = (filePath) => {
 exports.getRepositories = async (req, res) => {
   try {
     const repositories = await GitService.findRepositories();
-    return res.json(repositories);
+    res.json(repositories);
   } catch (error) {
     logger.error('Error getting repositories:', error);
-    return res.status(500).json({ error: 'Failed to get repositories', details: error.message });
+    res.status(500).json({ error: 'Failed to get repositories' });
   }
 };
 
@@ -54,41 +54,32 @@ exports.getRepositories = async (req, res) => {
  * @param {Object} res - Express response object
  */
 exports.setRepository = async (req, res) => {
+  const { path: repoPath } = req.body;
+
+  if (!repoPath) {
+    return res.status(400).json({ error: 'Repository path is required' });
+  }
+
   try {
-    const { path: repoPath } = req.body;
-
-    if (!repoPath) {
-      return res.status(400).json({ error: 'Repository path is required' });
-    }
-
-    // Expand tilde in the path if present
-    const expandedPath = expandTilde(repoPath);
-
-    // Set repository path
-    gitService.setRepoPath(expandedPath);
-
-    // Verify it's a git repository
-    const isRepo = await gitService.isValidRepo();
-    if (!isRepo) {
+    const isValid = await gitService.isValidRepo(repoPath);
+    if (!isValid) {
       return res.status(400).json({ error: 'Not a valid git repository' });
     }
 
-    // Get branches
+    gitService.setRepoPath(repoPath);
     const branches = await gitService.getBranches();
-    const currentBranch = await gitService.getCurrentBranch();
+    const current = await gitService.getCurrentBranch();
 
-    // Save state
     await gitService.saveState();
 
-    return res.json({
-      path: expandedPath,
-      name: path.basename(expandedPath),
-      branches: branches.all || [],
-      current: currentBranch,
+    res.json({
+      path: repoPath,
+      branches: branches.all,
+      current
     });
   } catch (error) {
     logger.error('Error setting repository:', error);
-    return res.status(500).json({ error: 'Failed to set repository', details: error.message });
+    res.status(500).json({ error: 'Failed to set repository' });
   }
 };
 
@@ -98,22 +89,21 @@ exports.setRepository = async (req, res) => {
  * @param {Object} res - Express response object
  */
 exports.getBranches = async (req, res) => {
+  if (!gitService.repoPath) {
+    return res.status(400).json({ error: 'No repository selected' });
+  }
+
   try {
-    if (!gitService.repoPath) {
-      return res.status(400).json({ error: 'No repository selected' });
-    }
-
     const branches = await gitService.getBranches();
-    const currentBranch = await gitService.getCurrentBranch();
+    const current = await gitService.getCurrentBranch();
 
-    return res.json({
-      repository: path.basename(gitService.repoPath),
-      branches: branches.all || [],
-      current: currentBranch,
+    res.json({
+      branches: branches.all,
+      current
     });
   } catch (error) {
     logger.error('Error getting branches:', error);
-    return res.status(500).json({ error: 'Failed to get branches', details: error.message });
+    res.status(500).json({ error: 'Failed to get branches' });
   }
 };
 

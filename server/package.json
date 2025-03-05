@@ -11,10 +11,16 @@
     "lint:fix": "eslint . --fix",
     "lint:staged": "eslint $(git diff --cached --name-only --diff-filter=ACMR \"*.js\")",
     "lint:report": "eslint . -f html -o ./reports/eslint-report.html",
-    "test": "jest",
+    "test": "jest --coverage",
     "test:watch": "jest --watch",
+    "test:ci": "jest --ci --coverage --reporters=default --reporters=jest-junit",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "test:update": "jest --updateSnapshot",
+    "perf:analyze": "node ./src/utils/performance-analyzer.js",
     "test:coverage": "jest --coverage",
-    "perf:analyze": "node ./src/utils/performance-analyzer.js"
+    "test:coverage-summary": "node scripts/coverage-summary.js",
+    "test:full": "yarn test:coverage && yarn test:coverage-summary"
   },
   "dependencies": {
     "async": "^3.2.6",

@@ -1,34 +1,39 @@
-const {
-  describe, it, beforeEach, afterEach,
-} = require('mocha');
-const { expect } = require('chai');
-const sinon = require('sinon');
-const performanceAnalyzer = require('../../../src/utils/performance-analyzer');
+const { describe, expect, it } = require('@jest/globals');
+const PerformanceAnalyzer = require('../../../src/utils/performance-analyzer');
 
-describe('Performance Analyzer', () => {
-  let clock;
+describe('PerformanceAnalyzer', () => {
+  describe('measure', () => {
+    it('should measure execution time', async () => {
+      const analyzer = new PerformanceAnalyzer();
+      const result = await analyzer.measure('test', async () => {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        return 'result';
+      });
 
-  beforeEach(() => {
-    clock = sinon.useFakeTimers();
+      expect(result.duration).toBeGreaterThanOrEqual(100);
+      expect(result.result).toBe('result');
+    });
+
+    it('should handle errors', async () => {
+      const analyzer = new PerformanceAnalyzer();
+      await expect(analyzer.measure('test', async () => {
+        throw new Error('Test error');
+      })).rejects.toThrow('Test error');
+    });
   });
 
-  afterEach(() => {
-    clock.restore();
+  describe('getStats', () => {
+    it('should return performance stats', async () => {
+      const analyzer = new PerformanceAnalyzer();
+      await analyzer.measure('test', async () => {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      });
+
+      const stats = analyzer.getStats();
+      expect(stats).toHaveProperty('test');
+      expect(stats.test).toHaveProperty('count');
+      expect(stats.test).toHaveProperty('totalTime');
+      expect(stats.test).toHaveProperty('avgTime');
+    });
   });
-
-  it('should measure execution time accurately', async () => {
-    const testFn = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      return 'result';
-    };
-
-    const result = await performanceAnalyzer.runTest('test', testFn, 3);
-
-    expect(result).to.have.property('name', 'test');
-    expect(result).to.have.property('averageTime');
-    expect(result).to.have.property('iterations', 3);
-    expect(result.samples).to.be.an('array').with.length(3);
-  });
-
-  // Add more test cases...
 });

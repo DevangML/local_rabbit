@@ -4,16 +4,35 @@ import StateManager from '../../services/StateManager';
 // Mock indexedDB
 vi.mock('idb', () => ({
   openDB: vi.fn().mockImplementation(() => ({
-    put: vi.fn().mockResolvedValue(true),
+    put: vi.fn().mockImplementation((storeName, value, key) => {
+      if (storeName && value && key) return Promise.resolve(true);
+      return Promise.reject(new Error('Invalid parameters'));
+    }),
     get: vi.fn().mockImplementation((storeName, key) => {
+      if (storeName === 'appState' && key === 'lastBackup') {
+        return Promise.resolve({
+          state: {
+            appState: [{ key: 'key1', value: 'value1' }],
+            diffState: [{ key: 'key2', value: 'value2' }],
+            analyzerState: [{ key: 'key3', value: 'value3' }],
+            timestamp: new Date().toISOString()
+          },
+          backupDate: new Date().toISOString(),
+          version: 1
+        });
+      }
       if (key === 'testKey') return Promise.resolve({ data: 'testValue' });
       if (key === 'nonExistentKey') return Promise.resolve(undefined);
       return Promise.resolve(null);
     }),
-    getAll: vi.fn().mockResolvedValue([
-      { key: 'key1', value: 'value1' },
-      { key: 'key2', value: 'value2' }
-    ]),
+    getAll: vi.fn().mockImplementation((storeName) => {
+      const mockData = {
+        appState: [{ key: 'key1', value: 'value1' }],
+        diffState: [{ key: 'key2', value: 'value2' }],
+        analyzerState: [{ key: 'key3', value: 'value3' }]
+      };
+      return Promise.resolve(mockData[storeName] || []);
+    }),
     clear: vi.fn().mockResolvedValue(undefined),
     delete: vi.fn().mockResolvedValue(undefined),
     transaction: vi.fn().mockImplementation(() => ({
@@ -41,6 +60,7 @@ describe('StateManager Service', () => {
     vi.spyOn(console, 'error').mockImplementation(() => { });
     vi.spyOn(console, 'warn').mockImplementation(() => { });
     vi.spyOn(console, 'log').mockImplementation(() => { });
+    vi.spyOn(console, 'info').mockImplementation(() => { });
 
     // Mock localStorage
     const localStorageMock = {
@@ -94,11 +114,8 @@ describe('StateManager Service', () => {
 
   it('retrieves all state from a store', async () => {
     const result = await stateManager.getAllState('appState');
-    expect(result).toHaveLength(2);
-    expect(result).toEqual([
-      { key: 'key1', value: 'value1' },
-      { key: 'key2', value: 'value2' }
-    ]);
+    expect(result).toHaveLength(1);
+    expect(result).toEqual([{ key: 'key1', value: 'value1' }]);
   });
 
   it('clears state from a specific store', async () => {
@@ -119,12 +136,15 @@ describe('StateManager Service', () => {
     expect(parsed).toHaveProperty('appState');
     expect(parsed).toHaveProperty('diffState');
     expect(parsed).toHaveProperty('analyzerState');
+    expect(parsed).toHaveProperty('timestamp');
   });
 
   it('imports state from a JSON string', async () => {
     const stateJson = JSON.stringify({
-      appState: { key1: { data: 'value1' } },
-      diffState: { key2: { data: 'value2' } }
+      appState: [{ key: 'key1', value: 'value1' }],
+      diffState: [{ key: 'key2', value: 'value2' }],
+      analyzerState: [{ key: 'key3', value: 'value3' }],
+      timestamp: new Date().toISOString()
     });
 
     const result = await stateManager.importState(stateJson);
@@ -153,13 +173,6 @@ describe('StateManager Service', () => {
   });
 
   it('restores state from a backup', async () => {
-    // Mock localStorage to return a backup
-    const mockBackup = JSON.stringify({
-      appState: { key1: { data: 'backup1' } },
-      diffState: { key2: { data: 'backup2' } }
-    });
-    window.localStorage.getItem.mockReturnValueOnce(mockBackup);
-
     const result = await stateManager.restoreFromBackup();
     expect(result).toBe(true);
   });
@@ -169,9 +182,9 @@ describe('StateManager Service', () => {
     expect(result).toEqual({
       status: 'healthy',
       stores: {
-        appState: { count: 2 },
-        diffState: { count: 2 },
-        analyzerState: { count: 2 }
+        appState: { count: 1 },
+        diffState: { count: 1 },
+        analyzerState: { count: 1 }
       }
     });
   });

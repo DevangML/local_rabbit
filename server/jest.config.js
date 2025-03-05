@@ -4,18 +4,30 @@ module.exports = {
   collectCoverageFrom: [
     'src/**/*.js',
     '!src/index.js',
-    '!src/config/*.js',
+    '!src/config/**/*.js'
   ],
   coverageThreshold: {
     global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80,
-    },
+      branches: 85,
+      functions: 85,
+      lines: 85,
+      statements: 85
+    }
   },
   testMatch: [
-    '**/tests/**/*.test.js',
+    '**/tests/**/*.test.js'
   ],
   setupFilesAfterEnv: ['./tests/setup.js'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/coverage/'
+  ],
+  coverageReporters: [
+    'text',
+    'lcov',
+    'json',
+    'html',
+    ['text-summary', { file: './coverage/summary.txt' }]
+  ],
+  verbose: true
 };

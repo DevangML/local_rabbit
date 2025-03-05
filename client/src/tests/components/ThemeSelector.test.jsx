@@ -56,8 +56,8 @@ describe('ThemeSelector Component', () => {
     const store = createMockStore(initialThemeState);
     renderWithStore(store);
 
-    expect(screen.getByText('Dark Mode')).toBeInTheDocument();
-    expect(screen.getByText('Light Default')).toBeInTheDocument();
+    expect(screen.getByTestId('theme-mode-toggle')).toHaveTextContent('Dark Mode');
+    expect(screen.getByTestId('theme-dropdown-button')).toHaveTextContent('Light Default');
   });
 
   it('toggles between light and dark mode', () => {
@@ -65,13 +65,13 @@ describe('ThemeSelector Component', () => {
     renderWithStore(store);
 
     // Initially in light mode
-    expect(screen.getByText('Dark Mode')).toBeInTheDocument();
+    expect(screen.getByTestId('theme-mode-toggle')).toHaveTextContent('Dark Mode');
 
     // Click to toggle to dark mode
-    fireEvent.click(screen.getByText('Dark Mode'));
+    fireEvent.click(screen.getByTestId('theme-mode-toggle'));
 
     // Now should be in dark mode
-    expect(screen.getByText('Light Mode')).toBeInTheDocument();
+    expect(screen.getByTestId('theme-mode-toggle')).toHaveTextContent('Light Mode');
   });
 
   it('opens theme dropdown when clicked', () => {
@@ -79,14 +79,13 @@ describe('ThemeSelector Component', () => {
     renderWithStore(store);
 
     // Dropdown should be closed initially
-    expect(screen.queryByText('Dark Themes')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('theme-dropdown-content')).not.toBeInTheDocument();
 
     // Click to open dropdown
-    fireEvent.click(screen.getByText('Light Default'));
+    fireEvent.click(screen.getByTestId('theme-dropdown-button'));
 
     // Dropdown should be open
-    expect(screen.getByText('Dark Themes')).toBeInTheDocument();
-    expect(screen.getByText('Light Themes')).toBeInTheDocument();
+    expect(screen.getByTestId('theme-dropdown-content')).toBeInTheDocument();
   });
 
   it('displays theme options in dropdown', () => {
@@ -94,13 +93,13 @@ describe('ThemeSelector Component', () => {
     renderWithStore(store);
 
     // Open dropdown
-    fireEvent.click(screen.getByText('Light Default'));
+    fireEvent.click(screen.getByTestId('theme-dropdown-button'));
 
     // Check if all theme options are displayed
-    expect(screen.getByText('Light Default')).toBeInTheDocument();
-    expect(screen.getByText('Light Blue')).toBeInTheDocument();
-    expect(screen.getByText('Dark Default')).toBeInTheDocument();
-    expect(screen.getByText('Dark Blue')).toBeInTheDocument();
+    expect(screen.getByTestId('theme-option-light-default')).toBeInTheDocument();
+    expect(screen.getByTestId('theme-option-light-blue')).toBeInTheDocument();
+    expect(screen.getByTestId('theme-option-dark-default')).toBeInTheDocument();
+    expect(screen.getByTestId('theme-option-dark-blue')).toBeInTheDocument();
   });
 
   it('selects a theme when clicked', () => {
@@ -108,14 +107,14 @@ describe('ThemeSelector Component', () => {
     renderWithStore(store);
 
     // Open dropdown
-    fireEvent.click(screen.getByText('Light Default'));
+    fireEvent.click(screen.getByTestId('theme-dropdown-button'));
 
     // Select a different theme
-    fireEvent.click(screen.getByText('Dark Blue'));
+    fireEvent.click(screen.getByTestId('theme-option-dark-blue'));
 
     // Dropdown should close and selected theme should be displayed
-    expect(screen.queryByText('Dark Themes')).not.toBeInTheDocument();
-    expect(screen.getByText('Dark Blue')).toBeInTheDocument();
+    expect(screen.queryByTestId('theme-dropdown-content')).not.toBeInTheDocument();
+    expect(screen.getByTestId('theme-dropdown-button')).toHaveTextContent('Dark Blue');
   });
 
   it('closes dropdown when a theme is selected', () => {
@@ -123,16 +122,16 @@ describe('ThemeSelector Component', () => {
     renderWithStore(store);
 
     // Open dropdown
-    fireEvent.click(screen.getByText('Light Default'));
+    fireEvent.click(screen.getByTestId('theme-dropdown-button'));
 
     // Dropdown should be open
-    expect(screen.getByText('Dark Themes')).toBeInTheDocument();
+    expect(screen.getByTestId('theme-dropdown-content')).toBeInTheDocument();
 
     // Select a theme
-    fireEvent.click(screen.getByText('Light Blue'));
+    fireEvent.click(screen.getByTestId('theme-option-light-blue'));
 
     // Dropdown should be closed
-    expect(screen.queryByText('Dark Themes')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('theme-dropdown-content')).not.toBeInTheDocument();
   });
 
   it('renders with dark theme when isDark is true', () => {
@@ -145,8 +144,8 @@ describe('ThemeSelector Component', () => {
     const store = createMockStore(darkThemeState);
     renderWithStore(store);
 
-    expect(screen.getByText('Light Mode')).toBeInTheDocument();
-    expect(screen.getByText('Dark Default')).toBeInTheDocument();
+    expect(screen.getByTestId('theme-mode-toggle')).toHaveTextContent('Light Mode');
+    expect(screen.getByTestId('theme-dropdown-button')).toHaveTextContent('Dark Default');
   });
 
   it('toggles dropdown open and closed', () => {
@@ -154,15 +153,15 @@ describe('ThemeSelector Component', () => {
     renderWithStore(store);
 
     // Open dropdown
-    fireEvent.click(screen.getByText('Light Default'));
+    fireEvent.click(screen.getByTestId('theme-dropdown-button'));
 
     // Dropdown should be open
-    expect(screen.getByText('Dark Themes')).toBeInTheDocument();
+    expect(screen.getByTestId('theme-dropdown-content')).toBeInTheDocument();
 
     // Close dropdown by clicking again
-    fireEvent.click(screen.getByText('Light Default'));
+    fireEvent.click(screen.getByTestId('theme-dropdown-button'));
 
     // Dropdown should be closed
-    expect(screen.queryByText('Dark Themes')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('theme-dropdown-content')).not.toBeInTheDocument();
   });
 }); 

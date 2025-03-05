@@ -10,73 +10,33 @@ const app = require('./src/app');
 const config = require('./src/config');
 const logger = require('./src/utils/logger');
 
-// Ensure we're using port 3001
-config.port = 3001;
+const port = config.port || 3001;
 
-// Start the server
-const server = app.listen(config.port, () => {
-  logger.info(`Server running in ${config.nodeEnv} mode on port ${config.port}`);
-  logger.info(`API available at http://localhost:${config.port}`);
-
-  // Log all routes for debugging
-  const routes = [];
-  app._router.stack.forEach(function (middleware) {
-    if (middleware.route) { // routes registered directly on the app
-      routes.push(middleware.route.path);
-    } else if (middleware.name === 'router') { // router middleware 
-      middleware.handle.stack.forEach(function (handler) {
-        if (handler.route) {
-          const path = handler.route.path;
-          routes.push(path);
-        }
-      });
-    }
-  });
-
-  logger.info(`Available routes: ${routes.join(', ')}`);
+app.listen(port, () => {
+  logger.success(`Server is running on port ${port}`);
+  logger.info(`Environment: ${config.nodeEnv}`);
+  logger.info('Press CTRL-C to stop\n');
 });
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-  logger.error('Unhandled Promise Rejection:', {
-    message: err.message,
-    stack: err.stack,
-    ...err
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM signal received.');
+  logger.info('Closing HTTP server...');
+  app.close(() => {
+    logger.info('HTTP server closed.');
+    process.exit(0);
   });
+});
 
-  // In development, don't exit the process
-  if (config.nodeEnv === 'production') {
-    // Close server & exit
-    server.close(() => {
-      process.exit(1);
-    });
-  }
+// Handle unhandled rejections
+process.on('unhandledRejection', (err) => {
+  logger.error('Unhandled rejection:', err);
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
-  logger.error('Uncaught Exception:', {
-    message: err.message,
-    stack: err.stack,
-    ...err
-  });
-
-  // In development, don't exit the process
-  if (config.nodeEnv === 'production') {
-    // Close server & exit
-    server.close(() => {
-      process.exit(1);
-    });
-  }
-});
-
-// Handle SIGTERM
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received. Shutting down gracefully');
-  server.close(() => {
-    logger.info('Process terminated');
-    process.exit(0);
-  });
+  logger.error('Uncaught exception:', err);
+  process.exit(1);
 });
 
 module.exports = server;

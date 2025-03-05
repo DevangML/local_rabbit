@@ -232,31 +232,39 @@ describe('App Component', () => {
   });
 
   it('toggles mobile menu on small screens', async () => {
+    // Set up mobile viewport
+    const originalInnerWidth = window.innerWidth;
+    window.innerWidth = 500;
+    window.dispatchEvent(new Event('resize'));
+
     renderApp();
 
-    // Find the mobile menu button
+    // Get elements
     const menuButton = screen.getByTestId('mobile-menu-button');
+    const menu = screen.getByTestId('mobile-menu');
 
-    // Initially menu should be closed
-    expect(screen.queryByTestId('mobile-menu-open')).not.toBeInTheDocument();
+    // Initially menu should not have mobile-open class
+    expect(menu).not.toHaveClass('mobile-open');
 
     // Open menu
-    act(() => {
+    await act(async () => {
       fireEvent.click(menuButton);
     });
 
-    // Menu should be open
-    expect(screen.getByTestId('mobile-menu-open')).toBeInTheDocument();
+    // Menu should have mobile-open class
+    expect(menu).toHaveClass('mobile-open');
 
     // Close menu
-    act(() => {
+    await act(async () => {
       fireEvent.click(menuButton);
     });
 
-    // Wait for state to update
-    await waitFor(() => {
-      expect(screen.queryByTestId('mobile-menu-open')).not.toBeInTheDocument();
-    });
+    // Menu should not have mobile-open class
+    expect(menu).not.toHaveClass('mobile-open');
+
+    // Clean up
+    window.innerWidth = originalInnerWidth;
+    window.dispatchEvent(new Event('resize'));
   });
 
   it('renders loading indicator when loading', async () => {

@@ -158,21 +158,23 @@ function App() {
   // Update navigation component to use Link and handle active state
   const Navigation = () => {
     const location = useLocation();
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    const toggleMobileMenu = () => {
+      setMobileMenuOpen(!mobileMenuOpen);
+    };
 
     return (
       <nav className="app-nav">
         <div className="nav-container">
           <button
-            className="theme-toggle mobile-menu-toggle"
-            onClick={() => {
-              console.log('Toggling mobile menu', { before: isMobileMenuOpen, after: !isMobileMenuOpen });
-              setIsMobileMenuOpen(prevState => !prevState);
-            }}
+            className="mobile-menu-toggle"
+            onClick={toggleMobileMenu}
             aria-label="Toggle menu"
             data-testid="mobile-menu-button"
           >
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
-              {isMobileMenuOpen ? (
+              {mobileMenuOpen ? (
                 <path d="M18 6L6 18M6 6l12 12" />
               ) : (
                 <>
@@ -184,13 +186,13 @@ function App() {
             </svg>
           </button>
 
-          <ul className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}
-            data-testid={isMobileMenuOpen ? "mobile-menu-open" : undefined}>
+          <ul className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}
+            data-testid="mobile-menu">
             <li>
               <Link
                 to="/"
                 className={location.pathname === '/' ? 'active' : ''}
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => setMobileMenuOpen(false)}
               >
                 Diff View
               </Link>
@@ -199,7 +201,7 @@ function App() {
               <Link
                 to="/impact"
                 className={location.pathname === '/impact' ? 'active' : ''}
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => setMobileMenuOpen(false)}
               >
                 Impact Analysis
               </Link>
@@ -208,7 +210,7 @@ function App() {
               <Link
                 to="/quality"
                 className={location.pathname === '/quality' ? 'active' : ''}
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => setMobileMenuOpen(false)}
               >
                 Quality Check
               </Link>
@@ -217,7 +219,7 @@ function App() {
               <Link
                 to="/review"
                 className={location.pathname === '/review' ? 'active' : ''}
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => setMobileMenuOpen(false)}
               >
                 Review
               </Link>
@@ -226,7 +228,7 @@ function App() {
               <Link
                 to="/ai-analysis"
                 className={location.pathname === '/ai-analysis' ? 'active' : ''}
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => setMobileMenuOpen(false)}
               >
                 AI Analysis
               </Link>

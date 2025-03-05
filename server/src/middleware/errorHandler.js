@@ -8,21 +8,27 @@ const config = require('../config');
  * @param {Object} res - Express response object
  * @param {Function} next - Express next function
  */
-const errorHandler = (err, req, res, _next) => {
-  // Log the error
-  logger.error('Unhandled error:', {
-    error: err.message,
+const errorHandler = (err, req, res, next) => {
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
+  logger.error('Error:', {
+    message: err.message,
     stack: err.stack,
     path: req.path,
-    method: req.method,
+    method: req.method
   });
 
-  // Send error response
-  res.status(err.status || 500).json({
+  const status = err.status || 500;
+  const response = {
     error: 'Internal Server Error',
-    message: config.nodeEnv === 'development' ? err.message : 'Something went wrong',
-    stack: config.nodeEnv === 'development' ? err.stack : undefined,
-  });
+    message: isDevelopment ? err.message : 'Something went wrong'
+  };
+
+  if (isDevelopment) {
+    response.stack = err.stack;
+  }
+
+  res.status(status).json(response);
 };
 
 module.exports = errorHandler;

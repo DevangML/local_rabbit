@@ -23,11 +23,12 @@ const ThemeSelector = () => {
   };
 
   return (
-    <div className="theme-selector-container">
+    <div className="theme-selector-container" data-testid="theme-selector">
       <button
         className="theme-mode-button"
         onClick={handleToggle}
         aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+        data-testid="theme-mode-toggle"
       >
         {isDark ? 'Light Mode' : 'Dark Mode'}
       </button>
@@ -38,13 +39,14 @@ const ThemeSelector = () => {
           onClick={toggleDropdown}
           aria-haspopup="true"
           aria-expanded={isOpen}
+          data-testid="theme-dropdown-button"
         >
           {themes[currentTheme]?.name || 'Select Theme'}
           <span className="dropdown-arrow">{isOpen ? '▲' : '▼'}</span>
         </button>
 
         {isOpen && (
-          <div className="theme-dropdown-content">
+          <div className="theme-dropdown-content" data-testid="theme-dropdown-content">
             <div className="theme-group">
               <h4>Dark Themes</h4>
               {themeList
@@ -54,6 +56,7 @@ const ThemeSelector = () => {
                     key={theme.id}
                     className={`theme-option ${currentTheme === theme.id ? 'active' : ''}`}
                     onClick={() => handleThemeSelect(theme.id)}
+                    data-testid={`theme-option-${theme.id}`}
                   >
                     {theme.name}
                   </button>
@@ -68,6 +71,7 @@ const ThemeSelector = () => {
                     key={theme.id}
                     className={`theme-option ${currentTheme === theme.id ? 'active' : ''}`}
                     onClick={() => handleThemeSelect(theme.id)}
+                    data-testid={`theme-option-${theme.id}`}
                   >
                     {theme.name}
                   </button>

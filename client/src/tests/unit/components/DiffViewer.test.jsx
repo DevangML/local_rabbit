@@ -1,29 +1,56 @@
-import { describe, it, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import configureStore from 'redux-mock-store';
+import { configureStore } from '@reduxjs/toolkit';
 import DiffViewer from '../../../components/DiffViewer';
-
-const mockStore = configureStore([]);
+import themeReducer from '../../../store/themeSlice';
 
 describe('DiffViewer', () => {
-  let store;
-
-  beforeEach(() => {
-    store = mockStore({
-      theme: { isDark: false }
+  const renderWithRedux = (component) => {
+    const store = configureStore({
+      reducer: {
+        theme: themeReducer
+      }
     });
-  });
 
-  it('should render empty state when no branches selected', () => {
-    render(
+    return render(
       <Provider store={store}>
-        <DiffViewer fromBranch="" toBranch="" />
+        {component}
       </Provider>
     );
+  };
 
-    expect(screen.getByText(/select both branches/i)).toBeInTheDocument();
+  it('should render empty state when no branches selected', () => {
+    renderWithRedux(<DiffViewer fromBranch={null} toBranch={null} diffData={null} />);
+    expect(screen.getByText(/Select branches to view diff/i)).toBeInTheDocument();
   });
 
-  // Add more test cases...
+  it('should render loading state', () => {
+    renderWithRedux(<DiffViewer fromBranch="main" toBranch="develop" diffData={null} isLoading={true} />);
+    expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+  });
+
+  it('should render diff data', () => {
+    const mockDiffData = {
+      files: [
+        {
+          path: 'test.js',
+          changes: [
+            { type: 'add', content: 'new line', lineNumber: 1 }
+          ]
+        }
+      ]
+    };
+
+    renderWithRedux(
+      <DiffViewer
+        fromBranch="main"
+        toBranch="develop"
+        diffData={mockDiffData}
+        isLoading={false}
+      />
+    );
+
+    expect(screen.getByText('test.js')).toBeInTheDocument();
+  });
 });

@@ -94,7 +94,7 @@ class StateManager {
         analyzerState: await db.getAll('analyzerState'),
         timestamp: new Date().toISOString(),
       };
-      return state;
+      return JSON.stringify(state);
     } catch (error) {
       console.error('Error exporting state:', error);
       return null;
@@ -103,10 +103,28 @@ class StateManager {
 
   async importState(state) {
     try {
+      // Parse the JSON string if it's a string
+      let stateObj = state;
+      if (typeof state === 'string') {
+        try {
+          stateObj = JSON.parse(state);
+        } catch (parseError) {
+          console.error('Error parsing state JSON:', parseError);
+          return false;
+        }
+      }
+
+      // Validate the state object
+      const isValid = await this.validateState(stateObj);
+      if (!isValid) {
+        console.error('Invalid state structure');
+        return false;
+      }
+
       const db = await this.dbPromise;
       await this.resetAllState();
 
-      for (const [storeName, items] of Object.entries(state)) {
+      for (const [storeName, items] of Object.entries(stateObj)) {
         if (storeName === 'timestamp') continue;
         for (const item of items) {
           await db.put(storeName, item.value, item.key);
@@ -123,11 +141,29 @@ class StateManager {
   async checkHealth() {
     try {
       const db = await this.dbPromise;
+
+      // Check database connection
       await db.get('appState', 'test');
-      return true;
+
+      // Get store counts
+      const appStateCount = (await db.getAll('appState')).length;
+      const diffStateCount = (await db.getAll('diffState')).length;
+      const analyzerStateCount = (await db.getAll('analyzerState')).length;
+
+      return {
+        status: 'healthy',
+        stores: {
+          appState: { count: appStateCount },
+          diffState: { count: diffStateCount },
+          analyzerState: { count: analyzerStateCount }
+        }
+      };
     } catch (error) {
       console.error('Database health check failed:', error);
-      return false;
+      return {
+        status: 'error',
+        error: error.message
+      };
     }
   }
 
@@ -167,15 +203,11 @@ class StateManager {
   async createBackup() {
     try {
       const state = await this.exportState();
-      if (!state) throw new Error('Failed to export state');
-
-      const backup = {
-        ...state,
+      await this.saveState('appState', 'lastBackup', {
+        state,
         backupDate: new Date().toISOString(),
         version: DB_VERSION
-      };
-
-      await this.saveState('appState', 'lastBackup', backup);
+      });
       return true;
     } catch (error) {
       console.error('Error creating backup:', error);
@@ -186,10 +218,18 @@ class StateManager {
   async restoreFromBackup() {
     try {
       const backup = await this.getState('appState', 'lastBackup');
-      if (!backup) throw new Error('No backup found');
+      if (!backup || !backup.state) {
+        console.error('No backup found');
+        return false;
+      }
 
-      const success = await this.importState(backup);
-      return success;
+      // Validate backup version
+      if (backup.version !== DB_VERSION) {
+        console.error('Backup version mismatch');
+        return false;
+      }
+
+      return await this.importState(backup.state);
     } catch (error) {
       console.error('Error restoring from backup:', error);
       return false;

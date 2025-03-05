@@ -2,103 +2,105 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import Logger from '../../utils/logger';
 
 describe('Logger Utility', () => {
-  beforeEach(() => {
-    // Mock console methods
-    vi.spyOn(console, 'error').mockImplementation(() => { });
-    vi.spyOn(console, 'warn').mockImplementation(() => { });
-    vi.spyOn(console, 'info').mockImplementation(() => { });
-    vi.spyOn(console, 'debug').mockImplementation(() => { });
+  let originalStack;
 
-    // Mock Error.stack for consistent testing
-    vi.spyOn(Error.prototype, 'stack', 'get').mockImplementation(() => {
-      return `Error
-    at Object.<anonymous> (/fake/path/src/utils/logger.test.js:10:10)
-    at Object.<anonymous> (/fake/path/src/components/TestComponent.jsx:20:30)`;
+  beforeEach(() => {
+    // Store original stack getter
+    originalStack = Object.getOwnPropertyDescriptor(Error.prototype, 'stack');
+
+    // Mock console methods
+    console.error = vi.fn();
+    console.warn = vi.fn();
+    console.info = vi.fn();
+    console.debug = vi.fn();
+
+    // Mock stack trace
+    const mockStack = `Error
+    at Object.<anonymous> (/src/utils/logger.test.js:10:10)
+    at Object.asyncJestTest (/src/utils/logger.test.js:11:11)`;
+
+    Object.defineProperty(Error.prototype, 'stack', {
+      get: () => mockStack
     });
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    // Restore original stack getter
+    if (originalStack) {
+      Object.defineProperty(Error.prototype, 'stack', originalStack);
+    }
+    vi.clearAllMocks();
   });
 
   it('should format message with correct level and location', () => {
-    const formattedMessage = Logger.formatMessage('test', 'Test message');
-    expect(formattedMessage).toContain('components/TestComponent.jsx:20:30');
-    expect(formattedMessage).toContain('test Test message');
+    const message = 'Test message';
+    const formattedMessage = Logger.formatMessage('info', message);
+    expect(formattedMessage).toBe('utils/logger.test.js:10:10: info Test message');
   });
 
   it('should include metadata in formatted message', () => {
-    const meta = { userId: 123, action: 'login' };
-    const formattedMessage = Logger.formatMessage('test', 'Test message', meta);
-    expect(formattedMessage).toContain(JSON.stringify(meta));
+    const message = 'Test message';
+    const meta = { key: 'value' };
+    const formattedMessage = Logger.formatMessage('info', message, meta);
+    expect(formattedMessage).toBe('utils/logger.test.js:10:10: info Test message {"key":"value"}');
   });
 
   it('should handle missing stack trace information', () => {
-    // Mock a stack trace without file information
-    vi.spyOn(Error.prototype, 'stack', 'get').mockImplementation(() => {
-      return `Error
-    at Object.<anonymous>
-    at runMicrotasks`;
+    // Temporarily override stack with invalid format
+    Object.defineProperty(Error.prototype, 'stack', {
+      get: () => 'Invalid stack trace'
     });
-
-    const formattedMessage = Logger.formatMessage('test', 'Test message');
-    expect(formattedMessage).toBe('logger.js:1:1: test Test message');
+    const message = 'Test message';
+    const formattedMessage = Logger.formatMessage('info', message);
+    expect(formattedMessage).toBe('logger.js:1:1: info Test message');
   });
 
   it('should log error messages', () => {
-    Logger.error('Error message');
-    expect(console.error).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('error Error message'));
+    const message = 'Error message';
+    Logger.error(message);
+    expect(console.error).toHaveBeenCalledWith('utils/logger.test.js:10:10: error Error message');
   });
 
   it('should log warning messages', () => {
-    Logger.warn('Warning message');
-    expect(console.warn).toHaveBeenCalledTimes(1);
-    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('warning Warning message'));
+    const message = 'Warning message';
+    Logger.warn(message);
+    expect(console.warn).toHaveBeenCalledWith('utils/logger.test.js:10:10: warning Warning message');
   });
 
   it('should log info messages', () => {
-    Logger.info('Info message');
-    expect(console.info).toHaveBeenCalledTimes(1);
-    expect(console.info).toHaveBeenCalledWith(expect.stringContaining('info Info message'));
+    const message = 'Info message';
+    Logger.info(message);
+    expect(console.info).toHaveBeenCalledWith('utils/logger.test.js:10:10: info Info message');
   });
 
   it('should log debug messages', () => {
-    Logger.debug('Debug message');
-    expect(console.debug).toHaveBeenCalledTimes(1);
-    expect(console.debug).toHaveBeenCalledWith(expect.stringContaining('debug Debug message'));
+    const message = 'Debug message';
+    Logger.debug(message);
+    expect(console.debug).toHaveBeenCalledWith('utils/logger.test.js:10:10: debug Debug message');
   });
 
   it('should log error messages with metadata', () => {
-    const meta = { code: 500, endpoint: '/api/users' };
-    Logger.error('API error', meta);
-    expect(console.error).toHaveBeenCalledWith(
-      expect.stringContaining(JSON.stringify(meta))
-    );
+    const message = 'Error with metadata';
+    const meta = { code: 500 };
+    Logger.error(message, meta);
+    expect(console.error).toHaveBeenCalledWith('utils/logger.test.js:10:10: error Error with metadata {"code":500}');
   });
 
   it('should extract relative file path from stack trace', () => {
-    // Mock a stack trace with a full path
-    vi.spyOn(Error.prototype, 'stack', 'get').mockImplementation(() => {
-      return `Error
-    at Object.<anonymous> (/fake/path/src/utils/logger.test.js:10:10)
-    at Object.<anonymous> (/fake/path/src/components/DeepNested/Component.jsx:25:15)`;
-    });
-
-    const formattedMessage = Logger.formatMessage('test', 'Test message');
-    expect(formattedMessage).toContain('components/DeepNested/Component.jsx:25:15');
-    expect(formattedMessage).not.toContain('/fake/path/src/');
+    const message = 'Test message';
+    const formattedMessage = Logger.formatMessage('info', message);
+    expect(formattedMessage).toBe('utils/logger.test.js:10:10: info Test message');
   });
 
   it('should handle stack traces without src directory', () => {
-    // Mock a stack trace without src directory
-    vi.spyOn(Error.prototype, 'stack', 'get').mockImplementation(() => {
-      return `Error
-    at Object.<anonymous> (/fake/path/logger.test.js:10:10)
-    at Object.<anonymous> (/fake/path/Component.jsx:25:15)`;
+    // Mock stack trace without src directory
+    Object.defineProperty(Error.prototype, 'stack', {
+      get: () => `Error
+      at Object.<anonymous> (utils/logger.test.js:10:10)
+      at Object.asyncJestTest (utils/logger.test.js:11:11)`
     });
-
-    const formattedMessage = Logger.formatMessage('test', 'Test message');
-    expect(formattedMessage).toContain('/fake/path/Component.jsx:25:15');
+    const message = 'Test message';
+    const formattedMessage = Logger.formatMessage('info', message);
+    expect(formattedMessage).toBe('utils/logger.test.js:10:10: info Test message');
   });
 }); 

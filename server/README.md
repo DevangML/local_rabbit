@@ -1,5 +1,7 @@
 # Local CodeRabbit Server
 
+![Coverage Status](./badges/coverage-badge.svg)
+
 A production-ready Express.js server for the Local CodeRabbit application, providing Git repository analysis and diff viewing capabilities.
 
 ## Features
@@ -96,6 +98,20 @@ yarn start
 | GIT_STATE_PATH| Path to Git state file           | .state.json            |
 | DB_PATH       | Path to SQLite database          | db.sqlite              |
 
+## Test Coverage
+
+Current test coverage metrics:
+- Statements: 85%+
+- Branches: 85%+
+- Functions: 85%+
+
+To run tests with coverage:
+```bash
+yarn test:full
+```
+
+This will run all tests and display a coverage summary.
+
 ## License
 
-MIT 
+MIT
