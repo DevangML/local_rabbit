@@ -35,7 +35,45 @@ exports.getDiff = async (req, res) => {
     }
 
     const diff = await gitService.getDiff(fromBranch, toBranch);
-    return res.json({ diff });
+
+    // Parse the diff output into a structured format
+    const files = [];
+    let currentFile = null;
+    let currentContent = [];
+
+    diff.split('\n').forEach(line => {
+      if (line.startsWith('diff --git')) {
+        if (currentFile) {
+          currentFile.content = currentContent.join('\n');
+          files.push(currentFile);
+        }
+        const filePath = line.split(' b/')[1];
+        currentFile = { path: filePath, content: '' };
+        currentContent = [];
+      } else if (currentFile) {
+        currentContent.push(line);
+      }
+    });
+
+    // Add the last file
+    if (currentFile) {
+      currentFile.content = currentContent.join('\n');
+      files.push(currentFile);
+    }
+
+    // Set cache control headers to prevent 304s
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
+    return res.json({
+      files,
+      fromBranch,
+      toBranch,
+      repository: gitService.repoPath
+    });
   } catch (error) {
     logger.error('Error getting diff:', error);
     return res.status(500).json({ error: 'Failed to get diff' });

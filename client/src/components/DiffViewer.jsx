@@ -34,87 +34,44 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
     setError(null);
 
     try {
-      const cacheKey = `diff:${fromBranch}:${toBranch}`;
-
-      // Try to get from cache first
-      const cachedData = localStorage.getItem(cacheKey);
-      if (cachedData) {
-        try {
-          const parsedData = JSON.parse(cachedData);
-          setDiffData(parsedData);
-          setIsLoading(false);
-          return;
-        } catch (e) {
-          console.warn('Failed to parse cached diff data', e);
-          localStorage.removeItem(cacheKey);
-        }
-      }
-
-      // Fetch from API if not in cache
-      const data = await cacheInstance.getOrFetch(
-        CACHE_TYPES.DIFF,
-        { fromBranch, toBranch },
-        async () => {
-          try {
-            const response = await fetch(`${config.API_BASE_URL}/api/git/diff?from=${encodeURIComponent(fromBranch)}&to=${encodeURIComponent(toBranch)}`, {
-              method: 'GET',
-              headers: {
-                'Accept': 'application/json',
-              }
-            });
-
-            if (!response.ok) {
-              const errorText = await response.text();
-              let errorMessage;
-              try {
-                const errorData = JSON.parse(errorText);
-                errorMessage = errorData.error || 'Failed to fetch diff data';
-              } catch (e) {
-                errorMessage = `Failed to fetch diff data: ${response.status} ${response.statusText}`;
-              }
-              throw new Error(errorMessage);
-            }
-
-            const responseData = await response.json();
-            if (!responseData.diff) {
-              throw new Error('Invalid diff data received from server');
-            }
-
-            const processedData = {
-              files: responseData.diff.split('\n').filter(Boolean).map(line => ({
-                path: line,
-                content: line
-              }))
-            };
-
-            // Cache the result in localStorage
-            localStorage.setItem(cacheKey, JSON.stringify(processedData));
-            return processedData;
-          } catch (error) {
-            console.error('Error fetching diff:', error);
-            throw error;
-          }
+      const response = await fetch(
+        `${config.API_BASE_URL}/api/git/diff?from=${encodeURIComponent(fromBranch)}&to=${encodeURIComponent(toBranch)}`,
+        {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          },
+          cache: 'no-store'
         }
       );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || 'Failed to fetch diff data';
+        } catch (e) {
+          errorMessage = `Failed to fetch diff data: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      if (!data.files) {
+        throw new Error('Invalid diff data received from server');
+      }
 
       setDiffData(data);
     } catch (error) {
       console.error('Error in fetchDiffData:', error);
       setError(error.message || 'Failed to fetch diff data');
-
-      // Auto-retry up to 3 times with exponential backoff
-      if (retryCount < 3) {
-        const timeout = Math.pow(2, retryCount) * 1000;
-        console.log(`Retrying in ${timeout}ms (attempt ${retryCount + 1}/3)`);
-        setTimeout(() => {
-          setRetryCount(prev => prev + 1);
-          fetchDiffData();
-        }, timeout);
-      }
     } finally {
       setIsLoading(false);
     }
-  }, [fromBranch, toBranch, propsDiffData, retryCount]);
+  }, [fromBranch, toBranch, propsDiffData]);
 
   useEffect(() => {
     setRetryCount(0); // Reset retry count when branches change
