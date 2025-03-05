@@ -15,13 +15,13 @@ const errorHandler = (err, req, res, next) => {
     message: err.message,
     stack: err.stack,
     path: req.path,
-    method: req.method
+    method: req.method,
   });
 
   const status = err.status || 500;
   const response = {
     error: 'Internal Server Error',
-    message: isDevelopment ? err.message : 'Something went wrong'
+    message: isDevelopment ? err.message : 'Something went wrong',
   };
 
   if (isDevelopment) {

@@ -1,11 +1,53 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { setupServer } from 'msw/node';
+import { http, HttpResponse } from 'msw';
 import DiffViewer from '../../presentation/components/diff/DiffViewer';
 import themeReducer from '../../store/themeSlice';
 import { cacheInstance, CACHE_TYPES } from '../../utils/cache';
+import { DiffApiService } from '../mocks/DiffApiService';
+
+// Set up MSW handlers
+const handlers = [
+  http.get('/api/git/diff', ({ request }) => {
+    const url = new URL(request.url);
+    const fromBranch = url.searchParams.get('from');
+    const toBranch = url.searchParams.get('to');
+
+    return HttpResponse.json({
+      diff: 'test diff content',
+      fromBranch,
+      toBranch,
+      repository: '/test/repo'
+    });
+  }),
+
+  http.get('/api/git/diff/analyze', ({ request }) => {
+    const url = new URL(request.url);
+    const fromBranch = url.searchParams.get('from');
+    const toBranch = url.searchParams.get('to');
+
+    return HttpResponse.json({
+      analysis: {
+        complexity: 'low',
+        changes: []
+      },
+      fromBranch,
+      toBranch,
+      repository: '/test/repo'
+    });
+  })
+];
+
+const server = setupServer(...handlers);
+
+// Set up server lifecycle
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+afterAll(() => server.close());
+afterEach(() => server.resetHandlers());
 
 // Mock the cache instance
 vi.mock('../../utils/cache', () => ({
@@ -41,53 +83,145 @@ vi.mock('../../components/RecoveryOptions', () => ({
   )
 }));
 
-// Mock fetch API
-global.fetch = vi.fn();
+// Mock the DiffApiService
+vi.mock('../mocks/DiffApiService', () => ({
+  DiffApiService: vi.fn().mockImplementation(() => new DiffApiService())
+}));
+
+// Create a test store
+const createTestStore = () => configureStore({
+  reducer: {
+    theme: themeReducer
+  }
+});
+
+// Create a test query client
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false
+    }
+  }
+});
 
 describe('DiffViewer', () => {
   let store;
   let queryClient;
 
   beforeEach(() => {
-    store = configureStore({
-      reducer: {
-        theme: themeReducer
-      }
-    });
-    queryClient = new QueryClient();
+    store = createTestStore();
+    queryClient = createTestQueryClient();
+    vi.clearAllMocks();
   });
 
-  const renderWithProviders = (component) => {
+  const renderDiffViewer = (props = {}) => {
     return render(
       <Provider store={store}>
         <QueryClientProvider client={queryClient}>
-          {component}
+          <DiffViewer {...props} />
         </QueryClientProvider>
       </Provider>
     );
   };
 
+  it('should render loading state initially', () => {
+    renderDiffViewer({
+      repositoryId: 'test-repo',
+      fromBranch: 'main',
+      toBranch: 'feature'
+    });
+
+    expect(screen.getByTestId('diff-loading')).toBeInTheDocument();
+  });
+
+  it('should render diff content when loaded', async () => {
+    renderDiffViewer({
+      repositoryId: 'test-repo',
+      fromBranch: 'main',
+      toBranch: 'feature'
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diff-content')).toBeInTheDocument();
+      expect(screen.getByText('Mock diff content')).toBeInTheDocument();
+    });
+  });
+
+  it('should handle error state', async () => {
+    // Mock the DiffApiService to throw an error
+    vi.mocked(DiffApiService).mockImplementationOnce(() => ({
+      getDiff: () => Promise.reject(new Error('Failed to fetch diff'))
+    }));
+
+    renderDiffViewer({
+      repositoryId: 'test-repo',
+      fromBranch: 'main',
+      toBranch: 'feature'
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diff-error')).toBeInTheDocument();
+      expect(screen.getByText('Failed to fetch diff')).toBeInTheDocument();
+    });
+  });
+
   it('should render empty state', () => {
-    renderWithProviders(<DiffViewer fromBranch="" toBranch="" />);
+    renderDiffViewer({ fromBranch: '', toBranch: '' });
     expect(screen.getByText(/select both branches/i)).toBeInTheDocument();
   });
 
   it('should render diff content', () => {
-    renderWithProviders(<DiffViewer fromBranch="main" toBranch="develop" />);
+    renderDiffViewer({ fromBranch: 'main', toBranch: 'develop' });
     expect(screen.getByText(/main → develop/i)).toBeInTheDocument();
   });
 
   it('should handle tab switching', () => {
-    renderWithProviders(<DiffViewer fromBranch="main" toBranch="develop" />);
+    renderDiffViewer({ fromBranch: 'main', toBranch: 'develop' });
     fireEvent.click(screen.getByText('Statistics'));
     expect(screen.getByText(/files changed/i)).toBeInTheDocument();
   });
 
   it('should handle refresh', async () => {
-    renderWithProviders(<DiffViewer fromBranch="main" toBranch="develop" />);
+    renderDiffViewer({ fromBranch: 'main', toBranch: 'develop' });
     const refreshButton = screen.getByText('Refresh');
     fireEvent.click(refreshButton);
     expect(await screen.findByText(/loading diff/i)).toBeInTheDocument();
+  });
+
+  it('should render empty state when no branches selected', () => {
+    renderDiffViewer({ fromBranch: null, toBranch: null, diffData: null });
+    expect(screen.getByText(/Both 'from' and 'to' branches must be selected/i)).toBeInTheDocument();
+  });
+
+  it('should render loading state', () => {
+    renderDiffViewer({
+      fromBranch: 'main',
+      toBranch: 'develop',
+      diffData: null,
+      isLoading: true
+    });
+    expect(screen.getByText(/Analyzing changes/i)).toBeInTheDocument();
+  });
+
+  it('should render diff data', () => {
+    const mockDiffData = {
+      files: [
+        {
+          path: 'test.js',
+          changes: [
+            { type: 'add', content: 'new line', lineNumber: 1 }
+          ]
+        }
+      ]
+    };
+
+    renderDiffViewer({
+      fromBranch: 'main',
+      toBranch: 'develop',
+      diffData: mockDiffData
+    });
+
+    expect(screen.getByText(/Select a file to view differences/i)).toBeInTheDocument();
   });
 });
 

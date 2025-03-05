@@ -48,24 +48,19 @@ function App() {
   useEffect(() => {
     if (repoInfo) {
       localStorage.setItem(STORAGE_KEYS.REPO_INFO, JSON.stringify(repoInfo));
-    } else {
-      localStorage.removeItem(STORAGE_KEYS.REPO_INFO);
     }
   }, [repoInfo]);
 
   // Persist selectedBranches changes
   useEffect(() => {
-    if (selectedBranches.from || selectedBranches.to) {
-      localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCHES, JSON.stringify(selectedBranches));
-    } else {
-      localStorage.removeItem(STORAGE_KEYS.SELECTED_BRANCHES);
-    }
+    localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCHES, JSON.stringify(selectedBranches));
   }, [selectedBranches]);
 
+  // Handle project selection
   const handleProjectSelect = async (dirInfo) => {
-    setError(null);
-    setIsLoading(true);
     console.info('Selecting project:', dirInfo);
+    setIsLoading(true);
+    setError(null);
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/git/repository/set`, {
@@ -99,264 +94,157 @@ function App() {
         from: data.branches[0],
         to: data.current || data.branches[0]
       };
-
       console.info('Setting default branches:', defaultBranches);
       setSelectedBranches(defaultBranches);
 
-    } catch (error) {
-      console.error('Error in handleProjectSelect:', error);
-      setError(error.message);
+      // Clear any previous errors
+      setError(null);
+    } catch (err) {
+      console.error('Error in handleProjectSelect:', err);
+      setError(err.message);
       setRepoInfo(null);
       setSelectedBranches({ from: '', to: '' });
-      // Clear localStorage on error
-      localStorage.removeItem(STORAGE_KEYS.REPO_INFO);
-      localStorage.removeItem(STORAGE_KEYS.SELECTED_BRANCHES);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchDiffData = useCallback(async () => {
-    if (!selectedBranches.from || !selectedBranches.to) return;
+  // Handle branch selection
+  const handleBranchesChange = useCallback(({ from, to }) => {
+    setSelectedBranches({ from, to });
+  }, []);
 
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/diff`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fromBranch: selectedBranches.from,
-          toBranch: selectedBranches.to,
-        }),
-      });
-
-      if (!response || !response.ok) {
-        const errorData = response ? await response.json().catch(() => ({ error: 'Unknown error' })) : { error: 'No response received' };
-        throw new Error(errorData.error || 'Failed to fetch diff');
+  // Fetch diff data when branches change
+  useEffect(() => {
+    const fetchDiff = async () => {
+      if (!selectedBranches.from || !selectedBranches.to) {
+        setDiffData(null);
+        return;
       }
 
-      const data = await response.json();
-      setDiffData(data);
-    } catch (error) {
-      console.error('Error fetching diff:', error);
-      setError(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedBranches]);
+      setIsLoading(true);
+      setError(null);
 
-  useEffect(() => {
-    if (selectedBranches.from && selectedBranches.to) {
-      fetchDiffData();
-    }
-  }, [selectedBranches, fetchDiffData]);
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/git/diff?from=${selectedBranches.from}&to=${selectedBranches.to}`);
 
-  // Update navigation component to use Link and handle active state
-  const Navigation = () => {
-    const location = useLocation();
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+        if (!response.ok) {
+          throw new Error('Failed to fetch diff');
+        }
 
-    const toggleMobileMenu = () => {
-      setMobileMenuOpen(!mobileMenuOpen);
+        const data = await response.json();
+        setDiffData(data);
+      } catch (err) {
+        console.error('Error fetching diff:', err);
+        setError(err.message);
+        setDiffData(null);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    return (
-      <nav className="app-nav">
-        <div className="nav-container">
-          <button
-            className="mobile-menu-toggle"
-            onClick={toggleMobileMenu}
-            aria-label="Toggle menu"
-            data-testid="mobile-menu-button"
-          >
-            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
-              {mobileMenuOpen ? (
-                <path d="M18 6L6 18M6 6l12 12" />
-              ) : (
-                <>
-                  <line x1="3" y1="12" x2="21" y2="12"></line>
-                  <line x1="3" y1="6" x2="21" y2="6"></line>
-                  <line x1="3" y1="18" x2="21" y2="18"></line>
-                </>
-              )}
-            </svg>
-          </button>
+    fetchDiff();
+  }, [selectedBranches]);
 
-          <ul className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}
-            data-testid="mobile-menu">
-            <li>
-              <Link
-                to="/"
-                className={location.pathname === '/' ? 'active' : ''}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Diff View
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/impact"
-                className={location.pathname === '/impact' ? 'active' : ''}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Impact Analysis
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/quality"
-                className={location.pathname === '/quality' ? 'active' : ''}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Quality Check
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/review"
-                className={location.pathname === '/review' ? 'active' : ''}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Review
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/ai-analysis"
-                className={location.pathname === '/ai-analysis' ? 'active' : ''}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                AI Analysis
-              </Link>
-            </li>
-          </ul>
-
-          <div className="nav-end">
-            <ThemeSelector />
-            <ThemeToggle />
-          </div>
-        </div>
-      </nav>
-    );
+  // Toggle mobile menu
+  const toggleMobileMenu = () => {
+    console.log('Mobile menu state before:', isMobileMenuOpen);
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+    console.log('Mobile menu state after:', !isMobileMenuOpen);
   };
 
   return (
-    <Provider store={store}>
-      <PersistGate loading={<LoadingIndicator />} persistor={persistor}>
-        <ErrorBoundary>
-          <ThemeProvider>
-            <Suspense fallback={<LoadingIndicator />}>
-              <Router>
-                <div className="app">
-                  <header className="app-header">
-                    <div className="header-content">
-                      <div className="logo">
-                        <span className="logo-icon">🐰</span>
-                        <h1>Local CodeRabbit</h1>
-                      </div>
-                      <p className="header-subtitle">PR Review Tool for Local Git Repositories</p>
-                    </div>
-                  </header>
+    <Router>
+      <div className="app">
+        <header className="app-header">
+          <div className="header-content">
+            <div className="logo-container">
+              <Link to="/" className="logo">Local Rabbit</Link>
+            </div>
+            <button
+              className="mobile-menu-toggle"
+              onClick={toggleMobileMenu}
+              aria-label="Toggle navigation menu"
+            >
+              <span className="menu-icon"></span>
+            </button>
+            <nav>
+              <ul className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+                <li><Link to="/">Diff</Link></li>
+                <li><Link to="/impact">Impact</Link></li>
+                <li><Link to="/quality">Quality</Link></li>
+                <li><ThemeToggle /></li>
+                <li><ThemeSelector /></li>
+              </ul>
+            </nav>
+          </div>
+        </header>
 
-                  <ProjectSelector
-                    repoInfo={repoInfo}
-                    onProjectSelect={handleProjectSelect}
-                    selectedBranches={selectedBranches}
-                    onBranchesChange={setSelectedBranches}
+        <main className="app-content">
+          <div className="project-selector-container">
+            <ProjectSelector
+              onProjectSelect={handleProjectSelect}
+              onBranchesChange={handleBranchesChange}
+              selectedBranches={selectedBranches}
+              repoInfo={repoInfo}
+              isLoading={isLoading}
+              error={error}
+            />
+          </div>
+
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
+
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingIndicator />}>
+              <Routes>
+                <Route path="/" element={
+                  <DiffViewer
+                    fromBranch={selectedBranches.from}
+                    toBranch={selectedBranches.to}
+                    diffData={diffData}
                     isLoading={isLoading}
                   />
-
-                  <Navigation />
-
-                  {error && (
-                    <div className="error-message" role="alert" data-testid="error-message">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="8" x2="12" y2="12" />
-                        <line x1="12" y1="16" x2="12" y2="16" />
-                      </svg>
-                      {error}
-                    </div>
-                  )}
-
-                  {isLoading && !diffData && (
-                    <div className="loading-message" role="status" data-testid="loading-indicator">
-                      <div className="loading-spinner" aria-hidden="true"></div>
-                      Loading repository information...
-                    </div>
-                  )}
-
-                  {repoInfo && (
-                    <main className="app-main">
-                      <div className="content-container">
-                        <Routes>
-                          <Route
-                            path="/"
-                            element={
-                              <DiffViewer
-                                diffData={diffData}
-                                isLoading={isLoading}
-                                fromBranch={selectedBranches.from}
-                                toBranch={selectedBranches.to}
-                              />
-                            }
-                          />
-                          <Route
-                            path="/impact"
-                            element={
-                              <ImpactView
-                                diffData={diffData}
-                                fromBranch={selectedBranches.from}
-                                toBranch={selectedBranches.to}
-                              />
-                            }
-                          />
-                          <Route
-                            path="/quality"
-                            element={
-                              <QualityView
-                                diffData={diffData}
-                                fromBranch={selectedBranches.from}
-                                toBranch={selectedBranches.to}
-                              />
-                            }
-                          />
-                          <Route
-                            path="/review"
-                            element={
-                              <ReviewPanel
-                                diffData={diffData}
-                                fromBranch={selectedBranches.from}
-                                toBranch={selectedBranches.to}
-                              />
-                            }
-                          />
-                          <Route
-                            path="/ai-analysis"
-                            element={
-                              <AIAnalyzer
-                                diffData={diffData}
-                                fromBranch={selectedBranches.from}
-                                toBranch={selectedBranches.to}
-                              />
-                            }
-                          />
-                        </Routes>
-                      </div>
-                    </main>
-                  )}
-                </div>
-              </Router>
+                } />
+                <Route path="/impact" element={
+                  <ImpactView
+                    fromBranch={selectedBranches.from}
+                    toBranch={selectedBranches.to}
+                    diffData={diffData}
+                    isLoading={isLoading}
+                  />
+                } />
+                <Route path="/quality" element={
+                  <QualityView
+                    fromBranch={selectedBranches.from}
+                    toBranch={selectedBranches.to}
+                    diffData={diffData}
+                    isLoading={isLoading}
+                  />
+                } />
+              </Routes>
             </Suspense>
-          </ThemeProvider>
-        </ErrorBoundary>
+          </ErrorBoundary>
+
+          <ReviewPanel />
+          <AIAnalyzer />
+        </main>
+      </div>
+    </Router>
+  );
+}
+
+export default function AppWrapper() {
+  return (
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
       </PersistGate>
     </Provider>
   );
 }
-
-export default App;

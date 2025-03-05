@@ -1,4 +1,6 @@
-const { describe, expect, it, jest } = require('@jest/globals');
+const {
+  describe, expect, it, jest,
+} = require('@jest/globals');
 const requestLogger = require('../../../src/middleware/requestLogger');
 const logger = require('../../../src/utils/logger');
 
@@ -57,7 +59,7 @@ describe('Request Logger Middleware', () => {
 
     expect(logger.warn).toHaveBeenCalledWith(
       'POST /api/test 404 - 100ms',
-      expect.any(Object)
+      expect.any(Object),
     );
 
     jest.useRealTimers();

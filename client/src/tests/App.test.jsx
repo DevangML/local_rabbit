@@ -1,9 +1,60 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { PersistGate } from 'redux-persist/integration/react';
-import { store, persistor } from '../store';
+import { configureStore } from '@reduxjs/toolkit';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { setupServer } from 'msw/node';
+import { http, HttpResponse } from 'msw';
 import App from '../App';
+import themeReducer from '../store/themeSlice';
+import { DiffApiService } from './mocks/DiffApiService';
+
+// Set up MSW handlers
+const handlers = [
+  http.get('/api/git/repositories', () => {
+    return HttpResponse.json([
+      { id: 1, name: 'Test Repo', path: '/test/repo' }
+    ]);
+  }),
+
+  http.post('/api/git/repository/set', () => {
+    return HttpResponse.json({
+      name: 'Test Repo',
+      path: '/test/repo',
+      branches: ['main', 'develop', 'feature/test'],
+      current: 'main'
+    });
+  }),
+
+  http.get('/api/git/repository/branches', () => {
+    return HttpResponse.json([
+      'main',
+      'develop',
+      'feature/test'
+    ]);
+  }),
+
+  http.get('/api/git/diff', ({ request }) => {
+    const url = new URL(request.url);
+    const fromBranch = url.searchParams.get('from');
+    const toBranch = url.searchParams.get('to');
+
+    return HttpResponse.json({
+      diff: 'test diff content',
+      fromBranch,
+      toBranch,
+      repository: '/test/repo'
+    });
+  })
+];
+
+// Set up MSW server
+const server = setupServer(...handlers);
+
+// Set up server lifecycle
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+afterAll(() => server.close());
+afterEach(() => server.resetHandlers());
 
 // Mock the components used in App
 vi.mock('react-router-dom', async () => {
@@ -48,9 +99,13 @@ vi.mock('../components/ProjectSelector', () => ({
 vi.mock('../components/DiffViewer', () => ({
   default: ({ fromBranch, toBranch }) => (
     <div data-testid="diff-viewer">
-      Diff Viewer: {fromBranch} to {toBranch}
+      Diff Viewer: {fromBranch} → {toBranch}
     </div>
   )
+}));
+
+vi.mock('../infrastructure/api/services/DiffApiService', () => ({
+  DiffApiService: vi.fn().mockImplementation(() => new DiffApiService())
 }));
 
 vi.mock('../components/ImpactView', () => ({
@@ -89,7 +144,24 @@ vi.mock('../components/ErrorBoundary', () => ({
 global.fetch = vi.fn();
 
 describe('App Component', () => {
+  let store;
+  let queryClient;
+
   beforeEach(() => {
+    store = configureStore({
+      reducer: {
+        theme: themeReducer
+      }
+    });
+
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false
+        }
+      }
+    });
+
     vi.clearAllMocks();
 
     // Reset fetch mock
@@ -121,17 +193,22 @@ describe('App Component', () => {
   const renderApp = () => {
     return render(
       <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
+        <QueryClientProvider client={queryClient}>
           <App />
-        </PersistGate>
+        </QueryClientProvider>
       </Provider>
     );
   };
 
+  it('renders without crashing', () => {
+    renderApp();
+    expect(screen.getByTestId('browser-router')).toBeInTheDocument();
+  });
+
   it('renders the app header and navigation', () => {
     renderApp();
 
-    expect(screen.getByText(/Local CodeRabbit/i)).toBeInTheDocument();
+    expect(screen.getByText('Local Rabbit')).toBeInTheDocument();
     expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
     expect(screen.getByTestId('theme-selector')).toBeInTheDocument();
   });
@@ -145,37 +222,35 @@ describe('App Component', () => {
 
   it('handles project selection', async () => {
     renderApp();
-
-    // Mock successful API response
-    fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ branches: ['main', 'develop', 'feature'] })
-    });
-
-    // Select a project
-    fireEvent.click(screen.getByTestId('select-project-btn'));
+    const selectProjectBtn = screen.getByTestId('select-project-btn');
+    fireEvent.click(selectProjectBtn);
 
     await waitFor(() => {
-      // Should save to localStorage
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        'localCodeRabbit_repoInfo',
-        expect.any(String)
-      );
+      expect(screen.getByText(/Test Repo/)).toBeInTheDocument();
     });
   });
 
   it('handles branch selection', async () => {
     renderApp();
-
-    // Select branches
-    fireEvent.click(screen.getByTestId('select-branches-btn'));
+    const selectBranchesBtn = screen.getByTestId('select-branches-btn');
+    fireEvent.click(selectBranchesBtn);
 
     await waitFor(() => {
-      // Should save to localStorage
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        'localCodeRabbit_selectedBranches',
-        expect.any(String)
-      );
+      expect(screen.getByText(/main → feature/)).toBeInTheDocument();
+    });
+  });
+
+  it('shows diff viewer when branches are selected', async () => {
+    renderApp();
+    const selectProjectBtn = screen.getByTestId('select-project-btn');
+    const selectBranchesBtn = screen.getByTestId('select-branches-btn');
+
+    fireEvent.click(selectProjectBtn);
+    fireEvent.click(selectBranchesBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('diff-viewer')).toBeInTheDocument();
+      expect(screen.getByText(/main → feature/)).toBeInTheDocument();
     });
   });
 
@@ -240,8 +315,8 @@ describe('App Component', () => {
     renderApp();
 
     // Get elements
-    const menuButton = screen.getByTestId('mobile-menu-button');
-    const menu = screen.getByTestId('mobile-menu');
+    const menuButton = screen.getByRole('button', { name: /Toggle navigation menu/i });
+    const menu = screen.getByRole('navigation').querySelector('.nav-links');
 
     // Initially menu should not have mobile-open class
     expect(menu).not.toHaveClass('mobile-open');
@@ -271,12 +346,22 @@ describe('App Component', () => {
     renderApp();
 
     // Mock loading state
-    fetch.mockImplementationOnce(() => new Promise(resolve => setTimeout(resolve, 100)));
+    server.use(
+      http.post('/api/git/repository/set', async () => {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        return HttpResponse.json({
+          name: 'Test Repo',
+          path: '/test/repo',
+          branches: ['main', 'develop', 'feature/test'],
+          current: 'main'
+        });
+      })
+    );
 
     // Select a project (which will trigger loading state)
     fireEvent.click(screen.getByTestId('select-project-btn'));
 
     // Should show loading indicator
-    expect(screen.getByTestId('loading-indicator')).toBeInTheDocument();
+    expect(await screen.findByRole('progressbar')).toBeInTheDocument();
   });
 });

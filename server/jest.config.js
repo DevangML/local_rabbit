@@ -1,33 +1,28 @@
 module.exports = {
   testEnvironment: 'node',
-  coverageDirectory: 'coverage',
   collectCoverageFrom: [
-    'src/**/*.js',
-    '!src/index.js',
-    '!src/config/**/*.js'
+    'src/**/*.{js,jsx}',
+    '!src/**/*.test.{js,jsx}',
+    '!src/config/**',
+    '!**/node_modules/**',
+  ],
+  coverageReporters: ['json', 'lcov', 'text', 'clover', 'json-summary'],
+  coverageDirectory: 'coverage',
+  testMatch: [
+    '**/tests/**/*.test.js',
+    '**/src/**/*.test.js',
   ],
   coverageThreshold: {
     global: {
+      statements: 85,
       branches: 85,
       functions: 85,
       lines: 85,
-      statements: 85
-    }
+    },
   },
-  testMatch: [
-    '**/tests/**/*.test.js'
-  ],
-  setupFilesAfterEnv: ['./tests/setup.js'],
   testPathIgnorePatterns: [
     '/node_modules/',
-    '/coverage/'
+    '/dist/',
   ],
-  coverageReporters: [
-    'text',
-    'lcov',
-    'json',
-    'html',
-    ['text-summary', { file: './coverage/summary.txt' }]
-  ],
-  verbose: true
+  moduleDirectories: ['node_modules', 'src'],
 };

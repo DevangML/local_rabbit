@@ -2,7 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './BranchSelector.css';
 
-const BranchSelector = ({ branches, selectedBranch, onSelect, label, isLoading }) => {
+const BranchSelector = ({
+  branches = [],
+  selectedBranch = null,
+  onSelect,
+  label,
+  isLoading = false
+}) => {
   if (!branches || branches.length === 0) {
     return <div className="branch-selector-empty">No branches available</div>;
   }
@@ -33,11 +39,6 @@ BranchSelector.propTypes = {
   onSelect: PropTypes.func.isRequired,
   label: PropTypes.string.isRequired,
   isLoading: PropTypes.bool
-};
-
-BranchSelector.defaultProps = {
-  selectedBranch: null,
-  isLoading: false
 };
 
 export default BranchSelector; 

@@ -8,8 +8,8 @@ class SecureGitService {
     this.currentRepoPath = null;
     this.allowedDirectories = [
       'Documents', 'Projects', 'Development', 'Code',
-      'Github', 'repos', 'git', 'workspace', 'dev', 'Desktop'
-    ].map(dir => path.join(os.homedir(), dir));
+      'Github', 'repos', 'git', 'workspace', 'dev', 'Desktop',
+    ].map((dir) => path.join(os.homedir(), dir));
   }
 
   setRepositoryPath(repoPath) {
@@ -31,9 +31,7 @@ class SecureGitService {
   }
 
   isPathAllowed(pathToCheck) {
-    return this.allowedDirectories.some(dir =>
-      pathToCheck.startsWith(dir) && !pathToCheck.includes('..')
-    );
+    return this.allowedDirectories.some((dir) => pathToCheck.startsWith(dir) && !pathToCheck.includes('..'));
   }
 
   async isValidRepo(repoPath) {
@@ -51,8 +49,8 @@ class SecureGitService {
     const repos = [];
     const searchDirs = [
       'Documents', 'Projects', 'Development', 'Code',
-      'Github', 'repos', 'git', 'workspace', 'dev', 'Desktop'
-    ].map(dir => path.join(os.homedir(), dir));
+      'Github', 'repos', 'git', 'workspace', 'dev', 'Desktop',
+    ].map((dir) => path.join(os.homedir(), dir));
 
     for (const dir of searchDirs) {
       try {
@@ -71,10 +69,10 @@ class SecureGitService {
     try {
       const entries = await fs.readdir(dir, { withFileTypes: true });
 
-      if (entries.some(entry => entry.name === '.git')) {
+      if (entries.some((entry) => entry.name === '.git')) {
         repos.push({
           path: dir,
-          name: path.basename(dir)
+          name: path.basename(dir),
         });
         return;
       }

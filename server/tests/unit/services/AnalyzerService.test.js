@@ -22,7 +22,7 @@ describe('AnalyzerService', () => {
     it('should calculate complexity correctly', () => {
       const file = {
         additions: 5,
-        deletions: 3
+        deletions: 3,
       };
       const result = AnalyzerService.calculateComplexity(file);
       expect(result.score).toBeDefined();
@@ -89,7 +89,7 @@ describe('AnalyzerService', () => {
     it('should calculate low complexity correctly', () => {
       const result = AnalyzerService.calculateComplexity({
         additions: 3,
-        deletions: 2
+        deletions: 2,
       });
       expect(result.score).toBe(1);
     });
@@ -97,7 +97,7 @@ describe('AnalyzerService', () => {
     it('should calculate medium complexity correctly', () => {
       const result = AnalyzerService.calculateComplexity({
         additions: 20,
-        deletions: 15
+        deletions: 15,
       });
       expect(result.score).toBe(2);
     });
@@ -105,7 +105,7 @@ describe('AnalyzerService', () => {
     it('should calculate high complexity correctly', () => {
       const result = AnalyzerService.calculateComplexity({
         additions: 30,
-        deletions: 25
+        deletions: 25,
       });
       expect(result.score).toBe(3);
     });

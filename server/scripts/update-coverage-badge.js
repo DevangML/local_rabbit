@@ -4,19 +4,19 @@ const path = require('path');
 function getFormattedCoverage() {
   const coveragePath = path.join(__dirname, '../coverage/coverage-summary.json');
   const coverage = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
-  const total = coverage.total;
+  const { total } = coverage;
 
   return {
     statements: Math.floor(total.statements.pct),
     branches: Math.floor(total.branches.pct),
     functions: Math.floor(total.functions.pct),
-    lines: Math.floor(total.lines.pct)
+    lines: Math.floor(total.lines.pct),
   };
 }
 
 function generateBadge(coverage) {
   const avgCoverage = Math.floor(
-    (coverage.statements + coverage.branches + coverage.functions + coverage.lines) / 4
+    (coverage.statements + coverage.branches + coverage.functions + coverage.lines) / 4,
   );
 
   const color = avgCoverage >= 90 ? 'brightgreen'

@@ -1,4 +1,6 @@
-const { describe, expect, it, jest } = require('@jest/globals');
+const {
+  describe, expect, it, jest,
+} = require('@jest/globals');
 const diffController = require('../../../src/controllers/diffController');
 const GitService = require('../../../src/services/GitService');
 const AnalyzerService = require('../../../src/services/AnalyzerService');

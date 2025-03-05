@@ -1,4 +1,6 @@
-const { describe, expect, it, jest, beforeEach } = require('@jest/globals');
+const {
+  describe, expect, it, jest, beforeEach,
+} = require('@jest/globals');
 const path = require('path');
 const fs = require('fs').promises;
 const GitService = require('../../../src/services/GitService');
@@ -47,8 +49,8 @@ describe('GitService', () => {
       gitService.git = {
         branch: jest.fn().mockResolvedValue({
           all: ['main', 'develop'],
-          current: 'main'
-        })
+          current: 'main',
+        }),
       };
 
       const branches = await gitService.getBranches();
@@ -59,8 +61,8 @@ describe('GitService', () => {
     it('should get current branch', async () => {
       gitService.git = {
         branch: jest.fn().mockResolvedValue({
-          current: 'main'
-        })
+          current: 'main',
+        }),
       };
 
       const branch = await gitService.getCurrentBranch();
@@ -69,7 +71,7 @@ describe('GitService', () => {
 
     it('should get diff between branches', async () => {
       gitService.git = {
-        diff: jest.fn().mockResolvedValue('test diff output')
+        diff: jest.fn().mockResolvedValue('test diff output'),
       };
 
       const diff = await gitService.getDiff('main', 'develop');
@@ -80,7 +82,7 @@ describe('GitService', () => {
   describe('error handling', () => {
     it('should handle git command errors', async () => {
       gitService.git = {
-        branch: jest.fn().mockRejectedValue(new Error('Git error'))
+        branch: jest.fn().mockRejectedValue(new Error('Git error')),
       };
 
       await expect(gitService.getBranches()).rejects.toThrow('Git error');
@@ -109,7 +111,7 @@ describe('GitService', () => {
       expect(writeFile).toHaveBeenCalledWith(
         expect.any(String),
         JSON.stringify({ repoPath: '/test/repo' }),
-        'utf8'
+        'utf8',
       );
     });
 
@@ -125,7 +127,7 @@ describe('GitService', () => {
   describe('utility methods', () => {
     it('should check if path is git repository', async () => {
       gitService.git = {
-        checkIsRepo: jest.fn().mockResolvedValue(true)
+        checkIsRepo: jest.fn().mockResolvedValue(true),
       };
 
       const isRepo = await gitService.isGitRepository('/test/path');
@@ -134,7 +136,7 @@ describe('GitService', () => {
 
     it('should handle non-git directories', async () => {
       gitService.git = {
-        checkIsRepo: jest.fn().mockResolvedValue(false)
+        checkIsRepo: jest.fn().mockResolvedValue(false),
       };
 
       const isRepo = await gitService.isGitRepository('/test/path');

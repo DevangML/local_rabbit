@@ -1,4 +1,3 @@
-
 /**
  * Advanced linting script with detailed reporting
  * Run with: node scripts/lint.js [--fix] [--staged]

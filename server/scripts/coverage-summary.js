@@ -20,7 +20,7 @@ function calculateTotalCoverage(coverage) {
   let totalFunctions = 0;
   let coveredFunctions = 0;
 
-  Object.values(coverage).forEach(file => {
+  Object.values(coverage).forEach((file) => {
     // Statements
     totalStatements += file.s.total;
     coveredStatements += file.s.covered;
@@ -35,7 +35,7 @@ function calculateTotalCoverage(coverage) {
   return {
     statements: (coveredStatements / totalStatements * 100).toFixed(2),
     branches: (coveredBranches / totalBranches * 100).toFixed(2),
-    functions: (coveredFunctions / totalFunctions * 100).toFixed(2)
+    functions: (coveredFunctions / totalFunctions * 100).toFixed(2),
   };
 }
 

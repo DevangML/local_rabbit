@@ -1,4 +1,6 @@
-const { describe, expect, it, jest } = require('@jest/globals');
+const {
+  describe, expect, it, jest,
+} = require('@jest/globals');
 const path = require('path');
 const os = require('os');
 const fs = require('fs').promises;
@@ -60,11 +62,11 @@ describe('SecureGitService', () => {
       // Verify all found repos are in allowed directories
       const allowedDirs = [
         'Documents', 'Projects', 'Development', 'Code',
-        'Github', 'repos', 'git', 'workspace', 'dev', 'Desktop'
-      ].map(dir => path.join(os.homedir(), dir));
+        'Github', 'repos', 'git', 'workspace', 'dev', 'Desktop',
+      ].map((dir) => path.join(os.homedir(), dir));
 
-      repos.forEach(repo => {
-        const isInAllowedDir = allowedDirs.some(dir => repo.path.startsWith(dir));
+      repos.forEach((repo) => {
+        const isInAllowedDir = allowedDirs.some((dir) => repo.path.startsWith(dir));
         expect(isInAllowedDir).toBe(true);
       });
     });
@@ -85,7 +87,7 @@ describe('SecureGitService', () => {
   describe('searchDirectory', () => {
     it('should handle permission errors', async () => {
       const mockFs = {
-        readdir: jest.fn().mockRejectedValue(new Error('Permission denied'))
+        readdir: jest.fn().mockRejectedValue(new Error('Permission denied')),
       };
       jest.spyOn(fs, 'readdir').mockImplementation(mockFs.readdir);
 
@@ -97,8 +99,8 @@ describe('SecureGitService', () => {
     it('should respect max depth', async () => {
       const mockFs = {
         readdir: jest.fn().mockResolvedValue([
-          { name: 'subdir', isDirectory: () => true }
-        ])
+          { name: 'subdir', isDirectory: () => true },
+        ]),
       };
       jest.spyOn(fs, 'readdir').mockImplementation(mockFs.readdir);
 
@@ -111,8 +113,8 @@ describe('SecureGitService', () => {
       const mockFs = {
         readdir: jest.fn().mockResolvedValue([
           { name: '.hidden', isDirectory: () => true },
-          { name: 'visible', isDirectory: () => true }
-        ])
+          { name: 'visible', isDirectory: () => true },
+        ]),
       };
       jest.spyOn(fs, 'readdir').mockImplementation(mockFs.readdir);
 
@@ -185,7 +187,7 @@ describe('SecureGitService', () => {
 
     it('should validate git repository existence', async () => {
       const mockFs = {
-        access: jest.fn().mockResolvedValue(undefined)
+        access: jest.fn().mockResolvedValue(undefined),
       };
       jest.spyOn(fs, 'access').mockImplementation(mockFs.access);
 
@@ -196,7 +198,7 @@ describe('SecureGitService', () => {
 
     it('should reject non-git directories', async () => {
       const mockFs = {
-        access: jest.fn().mockRejectedValue(new Error('ENOENT'))
+        access: jest.fn().mockRejectedValue(new Error('ENOENT')),
       };
       jest.spyOn(fs, 'access').mockImplementation(mockFs.access);
 

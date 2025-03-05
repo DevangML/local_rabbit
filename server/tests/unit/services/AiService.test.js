@@ -1,4 +1,6 @@
-const { describe, expect, it, jest, beforeEach } = require('@jest/globals');
+const {
+  describe, expect, it, jest, beforeEach,
+} = require('@jest/globals');
 const AiService = require('../../../src/services/AiService');
 const config = require('../../../src/config');
 
@@ -43,7 +45,7 @@ describe('AiService', () => {
 
     it('should handle AI service errors', async () => {
       aiService.model = {
-        generateContent: jest.fn().mockRejectedValue(new Error('AI error'))
+        generateContent: jest.fn().mockRejectedValue(new Error('AI error')),
       };
 
       await expect(aiService.analyzeDiff('test diff'))
@@ -70,7 +72,7 @@ describe('AiService', () => {
   describe('error handling', () => {
     it('should handle network errors', async () => {
       aiService.model = {
-        generateContent: jest.fn().mockRejectedValue(new Error('Network error'))
+        generateContent: jest.fn().mockRejectedValue(new Error('Network error')),
       };
 
       await expect(aiService.analyzeDiff('test'))
@@ -79,7 +81,7 @@ describe('AiService', () => {
 
     it('should handle rate limiting', async () => {
       aiService.model = {
-        generateContent: jest.fn().mockRejectedValue(new Error('Rate limit exceeded'))
+        generateContent: jest.fn().mockRejectedValue(new Error('Rate limit exceeded')),
       };
 
       await expect(aiService.analyzeDiff('test'))

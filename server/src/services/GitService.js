@@ -294,7 +294,7 @@ class GitService {
     try {
       return await this.git.log({
         maxCount,
-        branch
+        branch,
       });
     } catch (error) {
       logger.error('Error getting commit history:', error);

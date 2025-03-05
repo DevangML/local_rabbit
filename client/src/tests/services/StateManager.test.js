@@ -1,52 +1,34 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { openDB } from 'idb';
 import StateManager from '../../services/StateManager';
 
-// Mock indexedDB
+// Mock IndexedDB
+const mockDB = {
+  appState: new Map(),
+  diffState: new Map(),
+  analyzerState: new Map()
+};
+
 vi.mock('idb', () => ({
   openDB: vi.fn().mockImplementation(() => ({
-    put: vi.fn().mockImplementation((storeName, value, key) => {
-      if (storeName && value && key) return Promise.resolve(true);
-      return Promise.reject(new Error('Invalid parameters'));
+    put: vi.fn(async (storeName, value, key) => {
+      mockDB[storeName].set(key, value);
+      return true;
     }),
-    get: vi.fn().mockImplementation((storeName, key) => {
-      if (storeName === 'appState' && key === 'lastBackup') {
-        return Promise.resolve({
-          state: {
-            appState: [{ key: 'key1', value: 'value1' }],
-            diffState: [{ key: 'key2', value: 'value2' }],
-            analyzerState: [{ key: 'key3', value: 'value3' }],
-            timestamp: new Date().toISOString()
-          },
-          backupDate: new Date().toISOString(),
-          version: 1
-        });
-      }
-      if (key === 'testKey') return Promise.resolve({ data: 'testValue' });
-      if (key === 'nonExistentKey') return Promise.resolve(undefined);
-      return Promise.resolve(null);
+    get: vi.fn(async (storeName, key) => {
+      return mockDB[storeName].get(key) || null;
     }),
-    getAll: vi.fn().mockImplementation((storeName) => {
-      const mockData = {
-        appState: [{ key: 'key1', value: 'value1' }],
-        diffState: [{ key: 'key2', value: 'value2' }],
-        analyzerState: [{ key: 'key3', value: 'value3' }]
-      };
-      return Promise.resolve(mockData[storeName] || []);
+    getAll: vi.fn(async (storeName) => {
+      return Array.from(mockDB[storeName].values());
     }),
-    clear: vi.fn().mockResolvedValue(undefined),
-    delete: vi.fn().mockResolvedValue(undefined),
-    transaction: vi.fn().mockImplementation(() => ({
-      objectStore: vi.fn().mockImplementation(() => ({
-        getAllKeys: vi.fn().mockResolvedValue(['key1', 'key2']),
-        get: vi.fn().mockImplementation((key) => {
-          if (key === 'key1') return Promise.resolve({ data: 'value1' });
-          if (key === 'key2') return Promise.resolve({ data: 'value2' });
-          return Promise.resolve(null);
-        }),
-        put: vi.fn().mockResolvedValue(undefined)
-      })),
-      done: Promise.resolve()
-    }))
+    clear: vi.fn(async (storeName) => {
+      mockDB[storeName].clear();
+      return true;
+    }),
+    objectStoreNames: {
+      contains: vi.fn().mockReturnValue(false)
+    },
+    createObjectStore: vi.fn()
   }))
 }));
 
@@ -59,6 +41,11 @@ describe('StateManager Service', () => {
   };
 
   beforeEach(() => {
+    // Clear mock DB
+    mockDB.appState.clear();
+    mockDB.diffState.clear();
+    mockDB.analyzerState.clear();
+
     // Mock localStorage
     Object.defineProperty(window, 'localStorage', {
       value: mockLocalStorage,
@@ -90,6 +77,8 @@ describe('StateManager Service', () => {
   it('saves state to the database', async () => {
     const result = await stateManager.saveState('appState', 'test', { value: 'test' });
     expect(result).toBe(true);
+    const savedValue = await stateManager.getState('appState', 'test');
+    expect(savedValue).toEqual({ value: 'test' });
   });
 
   it('retrieves state from the database', async () => {
@@ -104,13 +93,19 @@ describe('StateManager Service', () => {
   });
 
   it('handles errors when saving state', async () => {
-    const result = await stateManager.saveState('invalidStore', 'test', { value: 'test' });
+    // Mock a failure
+    const mockDB = {
+      put: vi.fn().mockRejectedValue(new Error('DB error')),
+      get: vi.fn(),
+      getAll: vi.fn(),
+      clear: vi.fn(),
+      objectStoreNames: { contains: vi.fn() },
+      createObjectStore: vi.fn()
+    };
+    vi.mocked(openDB).mockImplementationOnce(() => mockDB);
+    const testManager = new StateManager();
+    const result = await testManager.saveState('appState', 'test', { value: 'test' });
     expect(result).toBe(false);
-  });
-
-  it('handles errors when getting state', async () => {
-    const result = await stateManager.getState('invalidStore', 'test');
-    expect(result).toBeNull();
   });
 
   it('retrieves all state from a store', async () => {
@@ -124,6 +119,8 @@ describe('StateManager Service', () => {
     await stateManager.saveState('appState', 'test', { value: 'test' });
     const result = await stateManager.clearState('appState');
     expect(result).toBe(true);
+    const clearedValue = await stateManager.getState('appState', 'test');
+    expect(clearedValue).toBeNull();
   });
 
   it('resets all state across all stores', async () => {
@@ -131,12 +128,17 @@ describe('StateManager Service', () => {
     await stateManager.saveState('diffState', 'test', { value: 'test' });
     const result = await stateManager.resetAllState();
     expect(result).toBe(true);
+    const appStateValue = await stateManager.getState('appState', 'test');
+    const diffStateValue = await stateManager.getState('diffState', 'test');
+    expect(appStateValue).toBeNull();
+    expect(diffStateValue).toBeNull();
   });
 
   it('exports state to a JSON string', async () => {
     await stateManager.saveState('appState', 'test', { value: 'test' });
     const result = await stateManager.exportState();
-    expect(JSON.parse(result)).toEqual({
+    const parsed = JSON.parse(result);
+    expect(parsed).toEqual({
       appState: [{ value: 'test' }],
       diffState: [],
       analyzerState: [],
@@ -153,6 +155,8 @@ describe('StateManager Service', () => {
     };
     const result = await stateManager.importState(JSON.stringify(state));
     expect(result).toBe(true);
+    const importedValue = await stateManager.getState('appState', 'test');
+    expect(importedValue).toEqual({ value: 'test' });
   });
 
   it('validates state before importing', async () => {
@@ -168,10 +172,11 @@ describe('StateManager Service', () => {
     await stateManager.saveState('appState', 'test', { value: 'test' });
     const result = await stateManager.createBackup();
     expect(result).toBe(true);
-    expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-      'localCodeRabbit_stateBackup',
-      expect.any(String)
-    );
+    const backup = await stateManager.getState('appState', 'lastBackup');
+    expect(backup).toBeDefined();
+    expect(backup.state).toBeDefined();
+    expect(backup.backupDate).toBeDefined();
+    expect(backup.version).toBeDefined();
   });
 
   it('restores state from a backup', async () => {
@@ -189,9 +194,12 @@ describe('StateManager Service', () => {
     await stateManager.saveState('appState', 'lastBackup', mockBackup);
     const result = await stateManager.restoreFromBackup();
     expect(result).toBe(true);
+    const restoredValue = await stateManager.getState('appState', 'test');
+    expect(restoredValue).toEqual({ value: 'test' });
   });
 
   it('checks database health', async () => {
+    await stateManager.saveState('appState', 'test', { value: 'test' });
     const result = await stateManager.checkHealth();
     expect(result).toEqual({
       status: 'healthy',

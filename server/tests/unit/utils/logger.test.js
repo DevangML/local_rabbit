@@ -1,4 +1,6 @@
-const { describe, expect, it, jest } = require('@jest/globals');
+const {
+  describe, expect, it, jest,
+} = require('@jest/globals');
 const winston = require('winston');
 const logger = require('../../../src/utils/logger');
 
@@ -10,7 +12,7 @@ jest.mock('winston', () => ({
     splat: jest.fn(),
     json: jest.fn(),
     printf: jest.fn(),
-    colorize: jest.fn()
+    colorize: jest.fn(),
   },
   createLogger: jest.fn(() => ({
     error: jest.fn(),
@@ -42,7 +44,7 @@ describe('Logger', () => {
       expect.objectContaining({
         filename: 'logs/error.log',
         level: 'error',
-      })
+      }),
     );
   });
 

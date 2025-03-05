@@ -1,7 +1,7 @@
 const path = require('path');
+const os = require('os');
 const GitService = require('../services/GitService');
 const logger = require('../utils/logger');
-const os = require('os');
 
 // Create a GitService instance
 const gitService = new GitService();
@@ -75,7 +75,7 @@ exports.setRepository = async (req, res) => {
     res.json({
       path: repoPath,
       branches: branches.all,
-      current
+      current,
     });
   } catch (error) {
     logger.error('Error setting repository:', error);
@@ -99,7 +99,7 @@ exports.getBranches = async (req, res) => {
 
     res.json({
       branches: branches.all,
-      current
+      current,
     });
   } catch (error) {
     logger.error('Error getting branches:', error);

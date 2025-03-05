@@ -30,7 +30,7 @@ describe('API Integration Tests', () => {
       it('should return list of repositories', async () => {
         const mockRepos = [
           { path: '/test/repo1', name: 'repo1' },
-          { path: '/test/repo2', name: 'repo2' }
+          { path: '/test/repo2', name: 'repo2' },
         ];
 
         GitService.findRepositories.mockResolvedValue(mockRepos);
@@ -50,7 +50,7 @@ describe('API Integration Tests', () => {
           .get('/api/repositories')
           .expect('Content-Type', /json/)
           .expect(500)
-          .then(response => {
+          .then((response) => {
             expect(response.body.error).toBeDefined();
           });
       });
@@ -71,7 +71,7 @@ describe('API Integration Tests', () => {
           .send({ path: validRepoPath })
           .expect('Content-Type', /json/)
           .expect(200)
-          .then(response => {
+          .then((response) => {
             expect(response.body.path).toBe(validRepoPath);
             expect(response.body.branches).toEqual(['main']);
             expect(response.body.current).toBe('main');
@@ -86,7 +86,7 @@ describe('API Integration Tests', () => {
           .send({ path: '/invalid/path' })
           .expect('Content-Type', /json/)
           .expect(400)
-          .then(response => {
+          .then((response) => {
             expect(response.body.error).toBe('Not a valid git repository');
           });
       });
@@ -119,7 +119,7 @@ describe('API Integration Tests', () => {
           .post('/api/diff/analyze')
           .send({
             fromBranch: 'main',
-            toBranch: 'develop'
+            toBranch: 'develop',
           })
           .expect(200);
 

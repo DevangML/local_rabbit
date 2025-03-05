@@ -1,39 +1,69 @@
-class Logger {
-  static formatMessage(level, message, meta = {}) {
+/**
+ * Logger utility for consistent logging across the application
+ */
+export class Logger {
+  /**
+   * Format a log message with location and metadata
+   * @param {string} level - Log level (error, warn, info, debug)
+   * @param {string} message - Message to log
+   * @param {Object} [metadata] - Optional metadata to include
+   * @returns {string} - Formatted message
+   */
+  static formatMessage(level, message, metadata = null) {
     const error = new Error();
-    const stack = error.stack.split('\n')[2];
-    const match = stack.match(/\((.+):(\d+):(\d+)\)$/);
-    
-    if (match) {
-      const [, file, line, column] = match;
-      const relativeFile = file.split('/src/')[1] || file;
-      return `${relativeFile}:${line}:${column}: ${level} ${message} ${
-        Object.keys(meta).length ? JSON.stringify(meta) : ''
-      }`;
+    const stackLines = error.stack.split('\n');
+    let location = 'unknown:0:0';
+
+    // Find the first line that's not from this file
+    for (const line of stackLines) {
+      if (line.includes('at ') && !line.includes('logger.js')) {
+        const match = line.match(/\((.*?):(\d+):(\d+)\)/) || line.match(/at (.*?):(\d+):(\d+)/);
+        if (match) {
+          const [, file, lineNum, colNum] = match;
+          const srcIndex = file.indexOf('src/');
+          location = srcIndex >= 0 ? file.slice(srcIndex) : `${file}:${lineNum}:${colNum}`;
+          break;
+        }
+      }
     }
-    
-    return `logger.js:1:1: ${level} ${message}`;
+
+    const formattedMessage = `[${level.toUpperCase()}] [${location}] ${message}`;
+    return metadata ? `${formattedMessage} ${JSON.stringify(metadata)}` : formattedMessage;
   }
 
-  static error(message, meta) {
-    const formattedMessage = this.formatMessage('error', message, meta);
-    console.error(formattedMessage);
+  /**
+   * Log an error message
+   * @param {string} message - Error message
+   * @param {Object} [metadata] - Optional metadata
+   */
+  static error(message, metadata = null) {
+    console.error(this.formatMessage('error', message, metadata));
   }
 
-  static warn(message, meta) {
-    const formattedMessage = this.formatMessage('warning', message, meta);
-    console.warn(formattedMessage);
+  /**
+   * Log a warning message
+   * @param {string} message - Warning message
+   * @param {Object} [metadata] - Optional metadata
+   */
+  static warn(message, metadata = null) {
+    console.warn(this.formatMessage('warn', message, metadata));
   }
 
-  static info(message, meta) {
-    const formattedMessage = this.formatMessage('info', message, meta);
-    console.info(formattedMessage);
+  /**
+   * Log an info message
+   * @param {string} message - Info message
+   * @param {Object} [metadata] - Optional metadata
+   */
+  static info(message, metadata = null) {
+    console.info(this.formatMessage('info', message, metadata));
   }
 
-  static debug(message, meta) {
-    const formattedMessage = this.formatMessage('debug', message, meta);
-    console.debug(formattedMessage);
+  /**
+   * Log a debug message
+   * @param {string} message - Debug message
+   * @param {Object} [metadata] - Optional metadata
+   */
+  static debug(message, metadata = null) {
+    console.debug(this.formatMessage('debug', message, metadata));
   }
 }
-
-export default Logger;

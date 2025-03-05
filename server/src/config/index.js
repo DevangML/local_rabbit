@@ -35,14 +35,14 @@ const config = {
       'git',
       'workspace',
       'dev',
-      'Desktop'
-    ].map(dir => path.join(os.homedir(), dir))
+      'Desktop',
+    ].map((dir) => path.join(os.homedir(), dir)),
   },
 
   // Logging settings
   logging: {
     level: process.env.LOG_LEVEL || 'info',
-    dir: path.join(__dirname, '../../logs')
+    dir: path.join(__dirname, '../../logs'),
   },
 
   // AI settings
@@ -56,9 +56,9 @@ const config = {
     maxFileSize: process.env.MAX_FILE_SIZE || '10mb',
     rateLimit: {
       windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 100 // limit each IP to 100 requests per windowMs
-    }
-  }
+      max: 100, // limit each IP to 100 requests per windowMs
+    },
+  },
 };
 
 module.exports = config;

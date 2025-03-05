@@ -1,4 +1,6 @@
-const { describe, expect, it, jest } = require('@jest/globals');
+const {
+  describe, expect, it, jest,
+} = require('@jest/globals');
 const cors = require('cors');
 const corsMiddleware = require('../../../src/middleware/cors');
 const config = require('../../../src/config');

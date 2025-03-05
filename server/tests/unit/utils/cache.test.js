@@ -1,4 +1,6 @@
-const { describe, expect, it, jest, beforeEach } = require('@jest/globals');
+const {
+  describe, expect, it, jest, beforeEach,
+} = require('@jest/globals');
 const Cache = require('../../../src/utils/cache');
 
 describe('Cache', () => {

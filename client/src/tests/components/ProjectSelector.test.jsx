@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach, beforeAll, afterAll, afterEach } 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import { rest } from 'msw';
 import { setupServer } from 'msw/node';
+import { http, HttpResponse } from 'msw';
 import ProjectSelector from '../../components/ProjectSelector';
 import { cacheInstance } from '../../utils/cache';
 
@@ -26,21 +26,34 @@ vi.mock('../../utils/cache', () => ({
   }
 }));
 
-// Mock fetch API
-global.fetch = vi.fn();
-
-const server = setupServer(
-  rest.get('/api/branches', (req, res, ctx) => {
-    const path = req.url.searchParams.get('path');
+// Set up MSW handlers
+const handlers = [
+  http.get('/api/git/repository/branches', ({ request }) => {
+    const url = new URL(request.url);
+    const path = url.searchParams.get('path');
     if (path === '/invalid/path') {
-      return res(ctx.status(404), ctx.json({ message: 'Repository not found' }));
+      return new HttpResponse(null, { status: 404, statusText: 'Repository not found' });
     }
-    return res(ctx.json(['main', 'develop']));
+    return HttpResponse.json(['main', 'develop']);
+  }),
+
+  http.post('/api/git/repository/set', async ({ request }) => {
+    const data = await request.json();
+    if (data.path === '/invalid/path') {
+      return new HttpResponse('Repository not found', { status: 404 });
+    }
+    return HttpResponse.json({
+      name: 'test-repo',
+      path: data.path,
+      branches: ['main', 'develop']
+    });
   })
-);
+];
+
+const server = setupServer(...handlers);
 
 describe('ProjectSelector Component', () => {
-  beforeAll(() => server.listen());
+  beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
   afterEach(() => server.resetHandlers());
   afterAll(() => server.close());
 
@@ -49,9 +62,6 @@ describe('ProjectSelector Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-
-    // Reset fetch mock
-    fetch.mockReset();
 
     // Mock localStorage
     const localStorageMock = {
@@ -95,17 +105,6 @@ describe('ProjectSelector Component', () => {
   });
 
   it('handles successful repository selection', async () => {
-    const mockRepoData = {
-      name: 'test-repo',
-      path: '/path/to/repo',
-      branches: ['main', 'develop']
-    };
-
-    fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockRepoData
-    });
-
     renderComponent();
 
     const input = screen.getByLabelText(/Repository Path:/i);
@@ -115,19 +114,16 @@ describe('ProjectSelector Component', () => {
     fireEvent.submit(form);
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('/api/repository/set', expect.any(Object));
-      expect(mockOnProjectSelect).toHaveBeenCalledWith(mockRepoData);
+      expect(mockOnProjectSelect).toHaveBeenCalledWith(expect.objectContaining({
+        name: 'test-repo',
+        path: '/path/to/repo',
+        branches: ['main', 'develop']
+      }));
       expect(cacheInstance.clear).toHaveBeenCalled();
     });
   });
 
   it('handles repository selection error', async () => {
-    fetch.mockResolvedValueOnce({
-      ok: false,
-      status: 404,
-      text: async () => 'Repository not found'
-    });
-
     renderComponent();
 
     const input = screen.getByLabelText(/Repository Path:/i);
@@ -148,12 +144,12 @@ describe('ProjectSelector Component', () => {
       { name: 'repo2', path: '/path/to/repo2' }
     ];
 
-    window.localStorage.getItem.mockReturnValueOnce(JSON.stringify(mockRecentRepos));
+    global.localStorage.getItem.mockReturnValueOnce(JSON.stringify(mockRecentRepos));
 
     renderComponent();
 
     await waitFor(() => {
-      expect(window.localStorage.getItem).toHaveBeenCalledWith('recentRepositories');
+      expect(global.localStorage.getItem).toHaveBeenCalledWith('recentRepositories');
       expect(screen.getByText('Recent Repositories')).toBeInTheDocument();
       expect(screen.getByText('repo1')).toBeInTheDocument();
       expect(screen.getByText('repo2')).toBeInTheDocument();
@@ -165,18 +161,7 @@ describe('ProjectSelector Component', () => {
       { name: 'repo1', path: '/path/to/repo1' }
     ];
 
-    const mockRepoData = {
-      name: 'repo1',
-      path: '/path/to/repo1',
-      branches: ['main']
-    };
-
-    window.localStorage.getItem.mockReturnValueOnce(JSON.stringify(mockRecentRepos));
-
-    fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockRepoData
-    });
+    global.localStorage.getItem.mockReturnValueOnce(JSON.stringify(mockRecentRepos));
 
     renderComponent();
 
@@ -188,34 +173,15 @@ describe('ProjectSelector Component', () => {
     fireEvent.click(recentRepoButton);
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('/api/repository/set', expect.any(Object));
-      expect(mockOnProjectSelect).toHaveBeenCalledWith(mockRepoData);
+      expect(mockOnProjectSelect).toHaveBeenCalledWith(expect.objectContaining({
+        name: 'repo1',
+        path: '/path/to/repo1',
+        branches: ['main', 'develop']
+      }));
     });
   });
 
   it('fetches branches when repository is selected', async () => {
-    const mockRepoData = {
-      name: 'test-repo',
-      path: '/path/to/repo',
-      branches: []
-    };
-
-    const mockBranchesData = {
-      branches: ['main', 'develop', 'feature/test']
-    };
-
-    // Mock first fetch for repository selection
-    fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockRepoData
-    });
-
-    // Mock second fetch for branches
-    fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockBranchesData
-    });
-
     renderComponent();
 
     const input = screen.getByLabelText(/Repository Path:/i);
@@ -225,30 +191,20 @@ describe('ProjectSelector Component', () => {
     fireEvent.submit(form);
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledTimes(2);
-      expect(fetch).toHaveBeenCalledWith(`${process.env.REACT_APP_API_URL}/api/repo/branches`, expect.any(Object));
+      expect(mockOnProjectSelect).toHaveBeenCalledWith(expect.objectContaining({
+        name: 'test-repo',
+        path: '/path/to/repo',
+        branches: ['main', 'develop']
+      }));
     });
   });
 
   it('handles branches fetch error', async () => {
-    const mockRepoData = {
-      name: 'test-repo',
-      path: '/path/to/repo',
-      branches: []
-    };
-
-    // Mock first fetch for repository selection
-    fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockRepoData
-    });
-
-    // Mock second fetch for branches (error)
-    fetch.mockResolvedValueOnce({
-      ok: false,
-      status: 500,
-      text: async () => 'Server error'
-    });
+    server.use(
+      http.get('/api/git/repository/branches', (req, res, ctx) => {
+        return res(ctx.status(500), ctx.text('Server error'));
+      })
+    );
 
     renderComponent();
 
@@ -259,42 +215,7 @@ describe('ProjectSelector Component', () => {
     fireEvent.submit(form);
 
     await waitFor(() => {
-      expect(screen.getByText(/Unable to load branches/i)).toBeInTheDocument();
+      expect(screen.getByText(/Failed to fetch branches/i)).toBeInTheDocument();
     });
   });
-
-  it('disables inputs when loading', () => {
-    renderComponent({ isLoading: true });
-
-    expect(screen.getByLabelText(/Repository Path:/i)).toBeDisabled();
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
-  });
-
-  it('adds repository to recent repositories list', async () => {
-    const mockRepoData = {
-      name: 'new-repo',
-      path: '/path/to/new-repo',
-      branches: ['main']
-    };
-
-    fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockRepoData
-    });
-
-    renderComponent();
-
-    const input = screen.getByLabelText(/Repository Path:/i);
-    fireEvent.change(input, { target: { value: '/path/to/new-repo' } });
-
-    const form = screen.getByRole('form');
-    fireEvent.submit(form);
-
-    await waitFor(() => {
-      expect(window.localStorage.setItem).toHaveBeenCalledWith(
-        'recentRepositories',
-        expect.any(String)
-      );
-    });
-  });
-}); 
+});

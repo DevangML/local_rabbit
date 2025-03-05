@@ -12,6 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const { performance } = require('perf_hooks');
 const winston = require('winston');
+const logger = require('./logger');
 
 // Create reports directory if it doesn't exist
 const reportsDir = path.join(__dirname, '..', '..', 'reports');
@@ -340,3 +341,91 @@ module.exports = {
   compareImplementations,
   runAllTests,
 };
+
+class PerformanceAnalyzer {
+  constructor() {
+    this.measurements = new Map();
+  }
+
+  async measure(operation, fn) {
+    const start = process.hrtime.bigint();
+    try {
+      const result = await fn();
+      const end = process.hrtime.bigint();
+      this.recordMeasurement(operation, end - start);
+      return { result, duration: Number(end - start) / 1_000_000 };
+    } catch (error) {
+      logger.error(`Error in operation ${operation}:`, error);
+      throw error;
+    }
+  }
+
+  measureSync(operation, fn) {
+    const start = process.hrtime.bigint();
+    try {
+      const result = fn();
+      const end = process.hrtime.bigint();
+      this.recordMeasurement(operation, end - start);
+      return { result, duration: Number(end - start) / 1_000_000 };
+    } catch (error) {
+      logger.error(`Error in sync operation ${operation}:`, error);
+      throw error;
+    }
+  }
+
+  recordMeasurement(operation, duration) {
+    if (!this.measurements.has(operation)) {
+      this.measurements.set(operation, {
+        count: 0,
+        totalTime: BigInt(0),
+        durations: [],
+      });
+    }
+
+    const stats = this.measurements.get(operation);
+    stats.count += 1;
+    stats.totalTime += duration;
+    stats.durations.push(Number(duration));
+  }
+
+  getMetrics(operation) {
+    const stats = this.measurements.get(operation);
+    if (!stats) return null;
+
+    const durations = stats.durations.sort((a, b) => a - b);
+    const p95Index = Math.floor(durations.length * 0.95);
+    const p99Index = Math.floor(durations.length * 0.99);
+
+    return {
+      count: stats.count,
+      totalTime: Number(stats.totalTime) / 1_000_000,
+      avgTime: Number(stats.totalTime) / (stats.count * 1_000_000),
+      min: Math.min(...durations) / 1_000_000,
+      max: Math.max(...durations) / 1_000_000,
+      p95: durations[p95Index] / 1_000_000,
+      p99: durations[p99Index] / 1_000_000,
+    };
+  }
+
+  getStats() {
+    const stats = {};
+    this.measurements.forEach((value, key) => {
+      stats[key] = {
+        count: value.count,
+        totalTime: Number(value.totalTime) / 1_000_000,
+        avgTime: Number(value.totalTime) / (value.count * 1_000_000),
+      };
+    });
+    return stats;
+  }
+
+  reset(operation) {
+    if (operation) {
+      this.measurements.delete(operation);
+    } else {
+      this.measurements.clear();
+    }
+  }
+}
+
+module.exports = PerformanceAnalyzer;

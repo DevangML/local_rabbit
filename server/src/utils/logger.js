@@ -60,7 +60,7 @@ const machineFormat = winston.format.printf(({
   const sourceColumn = column || '1';
 
   return `${sourceFile}:${sourceLine}:${sourceColumn}: ${level} ${message} ${Object.keys(meta).length ? JSON.stringify(meta) : ''
-    }`;
+  }`;
 });
 
 // Create the logger
@@ -70,25 +70,25 @@ const logger = winston.createLogger({
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
     winston.format.splat(),
-    winston.format.json()
+    winston.format.json(),
   ),
   transports: [
     new winston.transports.File({
       filename: path.join('logs', 'error.log'),
-      level: 'error'
+      level: 'error',
     }),
     new winston.transports.File({
-      filename: path.join('logs', 'combined.log')
-    })
-  ]
+      filename: path.join('logs', 'combined.log'),
+    }),
+  ],
 });
 
 if (process.env.NODE_ENV !== 'production') {
   logger.add(new winston.transports.Console({
     format: winston.format.combine(
       winston.format.colorize(),
-      winston.format.simple()
-    )
+      winston.format.simple(),
+    ),
   }));
 }
 
@@ -141,7 +141,7 @@ logger.section = (title, meta = {}) => {
 
 logger.table = (data, meta = {}) => {
   if (Array.isArray(data)) {
-    logger.info('\n' + JSON.stringify(data, null, 2), meta);
+    logger.info(`\n${JSON.stringify(data, null, 2)}`, meta);
   } else {
     logger.info(data, meta);
   }
