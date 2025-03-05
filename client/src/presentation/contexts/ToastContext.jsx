@@ -1,22 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { ToastContainer } from '../components/common/Toast';
 
 // Create context
-const ToastContext = createContext(null);
-
-/**
- * Custom hook to use the toast context
- * @returns {Object} - Toast context
- */
-export const useToast = () => {
-  const context = useContext(ToastContext);
-  
-  if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
-  
-  return context;
-};
+const ToastContext = createContext();
 
 /**
  * Toast provider component
@@ -29,19 +14,35 @@ export const ToastProvider = ({ children }) => {
   /**
    * Add a toast notification
    * @param {string} message - Toast message
-   * @param {string} type - Toast type (info, success, error, warning)
+   * @param {string} type - Toast type (success, error, warning, info)
    * @param {number} duration - Duration in milliseconds
    */
   const addToast = useCallback((message, type = 'info', duration = 5000) => {
-    setToasts((prevToasts) => [...prevToasts, { message, type, duration }]);
+    const id = Date.now().toString();
+    
+    setToasts((prevToasts) => [
+      ...prevToasts,
+      {
+        id,
+        message,
+        type,
+        duration,
+      },
+    ]);
+    
+    if (duration > 0) {
+      setTimeout(() => {
+        removeToast(id);
+      }, duration);
+    }
   }, []);
   
   /**
    * Remove a toast notification
-   * @param {number} index - Toast index
+   * @param {string} id - Toast ID
    */
-  const removeToast = useCallback((index) => {
-    setToasts((prevToasts) => prevToasts.filter((_, i) => i !== index));
+  const removeToast = useCallback((id) => {
+    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
   }, []);
   
   /**
@@ -53,17 +54,29 @@ export const ToastProvider = ({ children }) => {
   
   // Context value
   const value = {
+    toasts,
     addToast,
     removeToast,
-    clearToasts
+    clearToasts,
   };
   
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </ToastContext.Provider>
   );
 };
 
-export default ToastContext; 
+/**
+ * Hook for using toast context
+ * @returns {Object} - Toast context
+ */
+export const useToast = () => {
+  const context = useContext(ToastContext);
+  
+  if (!context) {
+    throw new Error('useToast must be used within a ToastProvider');
+  }
+  
+  return context;
+}; 

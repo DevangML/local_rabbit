@@ -1,0 +1,63 @@
+{
+  "timestamp": "2025-03-05T09:30:47.915Z",
+  "results": [
+    {
+      "testName": "Array Manipulation",
+      "standardResult": {
+        "name": "Standard Array Manipulation",
+        "duration": 57.51412498950958,
+        "iterations": 50,
+        "opsPerSecond": "869.35",
+        "result": 50
+      },
+      "optimizedResult": {
+        "name": "Optimized Array Manipulation (Lodash/Async)",
+        "duration": 77.19166699051857,
+        "iterations": 50,
+        "opsPerSecond": "647.74",
+        "result": 50
+      },
+      "improvement": -34.21340758395979
+    },
+    {
+      "testName": "Parallel Processing",
+      "standardResult": {
+        "name": "Standard Parallel Processing",
+        "duration": 1037.3733749985695,
+        "iterations": 5,
+        "opsPerSecond": "4.82",
+        "result": 100
+      },
+      "optimizedResult": {
+        "name": "Optimized Parallel Processing (Lodash/Async)",
+        "duration": 113.92687499523163,
+        "iterations": 5,
+        "opsPerSecond": "43.89",
+        "result": 100
+      },
+      "improvement": 89.01775602295666
+    },
+    {
+      "testName": "Object Manipulation",
+      "standardResult": {
+        "name": "Standard Object Manipulation",
+        "duration": 23.296542018651962,
+        "iterations": 100,
+        "opsPerSecond": "4292.48",
+        "result": 100
+      },
+      "optimizedResult": {
+        "name": "Optimized Object Manipulation (Lodash/Async)",
+        "duration": 51.980415999889374,
+        "iterations": 100,
+        "opsPerSecond": "1923.80",
+        "result": 100
+      },
+      "improvement": -123.12502841954904
+    }
+  ],
+  "summary": {
+    "averageImprovement": "-22.77",
+    "tests": 3
+  }
+}

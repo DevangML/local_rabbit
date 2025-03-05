@@ -1,4 +1,5 @@
 const winston = require('winston');
+const chalk = require('chalk');
 const config = require('../config');
 
 // Define log format
@@ -9,18 +10,45 @@ const logFormat = winston.format.combine(
   winston.format.json()
 );
 
-// Define console format for development
+// Custom formatter for console with enhanced colors using chalk
 const consoleFormat = winston.format.combine(
-  winston.format.colorize(),
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.printf(({ level, message, timestamp, ...meta }) => {
-    return `${timestamp} ${level}: ${message} ${Object.keys(meta).length ? JSON.stringify(meta, null, 2) : ''}`;
+    // Define color scheme for different log levels
+    const colorize = (text, lvl) => {
+      switch (lvl) {
+        case 'error':
+          return chalk.bold.red(text);
+        case 'warn':
+          return chalk.keyword('orange')(text);
+        case 'info':
+          return chalk.bold.blue(text);
+        case 'http':
+          return chalk.magenta(text);
+        case 'verbose':
+          return chalk.cyan(text);
+        case 'debug':
+          return chalk.green(text);
+        case 'silly':
+          return chalk.grey(text);
+        default:
+          return text;
+      }
+    };
+
+    const colorizedLevel = colorize(level.toUpperCase(), level);
+    const colorizedTimestamp = chalk.gray(timestamp);
+    const metadata = Object.keys(meta).length 
+      ? chalk.gray(JSON.stringify(meta, null, 2)) 
+      : '';
+
+    return `${colorizedTimestamp} ${colorizedLevel}: ${message} ${metadata}`;
   })
 );
 
 // Create the logger
 const logger = winston.createLogger({
-  level: config.logging.level,
+  level: config.logging.level || 'info',
   format: logFormat,
   defaultMeta: { service: 'local-coderabbit' },
   transports: [
@@ -44,5 +72,32 @@ if (config.nodeEnv !== 'production') {
     format: consoleFormat
   }));
 }
+
+// Add convenience methods for colorized logging
+logger.success = (message, meta = {}) => {
+  logger.info(`${chalk.bold.green('✓')} ${message}`, meta);
+};
+
+logger.important = (message, meta = {}) => {
+  logger.info(`${chalk.bold.yellow('!')} ${message}`, meta);
+};
+
+logger.highlight = (message, meta = {}) => {
+  logger.info(`${chalk.bold.cyan('→')} ${message}`, meta);
+};
+
+logger.section = (title) => {
+  const line = chalk.gray('─'.repeat(80));
+  logger.info(`\n${line}\n${chalk.bold.white(title)}\n${line}`);
+};
+
+logger.table = (data, columns) => {
+  if (!data || !data.length) {
+    logger.info(chalk.gray('No data to display'));
+    return;
+  }
+  
+  console.table(data, columns);
+};
 
 module.exports = logger; 

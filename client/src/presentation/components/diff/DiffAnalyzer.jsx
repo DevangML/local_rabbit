@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { useAppContext } from '../../contexts/AppContext';
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useDiffAnalysis } from '../../hooks/useDiff';
+import { useToast } from '../../contexts/ToastContext';
 
 /**
  * Diff analyzer component
@@ -7,151 +9,276 @@ import { useAppContext } from '../../contexts/AppContext';
  * @returns {JSX.Element} - Component
  */
 const DiffAnalyzer = ({ fromBranch, toBranch }) => {
-  const { analyzeDiff, loading, error } = useAppContext();
-  const [analysis, setAnalysis] = useState(null);
-  const [analyzing, setAnalyzing] = useState(false);
+  const { 
+    data: analysis, 
+    isLoading, 
+    error, 
+    refetch 
+  } = useDiffAnalysis(fromBranch, toBranch);
+  
+  const { addToast } = useToast();
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: 0.5,
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 }
+  };
 
   /**
-   * Analyze diff between branches
+   * Handle analyze button click
    */
-  const handleAnalyzeDiff = async () => {
+  const handleAnalyzeDiff = () => {
     if (!fromBranch || !toBranch) {
       return;
     }
 
-    try {
-      setAnalyzing(true);
-      const analysisData = await analyzeDiff(fromBranch, toBranch);
-      setAnalysis(analysisData);
-    } catch (err) {
-      console.error('Error analyzing diff:', err);
-    } finally {
-      setAnalyzing(false);
-    }
+    refetch().then(() => {
+      addToast('Diff analysis completed successfully', 'success');
+    }).catch((err) => {
+      addToast(`Failed to analyze diff: ${err.message}`, 'error');
+    });
   };
 
   if (!fromBranch || !toBranch) {
     return (
-      <div className="diff-analyzer empty">
+      <motion.div 
+        className="diff-analyzer empty"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         <p>Please select both branches to analyze diff</p>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="diff-analyzer">
-      <h2>Diff Analysis</h2>
+    <motion.div 
+      className="diff-analyzer"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.h2 variants={itemVariants}>Diff Analysis</motion.h2>
       
       {/* Analysis button */}
-      <div className="analyzer-actions">
-        <button 
+      <motion.div 
+        className="analyzer-actions"
+        variants={itemVariants}
+      >
+        <motion.button 
           onClick={handleAnalyzeDiff} 
-          disabled={analyzing || loading}
+          disabled={isLoading}
           className="analyze-button"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          {analyzing ? 'Analyzing...' : 'Analyze Changes'}
-        </button>
-      </div>
+          {isLoading ? 'Analyzing...' : 'Analyze Changes'}
+        </motion.button>
+      </motion.div>
       
       {/* Error message */}
-      {error && !analysis && (
-        <div className="error-message">
-          <p>Error: {error}</p>
-        </div>
-      )}
+      <AnimatePresence>
+        {error && !analysis && (
+          <motion.div 
+            className="error-message"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <p>Error: {error.message}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Analysis results */}
-      {analysis && (
-        <div className="analysis-results">
-          <h3>Analysis Results</h3>
-          
-          {/* Summary */}
-          <div className="analysis-summary">
-            <h4>Summary</h4>
-            <p>{analysis.summary || 'No summary available'}</p>
-          </div>
-          
-          {/* Complexity changes */}
-          {analysis.complexity && (
-            <div className="analysis-complexity">
-              <h4>Complexity Changes</h4>
-              <div className="complexity-metrics">
-                <div className="metric">
-                  <span className="metric-label">Overall Complexity Change:</span>
-                  <span className={`metric-value ${analysis.complexity.overall > 0 ? 'increased' : 'decreased'}`}>
-                    {analysis.complexity.overall > 0 ? '+' : ''}{analysis.complexity.overall}%
-                  </span>
-                </div>
-                <div className="metric">
-                  <span className="metric-label">Files with Increased Complexity:</span>
-                  <span className="metric-value">{analysis.complexity.filesIncreased || 0}</span>
-                </div>
-                <div className="metric">
-                  <span className="metric-label">Files with Decreased Complexity:</span>
-                  <span className="metric-value">{analysis.complexity.filesDecreased || 0}</span>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Potential issues */}
-          {analysis.issues && analysis.issues.length > 0 && (
-            <div className="analysis-issues">
-              <h4>Potential Issues</h4>
-              <ul className="issues-list">
-                {analysis.issues.map((issue, index) => (
-                  <li key={index} className={`issue-item ${issue.severity}`}>
-                    <div className="issue-header">
-                      <span className="issue-severity">{issue.severity}</span>
-                      <span className="issue-title">{issue.title}</span>
-                    </div>
-                    <p className="issue-description">{issue.description}</p>
-                    {issue.location && (
-                      <div className="issue-location">
-                        <span className="location-file">{issue.location.file}</span>
-                        {issue.location.line && (
-                          <span className="location-line">Line: {issue.location.line}</span>
-                        )}
+      <AnimatePresence>
+        {analysis && (
+          <motion.div 
+            className="analysis-results"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.h3
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              Analysis Results
+            </motion.h3>
+            
+            {/* Summary */}
+            <motion.div 
+              className="analysis-summary"
+              variants={itemVariants}
+            >
+              <h4>Summary</h4>
+              <p>{analysis.summary || 'No summary available'}</p>
+            </motion.div>
+            
+            {/* Complexity changes */}
+            {analysis.complexity && (
+              <motion.div 
+                className="analysis-complexity"
+                variants={itemVariants}
+              >
+                <h4>Complexity Changes</h4>
+                <motion.div 
+                  className="complexity-metrics"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <motion.div 
+                    className="metric"
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    <span className="metric-label">Overall Complexity Change:</span>
+                    <span className={`metric-value ${analysis.complexity.overall > 0 ? 'increased' : 'decreased'}`}>
+                      {analysis.complexity.overall > 0 ? '+' : ''}{analysis.complexity.overall}%
+                    </span>
+                  </motion.div>
+                  <motion.div 
+                    className="metric"
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    <span className="metric-label">Files with Increased Complexity:</span>
+                    <span className="metric-value">{analysis.complexity.filesIncreased || 0}</span>
+                  </motion.div>
+                  <motion.div 
+                    className="metric"
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    <span className="metric-label">Files with Decreased Complexity:</span>
+                    <span className="metric-value">{analysis.complexity.filesDecreased || 0}</span>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
+            )}
+            
+            {/* Potential issues */}
+            {analysis.issues && analysis.issues.length > 0 && (
+              <motion.div 
+                className="analysis-issues"
+                variants={itemVariants}
+              >
+                <h4>Potential Issues</h4>
+                <motion.ul 
+                  className="issues-list"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  {analysis.issues.map((issue, index) => (
+                    <motion.li 
+                      key={index} 
+                      className={`issue-item ${issue.severity}`}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 + index * 0.1 }}
+                      whileHover={{ scale: 1.02, x: 5 }}
+                    >
+                      <div className="issue-header">
+                        <span className="issue-severity">{issue.severity}</span>
+                        <span className="issue-title">{issue.title}</span>
                       </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          
-          {/* Recommendations */}
-          {analysis.recommendations && analysis.recommendations.length > 0 && (
-            <div className="analysis-recommendations">
-              <h4>Recommendations</h4>
-              <ul className="recommendations-list">
-                {analysis.recommendations.map((recommendation, index) => (
-                  <li key={index} className="recommendation-item">
-                    {recommendation}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
+                      <p className="issue-description">{issue.description}</p>
+                      {issue.location && (
+                        <div className="issue-location">
+                          <span className="location-file">{issue.location.file}</span>
+                          {issue.location.line && (
+                            <span className="location-line">Line: {issue.location.line}</span>
+                          )}
+                        </div>
+                      )}
+                    </motion.li>
+                  ))}
+                </motion.ul>
+              </motion.div>
+            )}
+            
+            {/* Recommendations */}
+            {analysis.recommendations && analysis.recommendations.length > 0 && (
+              <motion.div 
+                className="analysis-recommendations"
+                variants={itemVariants}
+              >
+                <h4>Recommendations</h4>
+                <motion.ul 
+                  className="recommendations-list"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  {analysis.recommendations.map((recommendation, index) => (
+                    <motion.li 
+                      key={index} 
+                      className="recommendation-item"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.6 + index * 0.1 }}
+                      whileHover={{ scale: 1.02, x: 5 }}
+                    >
+                      {recommendation}
+                    </motion.li>
+                  ))}
+                </motion.ul>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* No analysis yet */}
-      {!analysis && !analyzing && (
-        <div className="no-analysis">
-          <p>Click the "Analyze Changes" button to analyze the diff between branches.</p>
-        </div>
-      )}
+      <AnimatePresence>
+        {!analysis && !isLoading && (
+          <motion.div 
+            className="no-analysis"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <p>Click the "Analyze Changes" button to analyze the diff between branches.</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Loading state */}
-      {analyzing && (
-        <div className="analyzing-indicator">
-          <p>Analyzing changes between {fromBranch} and {toBranch}...</p>
-          <div className="loading-spinner"></div>
-          <p className="analyzing-note">This may take a moment depending on the size of the diff.</p>
-        </div>
-      )}
-    </div>
+      <AnimatePresence>
+        {isLoading && (
+          <motion.div 
+            className="analyzing-indicator"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <p>Analyzing changes between {fromBranch} and {toBranch}...</p>
+            <motion.div 
+              className="loading-spinner"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            ></motion.div>
+            <p className="analyzing-note">This may take a moment depending on the size of the diff.</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 
