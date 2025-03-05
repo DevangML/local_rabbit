@@ -54,7 +54,21 @@ class Cache {
   }
 
   generateKey(type, params) {
-    return `${type}:${JSON.stringify(params)}`;
+    // Sort keys to ensure consistent key generation regardless of property order
+    const sortedParams = this.sortObjectKeys(params);
+    return `${type}:${JSON.stringify(sortedParams)}`;
+  }
+
+  sortObjectKeys(obj) {
+    if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) {
+      return obj;
+    }
+
+    // Create a new object with sorted keys
+    return Object.keys(obj).sort().reduce((result, key) => {
+      result[key] = this.sortObjectKeys(obj[key]); // Recursively sort nested objects
+      return result;
+    }, {});
   }
 
   set(type, params, data) {
@@ -150,4 +164,6 @@ export const CACHE_TYPES = {
   IMPACT: 'impact',
   QUALITY: 'quality',
   REVIEW: 'review'
-}; 
+};
+
+export { Cache }; 

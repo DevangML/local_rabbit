@@ -105,7 +105,7 @@ class StateManager {
     try {
       const db = await this.dbPromise;
       await this.resetAllState();
-      
+
       for (const [storeName, items] of Object.entries(state)) {
         if (storeName === 'timestamp') continue;
         for (const item of items) {
@@ -139,9 +139,9 @@ class StateManager {
       //   diffState: await _db.getAll('diffState'),
       //   analyzerState: await _db.getAll('analyzerState')
       // };
-      
+
       // Migration logic would go here
-      
+
       console.info('State migration completed');
       return true;
     } catch (error) {
@@ -198,3 +198,4 @@ class StateManager {
 }
 
 export const stateManager = new StateManager();
+export default StateManager;

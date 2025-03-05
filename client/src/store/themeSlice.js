@@ -2,9 +2,22 @@ import { createSlice } from '@reduxjs/toolkit';
 import { themes } from '../themes';
 
 const getInitialTheme = () => {
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme && themes[savedTheme]) return savedTheme;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'lunar-dark' : 'lunar-light';
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme && themes[savedTheme]) return savedTheme;
+    }
+
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'lunar-dark' : 'lunar-light';
+    }
+
+    // Default fallback
+    return 'lunar-light';
+  } catch (error) {
+    console.error('Error determining initial theme:', error);
+    return 'lunar-light';
+  }
 };
 
 const themeSlice = createSlice({

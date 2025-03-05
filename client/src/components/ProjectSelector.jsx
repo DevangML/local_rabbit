@@ -59,23 +59,23 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
 
   const fetchBranches = async () => {
     try {
-      setError(null);
       setLoading(true);
-      console.log('Fetching branches...');
+      setError(null);
 
-      // Use relative URL to let Vite proxy handle the request
-      const response = await fetch(`/api/repository/branches`, {
-        method: 'GET',
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/repo/branches`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
+        body: JSON.stringify({ path: selectedRepository.path }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Branch fetch error response:', response.status, errorText);
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      // Add null/undefined check before accessing response.ok
+      if (!response || !response.ok) {
+        const errorText = response ? await response.text() : 'No response received';
+        console.error('Branch fetch error response:', response ? response.status : 'undefined', errorText);
+        throw new Error(`HTTP error! status: ${response ? response.status : 'undefined'}, message: ${errorText}`);
       }
 
       const data = await response.json();
@@ -92,7 +92,23 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
 
   const handleFolderSelect = async (e) => {
     e.preventDefault();
-    const folderPath = e.target.folderPath.value;
+
+    // More robust way to get the form value that works in both real usage and tests
+    let folderPath;
+
+    // Try to get the value from the form elements collection
+    if (e.target.elements && e.target.elements.folderPath) {
+      folderPath = e.target.elements.folderPath.value;
+    }
+    // Fallback to direct property access
+    else if (e.target.folderPath) {
+      folderPath = e.target.folderPath.value;
+    }
+    // Last resort - try to find the input by ID
+    else {
+      const input = document.getElementById('folderPath');
+      folderPath = input ? input.value : '';
+    }
 
     if (!folderPath) {
       setError('Please enter a folder path');

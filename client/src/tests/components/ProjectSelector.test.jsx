@@ -210,7 +210,7 @@ describe('ProjectSelector Component', () => {
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledTimes(2);
-      expect(fetch).toHaveBeenCalledWith('/api/repository/branches', expect.any(Object));
+      expect(fetch).toHaveBeenCalledWith(`${process.env.REACT_APP_API_URL}/api/repo/branches`, expect.any(Object));
     });
   });
 

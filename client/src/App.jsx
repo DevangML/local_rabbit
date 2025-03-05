@@ -134,8 +134,8 @@ function App() {
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!response || !response.ok) {
+        const errorData = response ? await response.json().catch(() => ({ error: 'Unknown error' })) : { error: 'No response received' };
         throw new Error(errorData.error || 'Failed to fetch diff');
       }
 
@@ -164,8 +164,12 @@ function App() {
         <div className="nav-container">
           <button
             className="theme-toggle mobile-menu-toggle"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Toggle navigation menu"
+            onClick={() => {
+              console.log('Toggling mobile menu', { before: isMobileMenuOpen, after: !isMobileMenuOpen });
+              setIsMobileMenuOpen(prevState => !prevState);
+            }}
+            aria-label="Toggle menu"
+            data-testid="mobile-menu-button"
           >
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
               {isMobileMenuOpen ? (
@@ -180,7 +184,8 @@ function App() {
             </svg>
           </button>
 
-          <ul className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+          <ul className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}
+            data-testid={isMobileMenuOpen ? "mobile-menu-open" : undefined}>
             <li>
               <Link
                 to="/"
@@ -257,7 +262,7 @@ function App() {
 
                   <ProjectSelector
                     repoInfo={repoInfo}
-                    onSelectProject={handleProjectSelect}
+                    onProjectSelect={handleProjectSelect}
                     selectedBranches={selectedBranches}
                     onBranchesChange={setSelectedBranches}
                     isLoading={isLoading}
@@ -266,7 +271,7 @@ function App() {
                   <Navigation />
 
                   {error && (
-                    <div className="error-message" role="alert">
+                    <div className="error-message" role="alert" data-testid="error-message">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="10" />
                         <line x1="12" y1="8" x2="12" y2="12" />
@@ -277,7 +282,7 @@ function App() {
                   )}
 
                   {isLoading && !diffData && (
-                    <div className="loading-message" role="status">
+                    <div className="loading-message" role="status" data-testid="loading-indicator">
                       <div className="loading-spinner" aria-hidden="true"></div>
                       Loading repository information...
                     </div>

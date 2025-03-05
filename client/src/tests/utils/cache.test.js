@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { cacheInstance, CACHE_TYPES } from '../../utils/cache';
+import { cacheInstance, CACHE_TYPES, Cache } from '../../utils/cache';
 
 describe('Cache Utility', () => {
   beforeEach(() => {
@@ -16,8 +16,8 @@ describe('Cache Utility', () => {
     Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
     // Mock console methods
-    vi.spyOn(console, 'log').mockImplementation(() => { });
-    vi.spyOn(console, 'error').mockImplementation(() => { });
+    console.error = vi.fn();
+    console.log = vi.fn();
 
     // Reset time mocks
     vi.restoreAllMocks();
@@ -147,24 +147,21 @@ describe('Cache Utility', () => {
     expect(key1).toEqual(key2);
   });
 
-  it('should initialize from localStorage on construction', () => {
+  it('should initialize from localStorage on construction', async () => {
     const cachedData = {
       'diff:{"id":1}': { data: { result: 'cached' }, timestamp: Date.now() }
     };
 
+    // Set up localStorage mock to return our test data
     localStorage.getItem.mockReturnValueOnce(JSON.stringify(cachedData));
 
+    // Reset the cacheInstance to trigger initialization
+    cacheInstance.clear();
+
     // Create a new instance to trigger initialization
-    const { Cache } = vi.hoisted(() => ({
-      Cache: vi.fn().mockImplementation(function () {
-        this.cache = new Map();
-        this.initializeFromLocalStorage = vi.fn();
-      })
-    }));
+    const cacheInstance2 = new Cache();
 
-    const newCacheInstance = new Cache();
-    newCacheInstance.initializeFromLocalStorage();
-
+    // Verify localStorage was accessed
     expect(localStorage.getItem).toHaveBeenCalledWith('app_cache');
   });
 

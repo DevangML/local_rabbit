@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from '../store';
@@ -231,26 +231,32 @@ describe('App Component', () => {
     });
   });
 
-  it('toggles mobile menu on small screens', () => {
+  it('toggles mobile menu on small screens', async () => {
     renderApp();
 
     // Find the mobile menu button
-    const menuButton = screen.getByLabelText(/toggle menu/i);
+    const menuButton = screen.getByTestId('mobile-menu-button');
 
     // Initially menu should be closed
     expect(screen.queryByTestId('mobile-menu-open')).not.toBeInTheDocument();
 
     // Open menu
-    fireEvent.click(menuButton);
+    act(() => {
+      fireEvent.click(menuButton);
+    });
 
     // Menu should be open
     expect(screen.getByTestId('mobile-menu-open')).toBeInTheDocument();
 
     // Close menu
-    fireEvent.click(menuButton);
+    act(() => {
+      fireEvent.click(menuButton);
+    });
 
-    // Menu should be closed again
-    expect(screen.queryByTestId('mobile-menu-open')).not.toBeInTheDocument();
+    // Wait for state to update
+    await waitFor(() => {
+      expect(screen.queryByTestId('mobile-menu-open')).not.toBeInTheDocument();
+    });
   });
 
   it('renders loading indicator when loading', async () => {
