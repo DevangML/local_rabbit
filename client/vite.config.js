@@ -2,15 +2,54 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
+// Custom plugin to handle JSX in .js files
+function jsxInJs() {
+  return {
+    name: 'jsx-in-js',
+    enforce: 'pre',
+    transform(code, id) {
+      if (id.endsWith('.js') && code.includes('jsx')) {
+        return {
+          code,
+          map: null
+        }
+      }
+    }
+  }
+}
+
+// Polyfill for crypto
+function cryptoPolyfill() {
+  return {
+    name: 'crypto-polyfill',
+    config() {
+      return {
+        define: {
+          'global.crypto': 'globalThis.crypto',
+          'process.env': process.env
+        }
+      }
+    }
+  }
+}
+
 export default defineConfig(({ mode }) => {
   // Load env files
   const env = loadEnv(mode, process.cwd(), '');
   
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      jsxInJs(),
+      cryptoPolyfill()
+    ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        crypto: 'crypto-browserify',
+        stream: 'stream-browserify',
+        assert: 'assert',
+        util: 'util'
       },
       extensions: ['.js', '.jsx', '.ts', '.tsx']
     },
@@ -62,6 +101,9 @@ export default defineConfig(({ mode }) => {
       loader: { '.js': 'jsx', '.jsx': 'jsx' },
       include: /\.(jsx|js)$/,
       exclude: /node_modules/,
+      target: 'es2020',
+      jsxFactory: 'React.createElement',
+      jsxFragment: 'React.Fragment'
     },
     define: {
       'process.env': {}, // This ensures process.env is defined but empty
