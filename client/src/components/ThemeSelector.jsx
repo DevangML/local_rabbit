@@ -39,6 +39,9 @@ const ThemeSelector = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
+  // Ensure we have a valid theme
+  const themeName = currentTheme?.name || themes['lunar-light']?.name || 'Light Theme';
+
   return (
     <div className="theme-selector-container">
       <button
@@ -72,7 +75,7 @@ const ThemeSelector = () => {
           aria-haspopup="true"
           aria-expanded={isOpen}
         >
-          <span>{currentTheme.name || 'Select Theme'}</span>
+          <span>{themeName}</span>
           <svg
             className={`dropdown-arrow ${isOpen ? 'open' : ''}`}
             width="12"
@@ -95,7 +98,7 @@ const ThemeSelector = () => {
                 .map(([id, theme]) => (
                   <button
                     key={id}
-                    className={`theme-option ${currentTheme.id === id ? 'active' : ''}`}
+                    className={`theme-option ${currentTheme?.id === id ? 'active' : ''}`}
                     onClick={() => handleThemeSelect(id)}
                   >
                     {theme.name}
@@ -109,7 +112,7 @@ const ThemeSelector = () => {
                 .map(([id, theme]) => (
                   <button
                     key={id}
-                    className={`theme-option ${currentTheme.id === id ? 'active' : ''}`}
+                    className={`theme-option ${currentTheme?.id === id ? 'active' : ''}`}
                     onClick={() => handleThemeSelect(id)}
                   >
                     {theme.name}

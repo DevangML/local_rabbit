@@ -1,44 +1,35 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
+import React, { createContext, useContext, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { themes } from '../themes';
-import { stateManager } from '../services/StateManager';
 
 const ThemeContext = createContext();
 
-export function ThemeProvider({ children }) {
-  const [currentTheme, setCurrentTheme] = useState('dark-default');
-  const [themeMode, setThemeMode] = useState('dark');
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+};
+
+export const ThemeProvider = ({ children }) => {
+  const { currentTheme, isDark } = useSelector(state => state.theme);
 
   useEffect(() => {
-    const loadTheme = async () => {
-      const savedTheme = await stateManager.getState('appState', 'theme');
-      if (savedTheme) {
-        setCurrentTheme(savedTheme.name);
-        setThemeMode(savedTheme.mode);
-      }
-    };
-    loadTheme();
-  }, []);
+    // Apply theme to document
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
 
-  const toggleTheme = async () => {
-    const newMode = themeMode === 'dark' ? 'light' : 'dark';
-    const newTheme = newMode === 'dark' ? 'dark-default' : 'light-default';
-    
-    setThemeMode(newMode);
-    setCurrentTheme(newTheme);
-    
-    await stateManager.saveState('appState', 'theme', {
-      name: newTheme,
-      mode: newMode
-    });
-  };
+    // Apply theme colors
+    if (currentTheme?.colors) {
+      Object.entries(currentTheme.colors).forEach(([key, value]) => {
+        document.documentElement.style.setProperty(`--${key}`, value);
+      });
+    }
+  }, [currentTheme, isDark]);
 
   const value = {
-    theme: themes[currentTheme],
-    currentTheme,
-    themeMode,
-    setCurrentTheme,
-    toggleTheme
+    currentTheme: currentTheme || themes['lunar-light'],
+    isDark
   };
 
   return (
@@ -46,10 +37,6 @@ export function ThemeProvider({ children }) {
       {children}
     </ThemeContext.Provider>
   );
-}
-
-ThemeProvider.propTypes = {
-  children: PropTypes.node.isRequired
 };
 
-export const useTheme = () => useContext(ThemeContext);
+export default ThemeContext;
