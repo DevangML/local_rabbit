@@ -31,4 +31,4 @@ router.get('/repository/branches', repositoryController.getBranches);
  */
 router.get('/repository/info', repositoryController.getRepositoryInfo);
 
-module.exports = router; 
+module.exports = router;

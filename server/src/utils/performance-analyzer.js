@@ -1,6 +1,6 @@
 /**
  * Performance Analyzer
- * 
+ *
  * This utility demonstrates the performance benefits of using Lodash and Async
  * by comparing standard JavaScript operations with optimized versions.
  */
@@ -37,14 +37,14 @@ const log = {
  */
 const runTest = async (name, fn, iterations = 1000) => {
   log.info(`Running test: ${name} (${iterations} iterations)`);
-  
+
   const start = performance.now();
   const result = await fn(iterations);
   const end = performance.now();
-  
+
   const duration = end - start;
   log.success(`Completed in ${duration.toFixed(2)}ms`);
-  
+
   return {
     name,
     duration,
@@ -63,16 +63,16 @@ const runTest = async (name, fn, iterations = 1000) => {
  */
 const compareImplementations = async (testName, standardFn, optimizedFn, iterations = 1000) => {
   log.header(testName);
-  
+
   const standardResult = await runTest(`Standard ${testName}`, standardFn, iterations);
   const optimizedResult = await runTest(`Optimized ${testName} (Lodash/Async)`, optimizedFn, iterations);
-  
+
   const improvement = ((standardResult.duration - optimizedResult.duration) / standardResult.duration) * 100;
-  
+
   log.result(`\nPerformance improvement: ${improvement.toFixed(2)}%`);
   log.result(`Standard: ${standardResult.opsPerSecond} ops/sec`);
   log.result(`Optimized: ${optimizedResult.opsPerSecond} ops/sec`);
-  
+
   return {
     testName,
     standardResult,
@@ -84,72 +84,72 @@ const compareImplementations = async (testName, standardFn, optimizedFn, iterati
 // Test 1: Array Manipulation
 const arrayManipulationTest = async () => {
   // Generate test data
-  const generateArray = (size) => Array.from({ length: size }, (_, i) => ({ 
-    id: i, 
+  const generateArray = (size) => Array.from({ length: size }, (_, i) => ({
+    id: i,
     value: Math.random() * 1000,
     name: `Item ${i}`,
     active: Math.random() > 0.5,
   }));
-  
+
   const arraySize = 10000;
   const testArray = generateArray(arraySize);
-  
+
   // Standard implementation
   const standardArrayManipulation = async (iterations) => {
-    let results = [];
-    
+    const results = [];
+
     for (let i = 0; i < iterations; i++) {
       // Filter, map, and sort operations
-      const filtered = testArray.filter(item => item.active);
-      const mapped = filtered.map(item => ({ 
-        id: item.id, 
+      const filtered = testArray.filter((item) => item.active);
+      const mapped = filtered.map((item) => ({
+        id: item.id,
         formattedValue: `$${item.value.toFixed(2)}`,
       }));
       const sorted = mapped.sort((a, b) => a.id - b.id);
-      
+
       // Group by ranges
       const grouped = {};
-      sorted.forEach(item => {
+      sorted.forEach((item) => {
         const range = Math.floor(item.id / 1000) * 1000;
         if (!grouped[range]) {
           grouped[range] = [];
         }
         grouped[range].push(item);
       });
-      
+
       results.push(Object.keys(grouped).length);
     }
-    
+
     return results.length;
   };
-  
+
   // Optimized implementation with Lodash
   const optimizedArrayManipulation = async (iterations) => {
-    let results = [];
-    
+    const results = [];
+
     for (let i = 0; i < iterations; i++) {
       // Chained operations with Lodash
       const processed = _(testArray)
         .filter('active')
-        .map(item => ({ 
-          id: item.id, 
+        .map((item) => ({
+          id: item.id,
           formattedValue: `$${item.value.toFixed(2)}`,
         }))
         .sortBy('id')
-        .groupBy(item => Math.floor(item.id / 1000) * 1000)
+        .groupBy((item) => Math.floor(item.id / 1000) * 1000)
         .value();
-      
+
       results.push(Object.keys(processed).length);
     }
-    
+
     return results.length;
   };
-  
+
   return compareImplementations(
     'Array Manipulation',
     standardArrayManipulation,
     optimizedArrayManipulation,
-    50 // Fewer iterations for this intensive test
+    50, // Fewer iterations for this intensive test
   );
 };
 
@@ -162,38 +162,38 @@ const parallelProcessingTest = async () => {
       resolve({ id, processedAt: Date.now() });
     }, delay);
   });
-  
+
   // Generate test data - IDs to process
   const items = Array.from({ length: 100 }, (_, i) => i);
-  
+
   // Standard implementation - sequential processing
   const standardParallelProcessing = async () => {
     const results = [];
-    
+
     for (const item of items) {
       const result = await simulateAsyncOperation(item);
       results.push(result);
     }
-    
+
     return results.length;
   };
-  
+
   // Optimized implementation with Async
   const optimizedParallelProcessing = async () => {
     const results = await async.mapLimit(
       items,
       10, // Concurrency limit
-      async (item) => simulateAsyncOperation(item)
+      async (item) => simulateAsyncOperation(item),
     );
-    
+
     return results.length;
   };
-  
+
   return compareImplementations(
     'Parallel Processing',
     standardParallelProcessing,
     optimizedParallelProcessing,
-    5 // Fewer iterations due to the nature of the test
+    5, // Fewer iterations due to the nature of the test
   );
 };
 
@@ -204,25 +204,25 @@ const objectManipulationTest = async () => {
     if (depth === 0) {
       return { value: Math.random() * 1000 };
     }
-    
+
     const obj = {};
     for (let i = 0; i < breadth; i++) {
       obj[`prop${i}`] = generateNestedObject(depth - 1, breadth);
     }
-    
+
     return obj;
   };
-  
+
   const testObject = generateNestedObject(3, 5);
-  
+
   // Standard implementation
   const standardObjectManipulation = async (iterations) => {
-    let results = [];
-    
+    const results = [];
+
     for (let i = 0; i < iterations; i++) {
       // Deep clone
       const cloned = JSON.parse(JSON.stringify(testObject));
-      
+
       // Merge with another object
       const merged = {
         ...cloned,
@@ -231,38 +231,38 @@ const objectManipulationTest = async () => {
           values: [1, 2, 3],
         },
       };
-      
+
       // Extract values
       const extractValues = (obj, result = []) => {
         if (obj.value !== undefined) {
           result.push(obj.value);
           return result;
         }
-        
-        Object.values(obj).forEach(val => {
+
+        Object.values(obj).forEach((val) => {
           if (typeof val === 'object') {
             extractValues(val, result);
           }
         });
-        
+
         return result;
       };
-      
+
       const values = extractValues(merged);
       results.push(values.length);
     }
-    
+
     return results.length;
   };
-  
+
   // Optimized implementation with Lodash
   const optimizedObjectManipulation = async (iterations) => {
-    let results = [];
-    
+    const results = [];
+
     for (let i = 0; i < iterations; i++) {
       // Deep clone with Lodash
       const cloned = _.cloneDeep(testObject);
-      
+
       // Merge with Lodash
       const merged = _.merge({}, cloned, {
         additionalProp: {
@@ -270,7 +270,7 @@ const objectManipulationTest = async () => {
           values: [1, 2, 3],
         },
       });
-      
+
       // Extract values with Lodash
       const values = [];
       _.forEach(merged, function iterateValues(val) {
@@ -280,18 +280,18 @@ const objectManipulationTest = async () => {
           _.forEach(val, iterateValues);
         }
       });
-      
+
       results.push(values.length);
     }
-    
+
     return results.length;
   };
-  
+
   return compareImplementations(
     'Object Manipulation',
     standardObjectManipulation,
     optimizedObjectManipulation,
-    100 // Fewer iterations for this intensive test
+    100, // Fewer iterations for this intensive test
   );
 };
 
@@ -299,21 +299,21 @@ const objectManipulationTest = async () => {
 const runAllTests = async () => {
   log.header('PERFORMANCE ANALYSIS');
   log.info('Comparing standard JavaScript vs Lodash/Async optimized implementations\n');
-  
+
   const results = [];
-  
+
   try {
     results.push(await arrayManipulationTest());
     results.push(await parallelProcessingTest());
     results.push(await objectManipulationTest());
-    
+
     // Generate summary
     log.header('SUMMARY');
-    
-    results.forEach(result => {
+
+    results.forEach((result) => {
       log.result(`${result.testName}: ${result.improvement.toFixed(2)}% improvement`);
     });
-    
+
     // Save report to file
     const report = {
       timestamp: new Date().toISOString(),
@@ -323,12 +323,12 @@ const runAllTests = async () => {
         tests: results.length,
       },
     };
-    
+
     fs.writeFileSync(
       path.join(reportsDir, 'performance-report.json'),
-      JSON.stringify(report, null, 2)
+      JSON.stringify(report, null, 2),
     );
-    
+
     log.success('\nPerformance report saved to reports/performance-report.json');
   } catch (error) {
     log.error(`Error running tests: ${error.message}`);
@@ -345,4 +345,4 @@ module.exports = {
   runTest,
   compareImplementations,
   runAllTests,
-}; 
+};

@@ -59,7 +59,7 @@ export default defineConfig(({ mode }) => {
     },
     esbuild: {
       logOverride: { 'this-is-undefined-in-esm': 'silent' },
-      loader: 'jsx',
+      loader: { '.js': 'jsx', '.jsx': 'jsx' },
       include: /\.(jsx|js)$/,
       exclude: /node_modules/,
     },

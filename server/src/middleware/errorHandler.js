@@ -14,15 +14,15 @@ const errorHandler = (err, req, res, next) => {
     error: err.message,
     stack: err.stack,
     path: req.path,
-    method: req.method
+    method: req.method,
   });
 
   // Send error response
   res.status(err.status || 500).json({
     error: 'Internal Server Error',
     message: config.nodeEnv === 'development' ? err.message : 'Something went wrong',
-    stack: config.nodeEnv === 'development' ? err.stack : undefined
+    stack: config.nodeEnv === 'development' ? err.stack : undefined,
   });
 };
 
-module.exports = errorHandler; 
+module.exports = errorHandler;

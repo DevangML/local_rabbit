@@ -6,7 +6,7 @@ const logger = require('../utils/logger');
 const gitService = new GitService();
 
 // Load initial state
-gitService.loadState().catch(err => {
+gitService.loadState().catch((err) => {
   logger.error('Failed to load initial state:', err);
 });
 
@@ -33,32 +33,32 @@ exports.getRepositories = async (req, res) => {
 exports.setRepository = async (req, res) => {
   try {
     const { path: repoPath } = req.body;
-    
+
     if (!repoPath) {
       return res.status(400).json({ error: 'Repository path is required' });
     }
-    
+
     // Set repository path
     gitService.setRepoPath(repoPath);
-    
+
     // Verify it's a git repository
     const isRepo = await gitService.isValidRepo();
     if (!isRepo) {
       return res.status(400).json({ error: 'Not a valid git repository' });
     }
-    
+
     // Get branches
     const branches = await gitService.getBranches();
     const currentBranch = await gitService.getCurrentBranch();
-    
+
     // Save state
     await gitService.saveState();
-    
+
     res.json({
       path: repoPath,
       name: path.basename(repoPath),
       branches: branches.all || [],
-      current: currentBranch
+      current: currentBranch,
     });
   } catch (error) {
     logger.error('Error setting repository:', error);
@@ -76,14 +76,14 @@ exports.getBranches = async (req, res) => {
     if (!gitService.repoPath) {
       return res.status(400).json({ error: 'No repository selected' });
     }
-    
+
     const branches = await gitService.getBranches();
     const currentBranch = await gitService.getCurrentBranch();
-    
+
     res.json({
       repository: path.basename(gitService.repoPath),
       branches: branches.all || [],
-      current: currentBranch
+      current: currentBranch,
     });
   } catch (error) {
     logger.error('Error getting branches:', error);
@@ -101,18 +101,18 @@ exports.getRepositoryInfo = async (req, res) => {
     if (!gitService.repoPath) {
       return res.status(400).json({ error: 'No repository selected' });
     }
-    
+
     const branches = await gitService.getBranches();
     const currentBranch = await gitService.getCurrentBranch();
-    
+
     res.json({
       path: gitService.repoPath,
       name: path.basename(gitService.repoPath),
       branches: branches.all || [],
-      current: currentBranch
+      current: currentBranch,
     });
   } catch (error) {
     logger.error('Error getting repository info:', error);
     res.status(500).json({ error: 'Failed to get repository info', details: error.message });
   }
-}; 
+};

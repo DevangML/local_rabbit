@@ -7,13 +7,15 @@ const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.errors({ stack: true }),
   winston.format.splat(),
-  winston.format.json()
+  winston.format.json(),
 );
 
 // Custom formatter for console with enhanced colors using chalk
 const consoleFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  winston.format.printf(({ level, message, timestamp, ...meta }) => {
+  winston.format.printf(({
+    level, message, timestamp, ...meta
+  }) => {
     // Define color scheme for different log levels
     const colorize = (text, lvl) => {
       switch (lvl) {
@@ -38,12 +40,12 @@ const consoleFormat = winston.format.combine(
 
     const colorizedLevel = colorize(level.toUpperCase(), level);
     const colorizedTimestamp = chalk.gray(timestamp);
-    const metadata = Object.keys(meta).length 
-      ? chalk.gray(JSON.stringify(meta, null, 2)) 
+    const metadata = Object.keys(meta).length
+      ? chalk.gray(JSON.stringify(meta, null, 2))
       : '';
 
     return `${colorizedTimestamp} ${colorizedLevel}: ${message} ${metadata}`;
-  })
+  }),
 );
 
 // Create the logger
@@ -53,23 +55,23 @@ const logger = winston.createLogger({
   defaultMeta: { service: 'local-coderabbit' },
   transports: [
     // Write logs with level 'error' and below to error.log
-    new winston.transports.File({ 
-      filename: 'logs/error.log', 
+    new winston.transports.File({
+      filename: 'logs/error.log',
       level: 'error',
-      dirname: 'logs' 
+      dirname: 'logs',
     }),
     // Write all logs to combined.log
-    new winston.transports.File({ 
+    new winston.transports.File({
       filename: 'logs/combined.log',
-      dirname: 'logs'
-    })
-  ]
+      dirname: 'logs',
+    }),
+  ],
 });
 
 // If we're not in production, also log to the console with a simpler format
 if (config.nodeEnv !== 'production') {
   logger.add(new winston.transports.Console({
-    format: consoleFormat
+    format: consoleFormat,
   }));
 }
 
@@ -96,8 +98,8 @@ logger.table = (data, columns) => {
     logger.info(chalk.gray('No data to display'));
     return;
   }
-  
+
   console.table(data, columns);
 };
 
-module.exports = logger; 
+module.exports = logger;

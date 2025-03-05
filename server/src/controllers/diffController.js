@@ -7,11 +7,11 @@ const gitService = new GitService();
 const analyzerService = new AnalyzerService();
 
 // Load initial state
-gitService.loadState().then(repoPath => {
+gitService.loadState().then((repoPath) => {
   if (repoPath) {
     analyzerService.setRepoPath(repoPath);
   }
-}).catch(err => {
+}).catch((err) => {
   logger.error('Failed to load initial state:', err);
 });
 
@@ -23,23 +23,23 @@ gitService.loadState().then(repoPath => {
 exports.getDiff = async (req, res) => {
   try {
     const { fromBranch, toBranch } = req.body;
-    
+
     if (!gitService.repoPath) {
       return res.status(400).json({ error: 'No repository selected' });
     }
-    
+
     if (!fromBranch || !toBranch) {
       return res.status(400).json({ error: 'Both branches must be specified' });
     }
 
     // Get diff between branches
     const diff = await gitService.getDiff(fromBranch, toBranch);
-    
+
     res.json({
       diff,
       fromBranch,
       toBranch,
-      repository: gitService.repoPath
+      repository: gitService.repoPath,
     });
   } catch (error) {
     logger.error('Error getting diff:', error);
@@ -55,29 +55,29 @@ exports.getDiff = async (req, res) => {
 exports.analyzeDiff = async (req, res) => {
   try {
     const { fromBranch, toBranch } = req.body;
-    
+
     if (!gitService.repoPath) {
       return res.status(400).json({ error: 'No repository selected' });
     }
-    
+
     if (!fromBranch || !toBranch) {
       return res.status(400).json({ error: 'Both branches must be specified' });
     }
 
     // Get diff between branches
     const diff = await gitService.getDiff(fromBranch, toBranch);
-    
+
     // Analyze the diff
     const analysis = await analyzerService.analyzeDiff(diff);
-    
+
     res.json({
       analysis,
       fromBranch,
       toBranch,
-      repository: gitService.repoPath
+      repository: gitService.repoPath,
     });
   } catch (error) {
     logger.error('Error analyzing diff:', error);
     res.status(500).json({ error: 'Failed to analyze diff', details: error.message });
   }
-}; 
+};

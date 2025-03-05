@@ -83,7 +83,7 @@ class GitService {
   async loadState() {
     try {
       logger.info('Loading state from:', this.stateFilePath);
-      
+
       if (fsSync.existsSync(this.stateFilePath)) {
         const data = await fs.readFile(this.stateFilePath, 'utf8');
         const state = JSON.parse(data);
@@ -91,10 +91,9 @@ class GitService {
         this.git = simpleGit(this.repoPath);
         logger.info('Loaded repository path:', this.repoPath);
         return this.repoPath;
-      } else {
-        logger.info('No state file exists yet');
-        return '';
       }
+      logger.info('No state file exists yet');
+      return '';
     } catch (error) {
       logger.error('Error loading state:', error);
       return '';
@@ -128,36 +127,36 @@ class GitService {
         path.join(homeDir, 'Projects'),
         path.join(homeDir, 'Development'),
         path.join(homeDir, 'Code'),
-        path.join(homeDir, 'Github')
+        path.join(homeDir, 'Github'),
       ];
-      
+
       const repositories = [];
-      
+
       for (const dir of commonDirs) {
         try {
           // Check if directory exists
           await fs.stat(dir);
-          
+
           // Get subdirectories
           const items = await fs.readdir(dir, { withFileTypes: true });
           const subdirs = items
-            .filter(item => item.isDirectory())
-            .map(item => path.join(dir, item.name));
-          
+            .filter((item) => item.isDirectory())
+            .map((item) => path.join(dir, item.name));
+
           // Check each subdirectory for .git folder
           for (const subdir of subdirs) {
             try {
               const gitDir = path.join(subdir, '.git');
               await fs.stat(gitDir);
-              
+
               // It's a git repository
               const git = simpleGit(subdir);
               const isRepo = await git.checkIsRepo();
-              
+
               if (isRepo) {
                 repositories.push({
                   path: subdir,
-                  name: path.basename(subdir)
+                  name: path.basename(subdir),
                 });
               }
             } catch (err) {
@@ -169,7 +168,7 @@ class GitService {
           logger.debug(`Directory doesn't exist: ${dir}`);
         }
       }
-      
+
       return repositories;
     } catch (error) {
       logger.error('Error finding repositories:', error);
@@ -178,4 +177,4 @@ class GitService {
   }
 }
 
-module.exports = GitService; 
+module.exports = GitService;

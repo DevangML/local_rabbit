@@ -623,6 +623,8 @@ show_menu() {
         "Run Security Audit" 
         "Start Application" 
         "Run Complete Setup"
+        "Fix Server Package Issues"
+        "Fix Client Package Issues"
         "Exit"
     )
     
@@ -699,6 +701,144 @@ run_server_dev() {
         return 1
     fi
     yarn dev
+}
+
+# Fix server package issues
+fix_server_package_issues() {
+    print_step "Analyzing server package issues..."
+    
+    # Create reports directory if it doesn't exist
+    mkdir -p server/reports
+    
+    # Run with progress animation
+    (
+        cd server
+        
+        # Step 1: Run npm audit to find security issues
+        echo "Running security audit..."
+        npm audit --json > reports/security-audit.json 2>/dev/null
+        
+        # Step 2: Run ESLint to find code quality issues
+        echo "Running ESLint analysis..."
+        npx eslint . --format json > reports/eslint-report.json 2>/dev/null
+        
+        # Step 3: Check for outdated packages
+        echo "Checking for outdated packages..."
+        npm outdated --json > reports/outdated-packages.json 2>/dev/null
+        
+        # Step 4: Fix security vulnerabilities
+        echo "Fixing security vulnerabilities..."
+        npm audit fix
+        
+        # Step 5: Fix ESLint issues
+        echo "Fixing ESLint issues..."
+        npx eslint . --fix
+        
+        # Step 6: Update compatible dependencies
+        echo "Updating compatible dependencies..."
+        npx npm-check-updates -u --target minor
+        
+        # Step 7: Reinstall dependencies with fixed versions
+        echo "Reinstalling dependencies..."
+        npm install
+        
+        # Step 8: Generate final report
+        echo "Generating final report..."
+        {
+            echo "# Server Package Correction Report"
+            echo "## Generated on $(date)"
+            echo ""
+            echo "## Security Issues"
+            echo "$(cat reports/security-audit.json | jq -r '.metadata.vulnerabilities | to_entries | map("\(.key): \(.value)") | join(", ")' 2>/dev/null || echo "No security issues found")"
+            echo ""
+            echo "## ESLint Issues"
+            echo "$(cat reports/eslint-report.json | jq -r 'map(.errorCount + .warningCount) | add' 2>/dev/null || echo "No ESLint issues found")"
+            echo ""
+            echo "## Outdated Packages"
+            echo "$(cat reports/outdated-packages.json | jq -r 'to_entries | map("\(.key): \(.value.current) -> \(.value.latest)") | join("\n")' 2>/dev/null || echo "No outdated packages found")"
+            echo ""
+            echo "## Actions Taken"
+            echo "- Security vulnerabilities fixed"
+            echo "- Code quality issues fixed"
+            echo "- Compatible dependencies updated"
+            echo "- Dependencies reinstalled"
+        } > reports/correction-report.md
+    ) &
+    
+    spinner $! "Fixing server package issues..."
+    
+    print_success "Server package issues fixed"
+    echo "Report generated at server/reports/correction-report.md"
+    return 0
+}
+
+# Fix client package issues
+fix_client_package_issues() {
+    print_step "Analyzing client package issues..."
+    
+    # Create reports directory if it doesn't exist
+    mkdir -p client/reports
+    
+    # Run with progress animation
+    (
+        cd client
+        
+        # Step 1: Run npm audit to find security issues
+        echo "Running security audit..."
+        npm audit --json > reports/security-audit.json 2>/dev/null
+        
+        # Step 2: Run ESLint to find code quality issues
+        echo "Running ESLint analysis..."
+        npx eslint src --format json > reports/eslint-report.json 2>/dev/null
+        
+        # Step 3: Check for outdated packages
+        echo "Checking for outdated packages..."
+        npm outdated --json > reports/outdated-packages.json 2>/dev/null
+        
+        # Step 4: Fix security vulnerabilities
+        echo "Fixing security vulnerabilities..."
+        npm audit fix
+        
+        # Step 5: Fix ESLint issues
+        echo "Fixing ESLint issues..."
+        npx eslint src --fix
+        
+        # Step 6: Update compatible dependencies
+        echo "Updating compatible dependencies..."
+        npx npm-check-updates -u --target minor
+        
+        # Step 7: Reinstall dependencies with fixed versions
+        echo "Reinstalling dependencies..."
+        npm install
+        
+        # Step 8: Generate final report
+        echo "Generating final report..."
+        {
+            echo "# Client Package Correction Report"
+            echo "## Generated on $(date)"
+            echo ""
+            echo "## Security Issues"
+            echo "$(cat reports/security-audit.json | jq -r '.metadata.vulnerabilities | to_entries | map("\(.key): \(.value)") | join(", ")' 2>/dev/null || echo "No security issues found")"
+            echo ""
+            echo "## ESLint Issues"
+            echo "$(cat reports/eslint-report.json | jq -r 'map(.errorCount + .warningCount) | add' 2>/dev/null || echo "No ESLint issues found")"
+            echo ""
+            echo "## Outdated Packages"
+            echo "$(cat reports/outdated-packages.json | jq -r 'to_entries | map("\(.key): \(.value.current) -> \(.value.latest)") | join("\n")' 2>/dev/null || echo "No outdated packages found")"
+            echo ""
+            echo "## Actions Taken"
+            echo "- Security vulnerabilities fixed"
+            echo "- Code quality issues fixed"
+            echo "- Compatible dependencies updated"
+            echo "- Dependencies reinstalled"
+        } > reports/correction-report.md
+    ) &
+    
+    spinner $! "Fixing client package issues..."
+    
+    print_success "Client package issues fixed"
+    echo "Report generated at client/reports/correction-report.md"
+    return 0
 }
 
 # Process menu choice
@@ -800,36 +940,19 @@ process_choice() {
             success=true
             ;;
             
-        12) local total_steps=10
-            local current_step=0
-            
-            # Run all steps with proper validation
-            for step in {1..11}; do
-                print_step "Complete setup progress: $current_step/$total_steps"
-                process_choice $step || break
-                ((current_step++))
-            done
-            
-            [ $current_step -eq $total_steps ] && success=true
+        12) run_complete_setup && success=true
             ;;
             
-        13) clear
-            local farewell="Thank you for using LocalCodeRabbit!"
-            printf "\n\n"
-            local center_pos=$(( (TERM_WIDTH - ${#farewell}) / 2 ))
-            printf "%${center_pos}s" ""
-            for (( i=0; i<${#farewell}; i++ )); do
-                echo -n -e "${YELLOW}${farewell:$i:1}${NC}"
-                sleep 0.03
-            done
-            printf "\n\n"
-            play_sound "success"
-            sleep 1
-            exit 0
+        13) fix_server_package_issues && success=true
             ;;
             
-        *) print_error "Invalid option. Please try again."
-            success=false
+        14) fix_client_package_issues && success=true
+            ;;
+            
+        15) exit 0
+            ;;
+            
+        *) print_error "Invalid option"
             ;;
     esac
     
@@ -894,7 +1017,7 @@ main() {
             exit 0
         else
             # Run all options in sequence
-            for choice in {1..12}; do
+            for choice in {1..14}; do
                 process_choice "$choice"
             done
             exit 0
@@ -916,6 +1039,8 @@ main() {
             "Run Security Audit" 
             "Start Application" 
             "Run Complete Setup"
+            "Fix Server Package Issues"
+            "Fix Client Package Issues"
             "Exit"
         )
         

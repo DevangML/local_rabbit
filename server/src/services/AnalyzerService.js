@@ -24,20 +24,18 @@ class AnalyzerService {
     try {
       // Parse the diff output
       const files = this.parseDiff(diffOutput);
-      
+
       // Analyze each file
       const analyzedFiles = await Promise.all(
-        files.map(async (file) => {
-          return {
-            ...file,
-            analysis: await this.analyzeFile(file)
-          };
-        })
+        files.map(async (file) => ({
+          ...file,
+          analysis: await this.analyzeFile(file),
+        })),
       );
-      
+
       return {
         files: analyzedFiles,
-        summary: this.generateSummary(analyzedFiles)
+        summary: this.generateSummary(analyzedFiles),
       };
     } catch (error) {
       logger.error('Error analyzing diff:', error);
@@ -53,10 +51,10 @@ class AnalyzerService {
   parseDiff(diffOutput) {
     const files = [];
     let currentFile = null;
-    
+
     // Split the diff output into lines
     const lines = diffOutput.split('\n');
-    
+
     for (const line of lines) {
       // Check if line indicates a new file
       if (line.startsWith('diff --git')) {
@@ -64,11 +62,11 @@ class AnalyzerService {
         if (currentFile) {
           files.push(currentFile);
         }
-        
+
         // Extract file path
         const match = line.match(/diff --git a\/(.*) b\/(.*)/);
         const filePath = match ? match[1] : 'unknown';
-        
+
         // Create a new file object
         currentFile = {
           path: filePath,
@@ -76,57 +74,57 @@ class AnalyzerService {
           extension: path.extname(filePath).slice(1),
           changes: [],
           additions: 0,
-          deletions: 0
+          deletions: 0,
         };
-      } 
+      }
       // Check if line is a hunk header
       else if (line.startsWith('@@')) {
         // Extract line numbers
         const match = line.match(/@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@/);
-        
+
         if (match && currentFile) {
           const startLine = parseInt(match[3], 10);
           currentFile.changes.push({
             type: 'hunk',
             content: line,
-            startLine
+            startLine,
           });
         }
-      } 
+      }
       // Check if line is an addition
       else if (line.startsWith('+') && !line.startsWith('+++')) {
         if (currentFile) {
           currentFile.changes.push({
             type: 'addition',
-            content: line.slice(1)
+            content: line.slice(1),
           });
           currentFile.additions++;
         }
-      } 
+      }
       // Check if line is a deletion
       else if (line.startsWith('-') && !line.startsWith('---')) {
         if (currentFile) {
           currentFile.changes.push({
             type: 'deletion',
-            content: line.slice(1)
+            content: line.slice(1),
           });
           currentFile.deletions++;
         }
-      } 
+      }
       // Otherwise, it's a context line
       else if (currentFile && !line.startsWith('---') && !line.startsWith('+++')) {
         currentFile.changes.push({
           type: 'context',
-          content: line
+          content: line,
         });
       }
     }
-    
+
     // Add the last file
     if (currentFile) {
       files.push(currentFile);
     }
-    
+
     return files;
   }
 
@@ -139,21 +137,21 @@ class AnalyzerService {
     try {
       // Determine file type based on extension
       const fileType = this.getFileType(file.extension);
-      
+
       // Calculate complexity metrics
       const complexity = this.calculateComplexity(file);
-      
+
       return {
         fileType,
         complexity,
-        impactLevel: this.calculateImpactLevel(file, complexity)
+        impactLevel: this.calculateImpactLevel(file, complexity),
       };
     } catch (error) {
       logger.error(`Error analyzing file ${file.path}:`, error);
       return {
         fileType: 'unknown',
         complexity: { score: 0 },
-        impactLevel: 'unknown'
+        impactLevel: 'unknown',
       };
     }
   }
@@ -186,9 +184,9 @@ class AnalyzerService {
       yml: 'YAML',
       yaml: 'YAML',
       xml: 'XML',
-      sql: 'SQL'
+      sql: 'SQL',
     };
-    
+
     return typeMap[extension.toLowerCase()] || 'Unknown';
   }
 
@@ -200,7 +198,7 @@ class AnalyzerService {
   calculateComplexity(file) {
     // Simple complexity calculation based on number of changes
     const totalChanges = file.additions + file.deletions;
-    
+
     let score;
     if (totalChanges < 10) {
       score = 1; // Low complexity
@@ -209,12 +207,12 @@ class AnalyzerService {
     } else {
       score = 3; // High complexity
     }
-    
+
     return {
       score,
       changes: totalChanges,
       additions: file.additions,
-      deletions: file.deletions
+      deletions: file.deletions,
     };
   }
 
@@ -228,11 +226,10 @@ class AnalyzerService {
     // Determine impact level based on complexity and file type
     if (complexity.score === 3) {
       return 'high';
-    } else if (complexity.score === 2) {
+    } if (complexity.score === 2) {
       return 'medium';
-    } else {
-      return 'low';
     }
+    return 'low';
   }
 
   /**
@@ -244,23 +241,23 @@ class AnalyzerService {
     const totalFiles = files.length;
     const totalAdditions = files.reduce((sum, file) => sum + file.additions, 0);
     const totalDeletions = files.reduce((sum, file) => sum + file.deletions, 0);
-    
+
     // Count files by impact level
     const impactCounts = {
       high: 0,
       medium: 0,
       low: 0,
-      unknown: 0
+      unknown: 0,
     };
-    
-    files.forEach(file => {
+
+    files.forEach((file) => {
       if (file.analysis && file.analysis.impactLevel) {
         impactCounts[file.analysis.impactLevel]++;
       } else {
         impactCounts.unknown++;
       }
     });
-    
+
     // Determine overall impact
     let overallImpact;
     if (impactCounts.high > 0) {
@@ -270,15 +267,15 @@ class AnalyzerService {
     } else {
       overallImpact = 'low';
     }
-    
+
     return {
       totalFiles,
       totalAdditions,
       totalDeletions,
       impactCounts,
-      overallImpact
+      overallImpact,
     };
   }
 }
 
-module.exports = AnalyzerService; 
+module.exports = AnalyzerService;

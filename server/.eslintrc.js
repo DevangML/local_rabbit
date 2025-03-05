@@ -10,7 +10,7 @@ module.exports = {
     'plugin:promise/recommended',
   ],
   plugins: [
-    'security'
+    'security',
   ],
   parserOptions: {
     ecmaVersion: 2021,
@@ -33,9 +33,9 @@ module.exports = {
     'object-curly-spacing': ['error', 'always'],
     'eol-last': ['error', 'always'],
     'no-multiple-empty-lines': ['error', { max: 1, maxEOF: 1 }],
-    'quotes': ['error', 'single', { avoidEscape: true }],
-    'semi': ['error', 'always'],
-    
+    quotes: ['error', 'single', { avoidEscape: true }],
+    semi: ['error', 'always'],
+
     // Security rules
     'security/detect-buffer-noassert': 'error',
     'security/detect-child-process': 'error',
@@ -51,4 +51,4 @@ module.exports = {
     'security/detect-pseudoRandomBytes': 'error',
     'security/detect-unsafe-regex': 'error',
   },
-}; 
+};

@@ -13,29 +13,29 @@ const corsOptions = {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
 };
 
 // Middleware
 app.use(cors(corsOptions));
 
 // Increase payload limit to 50mb
-app.use(express.json({ 
+app.use(express.json({
   limit: '50mb',
-  type: ['application/json', 'text/plain']
+  type: ['application/json', 'text/plain'],
 }));
-app.use(express.urlencoded({ 
-  limit: '50mb', 
-  extended: true 
+app.use(express.urlencoded({
+  limit: '50mb',
+  extended: true,
 }));
 app.use(morgan('dev'));
 
 // Error handling for JSON parsing
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       error: 'Invalid JSON',
-      details: err.message 
+      details: err.message,
     });
   }
   next();
@@ -54,7 +54,7 @@ app.use((err, req, res, next) => {
   console.error('Global error:', err);
   res.status(500).json({
     error: 'Internal Server Error',
-    details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    details: process.env.NODE_ENV === 'development' ? err.message : undefined,
   });
 });
 

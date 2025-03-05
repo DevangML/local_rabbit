@@ -9,7 +9,7 @@ const corsMiddleware = cors({
   methods: config.cors.methods,
   allowedHeaders: config.cors.allowedHeaders,
   credentials: config.cors.credentials,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
 });
 
-module.exports = corsMiddleware; 
+module.exports = corsMiddleware;
