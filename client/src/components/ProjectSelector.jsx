@@ -194,7 +194,7 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
               type="text"
               id="folderPath"
               name="folderPath"
-              placeholder="Enter full path to git repository (e.g., /Users/username/Documents/my-repo)"
+              placeholder="Enter path to git repository (e.g., ~/Documents/my-repo)"
               defaultValue={selectedRepository ? selectedRepository.path : ''}
               disabled={isLoading}
               className="folder-path-input"
@@ -213,9 +213,9 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
           <p className="info-message">
             <strong>Examples:</strong>
             <br />
-            macOS/Linux: <code>/Users/username/Documents/my-repo</code>
+            macOS/Linux: <code>~/Documents/my-repo</code> or <code>/Users/username/Documents/my-repo</code>
             <br />
-            Windows: <code>C:\Users\username\Documents\my-repo</code>
+            Windows: <code>~/Documents/my-repo</code> or <code>C:\Users\username\Documents\my-repo</code>
           </p>
         </div>
 

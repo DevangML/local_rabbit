@@ -13,6 +13,7 @@ import ProjectSelector from './components/ProjectSelector';
 import ReviewPanel from './components/ReviewPanel';
 import AIAnalyzer from './components/AIAnalyzer';
 import ThemeToggle from './components/ThemeToggle';
+import ThemeSelector from './components/ThemeSelector';
 
 // Route components
 const DiffViewer = React.lazy(() => import('./components/DiffViewer'));
@@ -122,14 +123,14 @@ function App() {
     setError(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/git/diff`, {
+      const response = await fetch(`${API_BASE_URL}/api/diff`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           fromBranch: selectedBranches.from,
-          toBranch: selectedBranches.to
+          toBranch: selectedBranches.to,
         }),
       });
 
@@ -228,6 +229,7 @@ function App() {
           </ul>
 
           <div className="nav-end">
+            <ThemeSelector />
             <ThemeToggle />
           </div>
         </div>

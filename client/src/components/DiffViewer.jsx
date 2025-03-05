@@ -30,26 +30,41 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
         CACHE_TYPES.DIFF,
         params,
         async () => {
-          const response = await fetch(`${config.API_BASE_URL}/api/git/diff`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(params),
-          });
+          try {
+            // Use the correct endpoint that exists in the server
+            const response = await fetch(`${config.API_BASE_URL}/api/diff`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(params),
+            });
 
-          if (!response.ok) {
-            throw new Error('Failed to fetch diff data');
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Failed to fetch diff data');
+            }
+
+            return response.json();
+          } catch (error) {
+            console.error('Error fetching diff:', error);
+            throw error;
           }
-
-          return response.json();
         }
       );
 
       setDiffData(data);
-      if (data.files?.length > 0) {
+      if (data?.files?.length > 0) {
         setSelectedFile(data.files[0]);
+      } else if (data?.diff) {
+        // Handle raw diff format
+        setDiffData({
+          ...data,
+          files: [{ path: 'Complete Diff', content: data.diff.split('\n') }]
+        });
+        setSelectedFile({ path: 'Complete Diff', content: data.diff.split('\n') });
       }
     } catch (error) {
-      setError(error.message);
+      console.error('Failed to fetch diff data:', error);
+      setError(error.message || 'Failed to fetch diff data. Please try again.');
       setDiffData(null);
     } finally {
       setIsLoading(false);

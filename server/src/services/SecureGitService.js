@@ -4,6 +4,27 @@ const os = require('os');
 const logger = require('../utils/logger');
 
 /**
+ * Expand tilde in paths (e.g., "~/Documents" becomes "/Users/username/Documents")
+ * @param {string} filePath - Path that may contain tilde
+ * @returns {string} - Path with tilde expanded
+ */
+const expandTilde = (filePath) => {
+  if (!filePath) return filePath;
+
+  // If path starts with ~/ or ~\, replace it with home directory
+  if (filePath.startsWith('~/') || filePath.startsWith('~\\')) {
+    return path.join(os.homedir(), filePath.substring(2));
+  }
+
+  // If path is just ~, return home directory
+  if (filePath === '~') {
+    return os.homedir();
+  }
+
+  return filePath;
+};
+
+/**
  * Helper function to validate if a path is safe to use
  * @param {string} filePath - Path to validate
  * @returns {boolean} - True if path is safe
@@ -11,7 +32,9 @@ const logger = require('../utils/logger');
 const isPathSafe = (filePath) => {
   if (!filePath) return false;
 
-  const normalizedPath = path.normalize(filePath);
+  // Expand tilde if present
+  const expandedPath = expandTilde(filePath);
+  const normalizedPath = path.normalize(expandedPath);
 
   // Check for path traversal attempts
   if (normalizedPath.includes('..')) return false;
@@ -28,6 +51,7 @@ const isPathSafe = (filePath) => {
     path.join(homeDir, 'git'),
     path.join(homeDir, 'workspace'),
     path.join(homeDir, 'dev'),
+    path.join(homeDir, 'Desktop'),
   ];
 
   return allowedDirs.some((dir) => normalizedPath.startsWith(dir));
@@ -49,13 +73,16 @@ class SecureGitService {
    * @returns {boolean} - True if path is valid and set successfully
    */
   setRepositoryPath(repoPath) {
-    if (!isPathSafe(repoPath)) {
-      logger.error('Repository path is not safe:', repoPath);
+    // Expand tilde if present
+    const expandedPath = expandTilde(repoPath);
+
+    if (!isPathSafe(expandedPath)) {
+      logger.error('Repository path is not safe:', expandedPath);
       return false;
     }
 
-    this.currentRepoPath = repoPath;
-    this.git = simpleGit(repoPath);
+    this.currentRepoPath = expandedPath;
+    this.git = simpleGit(expandedPath);
     return true;
   }
 

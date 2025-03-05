@@ -15,7 +15,7 @@ export class ApiDiffRepository extends DiffRepository {
    */
   async getDiff(repositoryId, fromBranch, toBranch) {
     try {
-      const data = await apiClient.get('/api/git/diff', {
+      const data = await apiClient.get('/api/diff', {
         params: {
           from: fromBranch,
           to: toBranch
@@ -38,7 +38,7 @@ export class ApiDiffRepository extends DiffRepository {
    */
   async analyzeDiff(repositoryId, fromBranch, toBranch) {
     try {
-      const data = await apiClient.get('/api/git/diff/analyze', {
+      const data = await apiClient.get('/api/diff/analyze', {
         params: {
           from: fromBranch,
           to: toBranch

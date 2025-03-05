@@ -1,6 +1,7 @@
 const path = require('path');
 const GitService = require('../services/GitService');
 const logger = require('../utils/logger');
+const os = require('os');
 
 // Create a GitService instance
 const gitService = new GitService();
@@ -10,6 +11,27 @@ gitService.loadState().catch((err) => {
   logger.error('Failed to load initial state:', err);
   throw err; // Re-throw to satisfy promise/always-return
 });
+
+/**
+ * Expand tilde in paths (e.g., "~/Documents" becomes "/Users/username/Documents")
+ * @param {string} filePath - Path that may contain tilde
+ * @returns {string} - Path with tilde expanded
+ */
+const expandTilde = (filePath) => {
+  if (!filePath) return filePath;
+
+  // If path starts with ~/ or ~\, replace it with home directory
+  if (filePath.startsWith('~/') || filePath.startsWith('~\\')) {
+    return path.join(os.homedir(), filePath.substring(2));
+  }
+
+  // If path is just ~, return home directory
+  if (filePath === '~') {
+    return os.homedir();
+  }
+
+  return filePath;
+};
 
 /**
  * Get list of repositories
@@ -39,8 +61,11 @@ exports.setRepository = async (req, res) => {
       return res.status(400).json({ error: 'Repository path is required' });
     }
 
+    // Expand tilde in the path if present
+    const expandedPath = expandTilde(repoPath);
+
     // Set repository path
-    gitService.setRepoPath(repoPath);
+    gitService.setRepoPath(expandedPath);
 
     // Verify it's a git repository
     const isRepo = await gitService.isValidRepo();
@@ -56,8 +81,8 @@ exports.setRepository = async (req, res) => {
     await gitService.saveState();
 
     return res.json({
-      path: repoPath,
-      name: path.basename(repoPath),
+      path: expandedPath,
+      name: path.basename(expandedPath),
       branches: branches.all || [],
       current: currentBranch,
     });
