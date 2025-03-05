@@ -2,46 +2,16 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
-// Custom plugin to handle JSX in .js files
-function jsxInJs() {
-  return {
-    name: 'jsx-in-js',
-    enforce: 'pre',
-    transform(code, id) {
-      if (id.endsWith('.js') && code.includes('jsx')) {
-        return {
-          code,
-          map: null
-        }
-      }
-    }
-  }
-}
-
-// Polyfill for crypto
-function cryptoPolyfill() {
-  return {
-    name: 'crypto-polyfill',
-    config() {
-      return {
-        define: {
-          'global.crypto': 'globalThis.crypto',
-          'process.env': process.env
-        }
-      }
-    }
-  }
-}
-
 export default defineConfig(({ mode }) => {
   // Load env files
   const env = loadEnv(mode, process.cwd(), '');
   
   return {
     plugins: [
-      react(),
-      jsxInJs(),
-      cryptoPolyfill()
+      react({
+        // This is the key configuration to handle JSX in .js files
+        include: "**/*.{jsx,js}",
+      }),
     ],
     resolve: {
       alias: {
@@ -94,11 +64,20 @@ export default defineConfig(({ mode }) => {
         supported: { 
           'top-level-await': true 
         },
+        // Configure esbuild to handle JSX in .js files
+        loader: {
+          '.js': 'jsx',
+          '.jsx': 'jsx'
+        },
       }
     },
     esbuild: {
       logOverride: { 'this-is-undefined-in-esm': 'silent' },
-      loader: { '.js': 'jsx', '.jsx': 'jsx' },
+      // Configure esbuild to handle JSX in .js files
+      loader: { 
+        '.js': 'jsx', 
+        '.jsx': 'jsx' 
+      },
       include: /\.(jsx|js)$/,
       exclude: /node_modules/,
       target: 'es2020',
