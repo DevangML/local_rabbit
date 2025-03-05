@@ -6,6 +6,32 @@ const os = require('os');
 const logger = require('../utils/logger');
 const config = require('../config');
 
+// Helper function to validate paths before fs operations
+const validatePath = (filePath, allowedPaths = []) => {
+  if (!filePath) return false;
+
+  const normalizedPath = path.normalize(filePath);
+
+  // Check for path traversal attempts
+  if (normalizedPath.includes('..')) return false;
+
+  // If allowedPaths is provided, check against the whitelist
+  if (allowedPaths.length > 0) {
+    return allowedPaths.some((allowedPath) => {
+      const normalizedAllowedPath = path.normalize(allowedPath);
+      return normalizedPath.startsWith(normalizedAllowedPath);
+    });
+  }
+
+  // Default validation - check if path is absolute and within safe directories
+  const safeDirectories = [
+    path.resolve(__dirname, '..', '..'), // Project root
+    os.homedir(),
+  ];
+
+  return safeDirectories.some((safeDir) => normalizedPath.startsWith(safeDir));
+};
+
 class GitService {
   constructor(repoPath = '') {
     this.repoPath = repoPath;
@@ -84,7 +110,15 @@ class GitService {
     try {
       logger.info('Loading state from:', this.stateFilePath);
 
+      // Validate path before file operations
+      if (!validatePath(this.stateFilePath)) {
+        logger.error('Invalid state file path');
+        return '';
+      }
+
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       if (fsSync.existsSync(this.stateFilePath)) {
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         const data = await fs.readFile(this.stateFilePath, 'utf8');
         const state = JSON.parse(data);
         this.repoPath = state.repoPath || '';
@@ -107,6 +141,13 @@ class GitService {
   async saveState() {
     try {
       logger.info('Saving state, repoPath:', this.repoPath);
+
+      // Validate path before file operations
+      if (!validatePath(this.stateFilePath)) {
+        throw new Error('Invalid state file path');
+      }
+
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       await fs.writeFile(this.stateFilePath, JSON.stringify({ repoPath: this.repoPath }));
       logger.info('State saved successfully');
     } catch (error) {
@@ -119,7 +160,7 @@ class GitService {
    * Find Git repositories in common directories
    * @returns {Promise<Array>} - Array of repository objects
    */
-  async findRepositories() {
+  static async findRepositories() {
     try {
       const homeDir = os.homedir();
       const commonDirs = [
@@ -132,22 +173,36 @@ class GitService {
 
       const repositories = [];
 
-      for (const dir of commonDirs) {
+      // Process all common directories in parallel
+      await Promise.all(commonDirs.map(async (dir) => {
         try {
-          // Check if directory exists
-          await fs.stat(dir);
+          // Validate and check if directory exists
+          if (!validatePath(dir)) return;
+
+          // eslint-disable-next-line security/detect-non-literal-fs-filename
+          const dirStat = await fs.stat(dir).catch(() => null);
+          if (!dirStat || !dirStat.isDirectory()) return;
 
           // Get subdirectories
+          // eslint-disable-next-line security/detect-non-literal-fs-filename
           const items = await fs.readdir(dir, { withFileTypes: true });
           const subdirs = items
             .filter((item) => item.isDirectory())
             .map((item) => path.join(dir, item.name));
 
-          // Check each subdirectory for .git folder
-          for (const subdir of subdirs) {
+          // Check each subdirectory for .git folder in parallel
+          await Promise.all(subdirs.map(async (subdir) => {
             try {
+              // Validate path before checking for .git directory
+              if (!validatePath(subdir)) return;
+
               const gitDir = path.join(subdir, '.git');
-              await fs.stat(gitDir);
+              // Validate git directory path
+              if (!validatePath(gitDir)) return;
+
+              // eslint-disable-next-line security/detect-non-literal-fs-filename
+              const gitDirStat = await fs.stat(gitDir).catch(() => null);
+              if (!gitDirStat || !gitDirStat.isDirectory()) return;
 
               // It's a git repository
               const git = simpleGit(subdir);
@@ -159,15 +214,14 @@ class GitService {
                   name: path.basename(subdir),
                 });
               }
-            } catch (err) {
-              // Not a git repository, continue
+            } catch (error) {
+              // Skip this subdirectory if there's an error
             }
-          }
-        } catch (err) {
-          // Directory doesn't exist, continue
-          logger.debug(`Directory doesn't exist: ${dir}`);
+          }));
+        } catch (error) {
+          // Skip this directory if there's an error
         }
-      }
+      }));
 
       return repositories;
     } catch (error) {

@@ -12,7 +12,7 @@
     {
       "label": "Start Client",
       "type": "shell",
-      "command": "cd client && yarn dev",
+      "command": "source $HOME/.nvm/nvm.sh && nvm use && cd client && yarn dev",
       "isBackground": true,
       "problemMatcher": {
         "owner": "client",
@@ -35,7 +35,7 @@
     {
       "label": "Start Server",
       "type": "shell",
-      "command": "cd server && yarn dev",
+      "command": "source $HOME/.nvm/nvm.sh && nvm use && cd server && yarn dev",
       "isBackground": true,
       "problemMatcher": {
         "owner": "server",
@@ -53,21 +53,22 @@
     {
       "label": "Run ESLint (Watch Mode)",
       "type": "shell",
-      "command": "./run.sh lint-vscode",
+      "command": "source $HOME/.nvm/nvm.sh && nvm use && ./run.sh lint-vscode",
       "isBackground": true,
       "problemMatcher": [
         {
           "owner": "eslint-client",
           "fileLocation": ["relative", "${workspaceFolder}"],
-          "pattern": {
-            "regexp": "^(.+):(\\d+):(\\d+):\\s+(warning|error)\\s+(.+)\\s+\\[(.+)\\]$",
-            "file": 1,
-            "line": 2,
-            "column": 3,
-            "severity": 4,
-            "message": 5,
-            "code": 6
-          },
+          "pattern": [
+            {
+              "regexp": "^([^:]+):(\\d+):(\\d+):\\s+(warning|error)\\s+(.+)$",
+              "file": 1,
+              "line": 2,
+              "column": 3,
+              "severity": 4,
+              "message": 5
+            }
+          ],
           "background": {
             "activeOnStart": true,
             "beginsPattern": "Starting client linting in watch mode...",
@@ -77,15 +78,16 @@
         {
           "owner": "eslint-server",
           "fileLocation": ["relative", "${workspaceFolder}"],
-          "pattern": {
-            "regexp": "^(.+):(\\d+):(\\d+):\\s+(warning|error)\\s+(.+)\\s+\\[(.+)\\]$",
-            "file": 1,
-            "line": 2,
-            "column": 3,
-            "severity": 4,
-            "message": 5,
-            "code": 6
-          }
+          "pattern": [
+            {
+              "regexp": "^([^:]+):(\\d+):(\\d+):\\s+(warning|error)\\s+(.+)$",
+              "file": 1,
+              "line": 2,
+              "column": 3,
+              "severity": 4,
+              "message": 5
+            }
+          ]
         }
       ],
       "presentation": {
@@ -98,6 +100,33 @@
       "group": {
         "kind": "test",
         "isDefault": true
+      }
+    },
+    {
+      "label": "Lint Whole Project",
+      "type": "shell",
+      "command": "source $HOME/.nvm/nvm.sh && nvm use && (cd client && yarn eslint --format unix src/) && (cd server && yarn eslint --format unix ./)",
+      "problemMatcher": {
+        "owner": "eslint",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^([^:]+):(\\d+):(\\d+):\\s+(warning|error)\\s+(.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": false
       }
     },
     {

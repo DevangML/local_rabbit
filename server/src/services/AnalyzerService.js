@@ -24,7 +24,7 @@ class AnalyzerService {
   async analyzeDiff(diffOutput) {
     try {
       // Parse the diff output
-      const files = this.parseDiff(diffOutput);
+      const files = AnalyzerService.parseDiff(diffOutput);
 
       // Analyze each file
       const analyzedFiles = await Promise.all(
@@ -45,18 +45,19 @@ class AnalyzerService {
   }
 
   /**
-   * Parse diff output into structured data
+   * Parse git diff output into structured file objects
    * @param {string} diffOutput - Git diff output
    * @returns {Array} - Array of file objects
    */
-  parseDiff(diffOutput) {
+  static parseDiff(diffOutput) {
     const files = [];
     let currentFile = null;
 
     // Split the diff output into lines
     const lines = diffOutput.split('\n');
 
-    for (const line of lines) {
+    // Process each line
+    lines.forEach((line) => {
       // Check if line indicates a new file
       if (line.startsWith('diff --git')) {
         // If we have a current file, add it to the files array
@@ -77,11 +78,11 @@ class AnalyzerService {
           additions: 0,
           deletions: 0,
         };
-      }
-      // Check if line is a hunk header
-      else if (line.startsWith('@@')) {
-        // Extract line numbers
-        const match = line.match(/@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@/);
+      } else if (line.startsWith('@@')) { // Check if line is a hunk header
+        // Extract line numbers using a safer regex pattern
+        // Limit the number of digits to avoid catastrophic backtracking
+        // eslint-disable-next-line security/detect-unsafe-regex
+        const match = line.match(/@@ -(\d{1,7})(?:,(\d{1,7}))? \+(\d{1,7})(?:,(\d{1,7}))? @@/);
 
         if (match && currentFile) {
           const startLine = parseInt(match[3], 10);
@@ -91,37 +92,31 @@ class AnalyzerService {
             startLine,
           });
         }
-      }
-      // Check if line is an addition
-      else if (line.startsWith('+') && !line.startsWith('+++')) {
+      } else if (line.startsWith('+') && !line.startsWith('+++')) { // Check if line is an addition
         if (currentFile) {
           currentFile.changes.push({
             type: 'addition',
             content: line.slice(1),
           });
-          currentFile.additions++;
+          currentFile.additions += 1;
         }
-      }
-      // Check if line is a deletion
-      else if (line.startsWith('-') && !line.startsWith('---')) {
+      } else if (line.startsWith('-') && !line.startsWith('---')) { // Check if line is a deletion
         if (currentFile) {
           currentFile.changes.push({
             type: 'deletion',
             content: line.slice(1),
           });
-          currentFile.deletions++;
+          currentFile.deletions += 1;
         }
-      }
-      // Otherwise, it's a context line
-      else if (currentFile && !line.startsWith('---') && !line.startsWith('+++')) {
+      } else if (currentFile && !line.startsWith('---') && !line.startsWith('+++')) { // Otherwise, it's a context line
         currentFile.changes.push({
           type: 'context',
           content: line,
         });
       }
-    }
+    });
 
-    // Add the last file
+    // Add the last file if it exists
     if (currentFile) {
       files.push(currentFile);
     }
@@ -162,7 +157,7 @@ class AnalyzerService {
    * @param {string} extension - File extension
    * @returns {string} - File type
    */
-  getFileType(extension) {
+  static getFileType(extension) {
     const typeMap = {
       js: 'JavaScript',
       jsx: 'React',
@@ -196,7 +191,7 @@ class AnalyzerService {
    * @param {Object} file - File object
    * @returns {Object} - Complexity metrics
    */
-  calculateComplexity(file) {
+  static calculateComplexity(file) {
     // Simple complexity calculation based on number of changes
     const totalChanges = file.additions + file.deletions;
 
@@ -223,7 +218,7 @@ class AnalyzerService {
    * @param {Object} complexity - Complexity metrics
    * @returns {string} - Impact level
    */
-  calculateImpactLevel(file, complexity) {
+  static calculateImpactLevel(file, complexity) {
     // Determine impact level based on complexity and file type
     if (complexity.score === 3) {
       return 'high';
@@ -238,7 +233,7 @@ class AnalyzerService {
    * @param {Array} files - Array of analyzed file objects
    * @returns {Object} - Summary object
    */
-  generateSummary(files) {
+  static generateSummary(files) {
     const totalFiles = files.length;
     const totalAdditions = files.reduce((sum, file) => sum + file.additions, 0);
     const totalDeletions = files.reduce((sum, file) => sum + file.deletions, 0);
@@ -253,9 +248,9 @@ class AnalyzerService {
 
     files.forEach((file) => {
       if (file.analysis && file.analysis.impactLevel) {
-        impactCounts[file.analysis.impactLevel]++;
+        impactCounts[file.analysis.impactLevel] += 1;
       } else {
-        impactCounts.unknown++;
+        impactCounts.unknown += 1;
       }
     });
 

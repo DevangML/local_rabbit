@@ -1,2 +1,7 @@
 yarn run v1.22.22
-info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
+warning ../../../package.json: No license field
+$ /Users/devang/Documents/local_rabbit/client/node_modules/.bin/eslint --format unix src/
+/Users/devang/Documents/local_rabbit/client/src/utils/logger.js:35:5: Unexpected console statement. [Warning/no-console]
+
+1 problem
+Done in 1.16s.

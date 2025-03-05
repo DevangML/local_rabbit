@@ -854,14 +854,54 @@ run_lint_for_vscode() {
     > reports/server-lint.txt
     > reports/combined-lint.txt
     
+    # Ensure correct Node.js version using NVM
+    echo -e "${YELLOW}Ensuring correct Node.js version...${NC}"
+    
+    # Check if NVM is available
+    if [ -s "$NVM_DIR/nvm.sh" ]; then
+        # Load NVM
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        
+        # Use Node.js version from .nvmrc or fallback to 18
+        if [ -f ".nvmrc" ]; then
+            echo -e "${CYAN}Using Node.js version from .nvmrc file...${NC}"
+            nvm use
+        else
+            echo -e "${CYAN}Using Node.js version 18...${NC}"
+            nvm use 18
+        fi
+    else
+        echo -e "${YELLOW}NVM not found. Please ensure you're using Node.js 18 or higher.${NC}"
+    fi
+    
+    # Install nodemon if not already installed
+    if ! command -v nodemon &> /dev/null; then
+        echo -e "${YELLOW}Installing nodemon for file watching...${NC}"
+        npm install -g nodemon
+    fi
+    
+    # Create a filter script for ESLint output
+    cat > reports/filter-eslint.sh << 'EOF'
+#!/bin/bash
+# Remove ANSI color codes and format output for VS Code problem matcher
+sed -E 's/\x1B\[[0-9;]*[mK]//g' | # Remove ANSI color codes
+grep -v "^yarn" | 
+grep -v "Done in" | 
+grep -v "info Visit" |
+grep -v "$ eslint" |
+grep -v "^$" # Remove empty lines
+EOF
+    chmod +x reports/filter-eslint.sh
+    
     # Run client linting in watch mode in the background using nodemon
     echo -e "${CYAN}Starting client linting in watch mode...${NC}"
-    (cd client && npx nodemon --watch src --ext js,jsx,ts,tsx --exec "yarn eslint --format unix src/ | tee ../reports/client-lint.txt") &
+    (cd client && npx nodemon --watch src --ext js,jsx,ts,tsx --exec "yarn eslint --format unix src/ 2>&1 | tee ../reports/client-lint.txt | ../reports/filter-eslint.sh") &
     CLIENT_PID=$!
     
     # Run server linting in watch mode in the background using nodemon
     echo -e "${CYAN}Starting server linting in watch mode...${NC}"
-    (cd server && npx nodemon --watch . --ext js --ignore node_modules/ --exec "yarn eslint --format unix ./ | tee ../reports/server-lint.txt") &
+    (cd server && npx nodemon --watch . --ext js --ignore node_modules/ --exec "yarn eslint --format unix ./ 2>&1 | tee ../reports/server-lint.txt | ../reports/filter-eslint.sh") &
     SERVER_PID=$!
     
     # Display instructions

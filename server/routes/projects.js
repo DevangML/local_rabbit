@@ -30,12 +30,14 @@ const safeStat = async (pathToCheck) => {
   const allowedDirs = [
     path.join(homeDir, 'Documents'),
     path.join(homeDir, 'Projects'),
-    path.join(homeDir, 'Development'),
-    path.join(homeDir, 'Code'),
-    path.join(homeDir, 'Github'),
+    path.join(homeDir, 'repos'),
+    path.join(homeDir, 'git'),
+    path.join(homeDir, 'code'),
+    path.join(homeDir, 'src'),
+    path.join(homeDir, 'workspace'),
+    path.join(homeDir, 'dev'),
   ];
 
-  // Normalize the path to prevent path traversal attacks
   const normalizedPath = path.normalize(pathToCheck);
 
   // Check if the path is in the whitelist
@@ -43,7 +45,13 @@ const safeStat = async (pathToCheck) => {
     throw new Error('Path is not in allowed directories');
   }
 
+  // Additional validation to prevent path traversal
+  if (normalizedPath.includes('..')) {
+    throw new Error('Path contains invalid sequences');
+  }
+
   // Use a hardcoded path or a path from the whitelist
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
   return fs.promises.stat(normalizedPath);
 };
 
@@ -54,12 +62,14 @@ const safeReaddir = async (pathToCheck, options) => {
   const allowedDirs = [
     path.join(homeDir, 'Documents'),
     path.join(homeDir, 'Projects'),
-    path.join(homeDir, 'Development'),
-    path.join(homeDir, 'Code'),
-    path.join(homeDir, 'Github'),
+    path.join(homeDir, 'repos'),
+    path.join(homeDir, 'git'),
+    path.join(homeDir, 'code'),
+    path.join(homeDir, 'src'),
+    path.join(homeDir, 'workspace'),
+    path.join(homeDir, 'dev'),
   ];
 
-  // Normalize the path to prevent path traversal attacks
   const normalizedPath = path.normalize(pathToCheck);
 
   // Check if the path is in the whitelist
@@ -67,7 +77,13 @@ const safeReaddir = async (pathToCheck, options) => {
     throw new Error('Path is not in allowed directories');
   }
 
+  // Additional validation to prevent path traversal
+  if (normalizedPath.includes('..')) {
+    throw new Error('Path contains invalid sequences');
+  }
+
   // Use a hardcoded path or a path from the whitelist
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
   return fs.promises.readdir(normalizedPath, options);
 };
 

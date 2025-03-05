@@ -11,6 +11,7 @@ const chalk = require('chalk');
 const fs = require('fs');
 const path = require('path');
 const { performance } = require('perf_hooks');
+const winston = require('winston');
 
 // Create reports directory if it doesn't exist
 const reportsDir = path.join(__dirname, '..', '..', 'reports');
@@ -20,12 +21,12 @@ if (!fs.existsSync(reportsDir)) {
 
 // Logger setup
 const log = {
-  info: (message) => console.log(chalk.blue(message)),
-  success: (message) => console.log(chalk.green(message)),
-  error: (message) => console.log(chalk.red(message)),
-  warn: (message) => console.log(chalk.yellow(message)),
-  result: (message) => console.log(chalk.cyan(message)),
-  header: (message) => console.log(chalk.bold.white(`\n=== ${message} ===`)),
+  info: (message) => winston.info(message),
+  success: (message) => winston.info(chalk.green(message)),
+  error: (message) => winston.error(message),
+  warn: (message) => winston.warn(message),
+  result: (message) => winston.info(chalk.cyan(message)),
+  header: (message) => winston.info(chalk.bold.white(`\n=== ${message} ===`)),
 };
 
 /**
@@ -84,10 +85,10 @@ const compareImplementations = async (testName, standardFn, optimizedFn, iterati
 // Test 1: Array Manipulation
 const arrayManipulationTest = async () => {
   // Generate test data
-  const generateArray = (size) => Array.from({ length: size }, (_, i) => ({
-    id: i,
+  const generateArray = (size) => Array.from({ length: size }, (unused, index) => ({
+    id: index,
     value: Math.random() * 1000,
-    name: `Item ${i}`,
+    name: `Item ${index}`,
     active: Math.random() > 0.5,
   }));
 
@@ -98,7 +99,7 @@ const arrayManipulationTest = async () => {
   const standardArrayManipulation = async (iterations) => {
     const results = [];
 
-    for (let i = 0; i < iterations; i++) {
+    for (let i = 0; i < iterations; i += 1) {
       // Filter, map, and sort operations
       const filtered = testArray.filter((item) => item.active);
       const mapped = filtered.map((item) => ({
@@ -126,23 +127,20 @@ const arrayManipulationTest = async () => {
   // Optimized implementation with Lodash
   const optimizedArrayManipulation = async (iterations) => {
     const results = [];
+    const optimizedTestArray = generateArray(1000);
 
-    for (let i = 0; i < iterations; i++) {
+    for (let i = 0; i < iterations; i += 1) {
       // Chained operations with Lodash
-      const processed = _(testArray)
+      const processed = _(optimizedTestArray)
         .filter('active')
-        .map((item) => ({
-          id: item.id,
-          formattedValue: `$${item.value.toFixed(2)}`,
-        }))
-        .sortBy('id')
-        .groupBy((item) => Math.floor(item.id / 1000) * 1000)
+        .map((item) => ({ ...item, score: item.value * 2 }))
+        .sortBy('score')
         .value();
 
-      results.push(Object.keys(processed).length);
+      results.push(processed.length);
     }
 
-    return results.length;
+    return results;
   };
 
   return compareImplementations(
@@ -164,18 +162,12 @@ const parallelProcessingTest = async () => {
   });
 
   // Generate test data - IDs to process
-  const items = Array.from({ length: 100 }, (_, i) => i);
+  const items = Array.from({ length: 100 }, (unused, i) => i);
 
   // Standard implementation - sequential processing
   const standardParallelProcessing = async () => {
-    const results = [];
-
-    for (const item of items) {
-      const result = await simulateAsyncOperation(item);
-      results.push(result);
-    }
-
-    return results.length;
+    const tasks = Array.from({ length: 10 }, (unused, i) => simulateAsyncOperation(i));
+    return Promise.all(tasks);
   };
 
   // Optimized implementation with Async
@@ -206,7 +198,7 @@ const objectManipulationTest = async () => {
     }
 
     const obj = {};
-    for (let i = 0; i < breadth; i++) {
+    for (let i = 0; i < breadth; i += 1) {
       obj[`prop${i}`] = generateNestedObject(depth - 1, breadth);
     }
 
@@ -219,7 +211,7 @@ const objectManipulationTest = async () => {
   const standardObjectManipulation = async (iterations) => {
     const results = [];
 
-    for (let i = 0; i < iterations; i++) {
+    for (let i = 0; i < iterations; i += 1) {
       // Deep clone
       const cloned = JSON.parse(JSON.stringify(testObject));
 
@@ -259,7 +251,7 @@ const objectManipulationTest = async () => {
   const optimizedObjectManipulation = async (iterations) => {
     const results = [];
 
-    for (let i = 0; i < iterations; i++) {
+    for (let i = 0; i < iterations; i += 1) {
       // Deep clone with Lodash
       const cloned = _.cloneDeep(testObject);
 
@@ -301,6 +293,7 @@ const runAllTests = async () => {
   log.info('Comparing standard JavaScript vs Lodash/Async optimized implementations\n');
 
   const results = [];
+  let totalImprovement = 0;
 
   try {
     results.push(await arrayManipulationTest());
@@ -312,6 +305,7 @@ const runAllTests = async () => {
 
     results.forEach((result) => {
       log.result(`${result.testName}: ${result.improvement.toFixed(2)}% improvement`);
+      totalImprovement += result.improvement;
     });
 
     // Save report to file
@@ -319,7 +313,7 @@ const runAllTests = async () => {
       timestamp: new Date().toISOString(),
       results,
       summary: {
-        averageImprovement: _.meanBy(results, 'improvement').toFixed(2),
+        averageImprovement: (totalImprovement / results.length).toFixed(2),
         tests: results.length,
       },
     };
