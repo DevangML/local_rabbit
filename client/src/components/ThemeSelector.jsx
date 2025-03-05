@@ -10,15 +10,18 @@ const ThemeSelector = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
+    console.log('Theme state updated:', { currentTheme, isDark });
     // Apply theme to document
     document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-  }, [isDark]);
+  }, [currentTheme, isDark]);
 
   const handleToggle = () => {
+    console.log('Toggling theme');
     dispatch(toggleTheme());
   };
 
   const handleThemeSelect = (themeId) => {
+    console.log('Selecting theme:', themeId);
     dispatch(setTheme(themeId));
     setIsOpen(false);
   };

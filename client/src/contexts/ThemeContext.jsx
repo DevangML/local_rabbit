@@ -25,11 +25,15 @@ export const ThemeProvider = ({ children }) => {
         document.documentElement.style.setProperty(`--${key}`, value);
       });
     }
+
+    // Apply color scheme
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
   }, [currentTheme, isDark]);
 
   const value = {
     currentTheme: currentTheme || themes['lunar-light'],
-    isDark
+    isDark,
+    themes
   };
 
   return (

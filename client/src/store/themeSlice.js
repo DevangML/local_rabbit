@@ -34,11 +34,27 @@ const getInitialTheme = () => {
   }
 };
 
+const applyThemeToDOM = (themeId) => {
+  const theme = themes[themeId];
+  if (!theme || !theme.colors) return;
+
+  // Set theme mode
+  document.documentElement.setAttribute('data-theme', themeId.includes('dark') ? 'dark' : 'light');
+
+  // Apply all theme colors
+  Object.entries(theme.colors).forEach(([key, value]) => {
+    document.documentElement.style.setProperty(`--${key}`, value);
+  });
+};
+
+const initialTheme = getInitialTheme();
+applyThemeToDOM(initialTheme.id); // Apply initial theme immediately
+
 const themeSlice = createSlice({
   name: 'theme',
   initialState: {
-    currentTheme: getInitialTheme(),
-    isDark: getInitialTheme().id.includes('dark'),
+    currentTheme: initialTheme,
+    isDark: initialTheme.id.includes('dark'),
     availableThemes: Object.entries(themes).map(([id, theme]) => ({
       id,
       ...theme
@@ -48,17 +64,14 @@ const themeSlice = createSlice({
     setTheme: (state, action) => {
       const themeId = action.payload;
       if (themes[themeId]) {
-        state.currentTheme = {
+        const newTheme = {
           id: themeId,
           ...themes[themeId]
         };
+        state.currentTheme = newTheme;
         state.isDark = themeId.includes('dark');
         localStorage.setItem('theme', themeId);
-
-        // Apply theme variables to root
-        Object.entries(themes[themeId].colors).forEach(([key, value]) => {
-          document.documentElement.style.setProperty(`--${key}`, value);
-        });
+        applyThemeToDOM(themeId);
       }
     },
     toggleTheme: (state) => {
@@ -66,17 +79,14 @@ const themeSlice = createSlice({
       const newThemeId = state.isDark ? `${baseTheme}-light` : `${baseTheme}-dark`;
 
       if (themes[newThemeId]) {
-        state.currentTheme = {
+        const newTheme = {
           id: newThemeId,
           ...themes[newThemeId]
         };
+        state.currentTheme = newTheme;
         state.isDark = !state.isDark;
         localStorage.setItem('theme', newThemeId);
-
-        // Apply theme variables to root
-        Object.entries(themes[newThemeId].colors).forEach(([key, value]) => {
-          document.documentElement.style.setProperty(`--${key}`, value);
-        });
+        applyThemeToDOM(newThemeId);
       }
     }
   }

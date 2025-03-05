@@ -1,5 +1,5 @@
 import { combineReducers } from '@reduxjs/toolkit';
-import themeReducer from './themeReducer.js';
+import themeReducer from '../themeSlice';
 import diffViewReducer from './diffViewReducer.js';
 
 export default combineReducers({
