@@ -29,7 +29,7 @@
   font-weight: 600;
 }
 
-.refresh-btn {
+.refresh-btn, .select-folder-btn, .native-select-btn {
   background-color: var(--accent);
   color: white;
   border: none;
@@ -41,11 +41,11 @@
   transition: background-color 0.2s ease;
 }
 
-.refresh-btn:hover {
+.refresh-btn:hover, .select-folder-btn:hover, .native-select-btn:hover {
   background-color: var(--accentHover);
 }
 
-.refresh-btn:disabled {
+.refresh-btn:disabled, .select-folder-btn:disabled, .native-select-btn:disabled {
   background-color: var(--border);
   cursor: not-allowed;
 }
@@ -59,6 +59,16 @@
   font-size: 0.9rem;
 }
 
+.info-message {
+  color: var(--accent, #3b82f6);
+  background-color: rgba(59, 130, 246, 0.1);
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 8px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+}
+
 .repository-selector {
   margin-bottom: 20px;
 }
@@ -68,6 +78,63 @@
   margin-bottom: 8px;
   color: var(--textSecondary);
   font-weight: 500;
+}
+
+.folder-input-container {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.folder-path-input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background-color: var(--bgPrimary);
+  color: var(--textPrimary);
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease;
+}
+
+.folder-path-input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.folder-path-input:disabled {
+  background-color: var(--bgSecondary);
+  cursor: not-allowed;
+}
+
+.native-selector {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.native-select-btn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.selected-repo-info {
+  margin: 15px 0;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: var(--bgPrimary);
+  border: 1px solid var(--border);
+}
+
+.selected-repo-info p {
+  margin: 0;
+  color: var(--textPrimary);
+}
+
+.selected-repo-info strong {
+  color: var(--accent);
 }
 
 .repository-selector select {
@@ -143,4 +210,91 @@
   .branch-selectors {
     grid-template-columns: 1fr;
   }
+  
+  .folder-input-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .folder-path-input, .select-folder-btn {
+    width: 100%;
+  }
+}
+
+.allowed-paths-info {
+  margin: 15px 0;
+}
+
+.allowed-paths-info .info-message {
+  font-size: 0.85rem;
+}
+
+.allowed-paths-info .info-message strong {
+  color: var(--accent);
+}
+
+.recent-repositories {
+  margin: 20px 0;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 15px;
+  background-color: var(--bgPrimary);
+}
+
+.recent-repositories h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1rem;
+  color: var(--textPrimary);
+}
+
+.recent-repo-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.recent-repo-item {
+  margin-bottom: 8px;
+}
+
+.recent-repo-item:last-child {
+  margin-bottom: 0;
+}
+
+.recent-repo-btn {
+  width: 100%;
+  text-align: left;
+  background-color: var(--bgSecondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.recent-repo-btn:hover {
+  background-color: rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+  border-color: var(--accent);
+}
+
+.recent-repo-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.repo-name {
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.repo-path {
+  font-size: 0.8rem;
+  color: var(--textSecondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 } 

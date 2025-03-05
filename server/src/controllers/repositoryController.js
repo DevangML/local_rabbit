@@ -18,7 +18,7 @@ gitService.loadState().catch((err) => {
  */
 exports.getRepositories = async (req, res) => {
   try {
-    const repositories = await gitService.findRepositories();
+    const repositories = await GitService.findRepositories();
     return res.json(repositories);
   } catch (error) {
     logger.error('Error getting repositories:', error);

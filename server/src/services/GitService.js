@@ -163,6 +163,7 @@ class GitService {
   static async findRepositories() {
     try {
       const homeDir = os.homedir();
+      // Common places to find repositories
       const commonDirs = [
         path.join(homeDir, 'Documents'),
         path.join(homeDir, 'Projects'),
@@ -171,58 +172,81 @@ class GitService {
         path.join(homeDir, 'Github'),
       ];
 
+      // Add the current directory to the list for testing
+      const currentDir = process.cwd();
+      commonDirs.push(path.dirname(currentDir));
+
+      logger.info('Searching for repositories in directories:', commonDirs);
+
       const repositories = [];
+      const validDirs = [];
 
-      // Process all common directories in parallel
-      await Promise.all(commonDirs.map(async (dir) => {
+      // First validate all directories before attempting to search them
+      for (const dir of commonDirs) {
+        if (validatePath(dir)) {
+          try {
+            // eslint-disable-next-line security/detect-non-literal-fs-filename
+            const dirStat = await fs.stat(dir).catch(() => null);
+            if (dirStat && dirStat.isDirectory()) {
+              validDirs.push(dir);
+            }
+          } catch (error) {
+            logger.warn(`Error checking directory ${dir}:`, error.message);
+          }
+        }
+      }
+
+      logger.info('Valid directories to search:', validDirs);
+
+      // Process each directory one by one (safer than parallel)
+      for (const dir of validDirs) {
         try {
-          // Validate and check if directory exists
-          if (!validatePath(dir)) return;
-
-          // eslint-disable-next-line security/detect-non-literal-fs-filename
-          const dirStat = await fs.stat(dir).catch(() => null);
-          if (!dirStat || !dirStat.isDirectory()) return;
-
           // Get subdirectories
           // eslint-disable-next-line security/detect-non-literal-fs-filename
-          const items = await fs.readdir(dir, { withFileTypes: true });
+          const items = await fs.readdir(dir, { withFileTypes: true }).catch((err) => {
+            logger.warn(`Error reading directory ${dir}:`, err.message);
+            return [];
+          });
+
+          if (!items || !items.length) continue;
+
           const subdirs = items
             .filter((item) => item.isDirectory())
             .map((item) => path.join(dir, item.name));
 
-          // Check each subdirectory for .git folder in parallel
-          await Promise.all(subdirs.map(async (subdir) => {
+          // Check each subdirectory for .git folder (with a reasonable limit)
+          const checkLimit = Math.min(subdirs.length, 25); // limit to 25 directories per parent
+          logger.info(`Checking ${checkLimit} subdirectories in ${dir}`);
+
+          for (let i = 0; i < checkLimit; i++) {
+            const subdir = subdirs[i];
             try {
-              // Validate path before checking for .git directory
-              if (!validatePath(subdir)) return;
+              // Skip if path validation fails
+              if (!validatePath(subdir)) continue;
 
               const gitDir = path.join(subdir, '.git');
-              // Validate git directory path
-              if (!validatePath(gitDir)) return;
+              if (!validatePath(gitDir)) continue;
 
+              // Check if .git directory exists
               // eslint-disable-next-line security/detect-non-literal-fs-filename
               const gitDirStat = await fs.stat(gitDir).catch(() => null);
-              if (!gitDirStat || !gitDirStat.isDirectory()) return;
+              if (!gitDirStat || !gitDirStat.isDirectory()) continue;
 
-              // It's a git repository
-              const git = simpleGit(subdir);
-              const isRepo = await git.checkIsRepo();
-
-              if (isRepo) {
-                repositories.push({
-                  path: subdir,
-                  name: path.basename(subdir),
-                });
-              }
+              // It's a git repository - add it without doing any git operations that might hang
+              repositories.push({
+                path: subdir,
+                name: path.basename(subdir),
+              });
             } catch (error) {
-              // Skip this subdirectory if there's an error
+              logger.warn(`Error checking repository ${subdir}:`, error.message);
             }
-          }));
+          }
         } catch (error) {
-          // Skip this directory if there's an error
+          logger.warn(`Error processing directory ${dir}:`, error.message);
         }
-      }));
+      }
 
+      logger.info(`Found ${repositories.length} repositories`);
       return repositories;
     } catch (error) {
       logger.error('Error finding repositories:', error);

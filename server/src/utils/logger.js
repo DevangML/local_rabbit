@@ -58,9 +58,8 @@ const machineFormat = winston.format.printf(({
   const sourceLine = line || '1';
   const sourceColumn = column || '1';
 
-  return `${sourceFile}:${sourceLine}:${sourceColumn}: ${level} ${message} ${
-    Object.keys(meta).length ? JSON.stringify(meta) : ''
-  }`;
+  return `${sourceFile}:${sourceLine}:${sourceColumn}: ${level} ${message} ${Object.keys(meta).length ? JSON.stringify(meta) : ''
+    }`;
 });
 
 // Create the logger
@@ -108,7 +107,7 @@ const addSourceLocation = (file, line, column) => (message, meta = {}) => ({
 const enhanceLogger = (originalLogger) => {
   const enhanced = { ...originalLogger };
 
-  ['error', 'warn', 'info', 'debug'].forEach((level) => {
+  ['error', 'warn', 'info', 'http', 'debug'].forEach((level) => {
     enhanced[level] = (message, meta = {}) => {
       const error = new Error();
       const stack = error.stack.split('\n')[2];

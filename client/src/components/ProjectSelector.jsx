@@ -3,114 +3,279 @@ import { useSelector } from 'react-redux';
 import { config } from '../config';
 import './ProjectSelector.css';
 
-const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, isLoading }) => {
-  const [repositories, setRepositories] = useState([]);
+// Maximum number of recent repositories to remember
+const MAX_RECENT_REPOS = 5;
+
+const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, isLoading: externalLoading }) => {
   const [branches, setBranches] = useState([]);
   const [selectedRepository, setSelectedRepository] = useState(null);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [recentRepositories, setRecentRepositories] = useState([]);
   const { isDark } = useSelector(state => state.theme);
 
-  // Fetch available repositories
+  // Load recent repositories from localStorage on component mount
   useEffect(() => {
-    fetchRepositories();
+    try {
+      const storedRepos = localStorage.getItem('recentRepositories');
+      if (storedRepos) {
+        setRecentRepositories(JSON.parse(storedRepos));
+      }
+    } catch (err) {
+      console.error('Error loading recent repositories:', err);
+    }
   }, []);
 
   // Fetch branches when repository is selected
   useEffect(() => {
     if (selectedRepository) {
       fetchBranches();
+
+      // Add to recent repositories
+      addToRecentRepositories(selectedRepository);
     }
   }, [selectedRepository]);
 
-  const fetchRepositories = async () => {
+  // Add a repository to the recent repositories list
+  const addToRecentRepositories = (repo) => {
     try {
-      setError(null);
-      const response = await fetch(`${config.API_BASE_URL}/api/git/repositories`);
+      // Create new array without the current repo (if it exists)
+      const filteredRepos = recentRepositories.filter(
+        (r) => r.path !== repo.path
+      );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      // Add the current repo to the beginning
+      const updatedRepos = [repo, ...filteredRepos].slice(0, MAX_RECENT_REPOS);
 
-      const data = await response.json();
-      setRepositories(data);
+      setRecentRepositories(updatedRepos);
+
+      // Save to localStorage
+      localStorage.setItem('recentRepositories', JSON.stringify(updatedRepos));
     } catch (err) {
-      setError('Unable to load repositories. Please ensure the backend server is running.');
-      console.error('Repository fetch error:', err);
+      console.error('Error saving recent repositories:', err);
     }
   };
 
   const fetchBranches = async () => {
     try {
       setError(null);
-      const response = await fetch(`${config.API_BASE_URL}/api/git/repository/branches`);
+      setLoading(true);
+      console.log('Fetching branches...');
+
+      // Use relative URL to let Vite proxy handle the request
+      const response = await fetch(`/api/repository/branches`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Branch fetch error response:', response.status, errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
 
       const data = await response.json();
-      setBranches(data.branches || []);
+      console.log('Branches loaded:', data);
+      setBranches(Array.isArray(data.branches) ? data.branches : []);
     } catch (err) {
       setBranches([]);
       setError('Unable to load branches. Please ensure the backend server is running.');
       console.error('Branch fetch error:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleRepositorySelect = async (repositoryPath) => {
+  const handleFolderSelect = async (e) => {
+    e.preventDefault();
+    const folderPath = e.target.folderPath.value;
+
+    if (!folderPath) {
+      setError('Please enter a folder path');
+      return;
+    }
+
     try {
       setError(null);
-      const response = await fetch(`${config.API_BASE_URL}/api/git/repository/set`, {
+      setLoading(true);
+      console.log('Selecting repository:', folderPath);
+
+      // Use relative URL to let Vite proxy handle the request
+      const response = await fetch(`/api/repository/set`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ path: repositoryPath }),
+        body: JSON.stringify({ path: folderPath }),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Repository selection error response:', response.status, errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('Repository selected:', data);
       setSelectedRepository(data);
       onProjectSelect(data);
-      setBranches(data.branches || []);
+      setBranches(Array.isArray(data.branches) ? data.branches : []);
       onBranchesChange({ from: '', to: '' });
     } catch (err) {
-      setError('Failed to select repository. Please try again.');
+      setError('Failed to select repository. Please ensure the path is a valid git repository.');
       console.error('Repository selection error:', err);
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleRecentRepoSelect = async (repoPath) => {
+    if (!repoPath) return;
+
+    try {
+      setError(null);
+      setLoading(true);
+      console.log('Selecting recent repository:', repoPath);
+
+      // Update input field for visual feedback
+      const input = document.getElementById('folderPath');
+      if (input) {
+        input.value = repoPath;
+      }
+
+      // Use relative URL to let Vite proxy handle the request
+      const response = await fetch(`/api/repository/set`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ path: repoPath }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Repository selection error response:', response.status, errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Repository selected:', data);
+      setSelectedRepository(data);
+      onProjectSelect(data);
+      setBranches(Array.isArray(data.branches) ? data.branches : []);
+      onBranchesChange({ from: '', to: '' });
+    } catch (err) {
+      setError('Failed to select repository. Please ensure the path is a valid git repository.');
+      console.error('Repository selection error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Used for native folder selection (only works in some environments)
+  const handleNativeFolderSelect = async () => {
+    try {
+      // Using the directory picker API if available
+      // Note: This is experimental and may not work in all browsers
+      const dirHandle = await window.showDirectoryPicker();
+      const folderPath = dirHandle.name; // This is just the folder name, not the full path
+
+      // In a real app, you would need to handle this differently
+      // as browsers don't provide the full system path for security reasons
+      alert('Native folder selection is not fully supported in web browsers. Please use the manual path input instead.');
+
+    } catch (err) {
+      console.error('Native folder selection error:', err);
+      setError('Native folder selection is not supported in this browser. Please use the manual path input.');
+    }
+  };
+
+  // Combined loading state
+  const isLoading = loading || externalLoading;
 
   return (
     <div className={`project-selector ${isDark ? 'dark' : 'light'}`}>
       <div className="selector-header">
         <h2>Repository Selection</h2>
-        <button
-          className="refresh-btn"
-          onClick={fetchRepositories}
-          disabled={isLoading}
-        >
-          Refresh
-        </button>
       </div>
 
       {error && <div className="error-message">{error}</div>}
 
       <div className="repository-selector">
-        <label>Select Repository:</label>
-        <select
-          value={selectedRepository ? selectedRepository.path : ''}
-          onChange={(e) => handleRepositorySelect(e.target.value)}
-          disabled={isLoading || repositories.length === 0}
-        >
-          <option value="">Select a repository</option>
-          {repositories.map(repo => (
-            <option key={repo.path} value={repo.path}>{repo.name}</option>
-          ))}
-        </select>
+        <form id="repoForm" onSubmit={handleFolderSelect}>
+          <div className="folder-input-container">
+            <label htmlFor="folderPath">Repository Path:</label>
+            <input
+              type="text"
+              id="folderPath"
+              name="folderPath"
+              placeholder="Enter full path to git repository"
+              defaultValue={selectedRepository ? selectedRepository.path : ''}
+              disabled={isLoading}
+              className="folder-path-input"
+            />
+            <button
+              type="submit"
+              className="select-folder-btn"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Loading...' : 'Set Repository'}
+            </button>
+          </div>
+        </form>
+
+        {recentRepositories.length > 0 && (
+          <div className="recent-repositories">
+            <h3>Recent Repositories</h3>
+            <ul className="recent-repo-list">
+              {recentRepositories.map((repo) => (
+                <li key={repo.path} className="recent-repo-item">
+                  <button
+                    type="button"
+                    onClick={() => handleRecentRepoSelect(repo.path)}
+                    className="recent-repo-btn"
+                    disabled={isLoading}
+                  >
+                    <span className="repo-name">{repo.name}</span>
+                    <span className="repo-path">{repo.path}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="allowed-paths-info">
+          <p className="info-message">
+            <strong>Note:</strong> For security reasons, only repositories in the following directories are allowed:
+            <br />
+            ~/Documents, ~/Projects, ~/Development, ~/Code, ~/Github, ~/repos, ~/git, ~/workspace, ~/dev
+          </p>
+        </div>
+
+        <div className="native-selector">
+          <p className="info-message">
+            Or try using the native folder selector (may not work in all browsers):
+          </p>
+          <button
+            type="button"
+            onClick={handleNativeFolderSelect}
+            className="native-select-btn"
+            disabled={isLoading}
+          >
+            Browse for folder
+          </button>
+        </div>
       </div>
+
+      {selectedRepository && (
+        <div className="selected-repo-info">
+          <p>Selected repository: <strong>{selectedRepository.name}</strong></p>
+        </div>
+      )}
 
       <div className="branch-selectors">
         <div className="branch-select">

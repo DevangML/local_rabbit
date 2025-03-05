@@ -3,7 +3,7 @@
  */
 const config = {
   // Server settings
-  port: process.env.PORT || 3001,
+  port: 3001, // Hardcoded to port 3001 for now
   nodeEnv: process.env.NODE_ENV || 'development',
 
   // CORS settings
