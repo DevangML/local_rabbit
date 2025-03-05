@@ -87,7 +87,7 @@ exports.getDiff = async (req, res) => {
  */
 exports.analyzeDiff = async (req, res) => {
   try {
-    const { fromBranch, toBranch } = req.body;
+    const { fromBranch, toBranch, prompt } = req.body;
 
     if (!gitService.repoPath) {
       return res.status(400).json({ error: 'No repository selected' });
@@ -100,8 +100,8 @@ exports.analyzeDiff = async (req, res) => {
     // Get diff between branches
     const diff = await gitService.getDiff(fromBranch, toBranch);
 
-    // Analyze the diff
-    const analysis = await analyzerService.analyzeDiff(diff);
+    // Analyze the diff with the provided prompt
+    const analysis = await analyzerService.analyzeDiff(diff, prompt);
 
     return res.json({
       analysis,

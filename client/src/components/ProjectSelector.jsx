@@ -197,6 +197,38 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
     }
   };
 
+  const handleFolderIconClick = async () => {
+    try {
+      // Create an input element
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.webkitdirectory = true;
+      input.directory = true;
+
+      // Add change event listener
+      input.onchange = async (e) => {
+        if (e.target.files.length > 0) {
+          const folderPath = e.target.files[0].path.split('/').slice(0, -1).join('/');
+          const folderInput = document.getElementById('folderPath');
+          if (folderInput) {
+            folderInput.value = folderPath;
+            // Trigger the form submission
+            const form = document.getElementById('repoForm');
+            if (form) {
+              form.dispatchEvent(new Event('submit', { cancelable: true }));
+            }
+          }
+        }
+      };
+
+      // Trigger click
+      input.click();
+    } catch (err) {
+      setError('Failed to open folder picker');
+      console.error('Folder picker error:', err);
+    }
+  };
+
   // Combined loading state
   const isLoading = loading || externalLoading;
 
@@ -221,6 +253,14 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
               disabled={isLoading}
               className="folder-path-input"
             />
+            <button
+              type="button"
+              className="folder-icon-btn"
+              onClick={handleFolderIconClick}
+              disabled={isLoading}
+            >
+              📁
+            </button>
             <button
               type="submit"
               className="select-folder-btn"

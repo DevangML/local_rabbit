@@ -25,11 +25,27 @@ class AnalyzerService {
   /**
    * Analyze a diff output
    * @param {string} diffOutput - Git diff output
+   * @param {string} prompt - Custom prompt for analysis
    * @returns {Promise<Object>} - Analyzed diff data
    */
-  async analyzeDiff(diffOutput) {
+  async analyzeDiff(diffOutput, prompt = '') {
     try {
       const files = AnalyzerService.parseDiff(diffOutput);
+
+      // If a custom prompt is provided, use it for AI analysis
+      if (prompt) {
+        const aiAnalysis = await this.geminiService.analyzeDiff(files, prompt);
+        return {
+          ...aiAnalysis,
+          files: files.map(file => ({
+            name: file.name,
+            type: AnalyzerService.getFileType(file.extension),
+            changes: file.changes
+          }))
+        };
+      }
+
+      // Default analysis without AI
       const analysis = {
         files: files.map(file => {
           const complexity = AnalyzerService.calculateComplexity(file);
