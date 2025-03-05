@@ -1,9 +1,9 @@
 const express = require('express');
-const projectsRoutes = require('./projects.js');
+const secureGitRoutes = require('./secureGitRoutes.js');
 
 const router = express.Router();
 
 // Register all route modules
-router.use('/projects', projectsRoutes);
+router.use('/git', secureGitRoutes);
 
 module.exports = router;

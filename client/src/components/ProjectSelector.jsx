@@ -25,12 +25,12 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
   const fetchRepositories = async () => {
     try {
       setError(null);
-      const response = await fetch(`${config.API_BASE_URL}/api/repositories`);
-      
+      const response = await fetch(`${config.API_BASE_URL}/api/git/repositories`);
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setRepositories(data);
     } catch (err) {
@@ -42,12 +42,12 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
   const fetchBranches = async () => {
     try {
       setError(null);
-      const response = await fetch(`${config.API_BASE_URL}/api/repository/branches`);
-      
+      const response = await fetch(`${config.API_BASE_URL}/api/git/repository/branches`);
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setBranches(data.branches || []);
     } catch (err) {
@@ -60,18 +60,18 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
   const handleRepositorySelect = async (repositoryPath) => {
     try {
       setError(null);
-      const response = await fetch(`${config.API_BASE_URL}/api/repository/set`, {
+      const response = await fetch(`${config.API_BASE_URL}/api/git/repository/set`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ path: repositoryPath }),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setSelectedRepository(data);
       onProjectSelect(data);
@@ -87,7 +87,7 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
     <div className={`project-selector ${isDark ? 'dark' : 'light'}`}>
       <div className="selector-header">
         <h2>Repository Selection</h2>
-        <button 
+        <button
           className="refresh-btn"
           onClick={fetchRepositories}
           disabled={isLoading}

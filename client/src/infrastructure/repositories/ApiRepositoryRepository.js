@@ -12,7 +12,7 @@ export class ApiRepositoryRepository extends RepositoryRepository {
    */
   async getAll() {
     try {
-      const data = await apiClient.get('/api/repositories');
+      const data = await apiClient.get('/api/git/repositories');
       return data.map(repo => Repository.fromJSON(repo));
     } catch (error) {
       console.error('Failed to get repositories:', error);
@@ -30,11 +30,11 @@ export class ApiRepositoryRepository extends RepositoryRepository {
       // Since we don't have a direct endpoint for this, we'll get all and filter
       const repositories = await this.getAll();
       const repository = repositories.find(repo => repo.id === id);
-      
+
       if (!repository) {
         throw new Error(`Repository with ID ${id} not found`);
       }
-      
+
       return repository;
     } catch (error) {
       console.error(`Failed to get repository with ID ${id}:`, error);
@@ -49,7 +49,7 @@ export class ApiRepositoryRepository extends RepositoryRepository {
    */
   async setCurrent(path) {
     try {
-      const data = await apiClient.post('/api/repository/set', { path });
+      const data = await apiClient.post('/api/git/repository/set', { path });
       return Repository.fromJSON(data);
     } catch (error) {
       console.error('Failed to set current repository:', error);
@@ -64,7 +64,7 @@ export class ApiRepositoryRepository extends RepositoryRepository {
    */
   async getBranches(_id) {
     try {
-      const data = await apiClient.get('/api/repository/branches');
+      const data = await apiClient.get('/api/git/repository/branches');
       return data.branches || [];
     } catch (error) {
       console.error('Failed to get branches:', error);
@@ -78,7 +78,7 @@ export class ApiRepositoryRepository extends RepositoryRepository {
    */
   async getCurrentInfo() {
     try {
-      const data = await apiClient.get('/api/repository/info');
+      const data = await apiClient.get('/api/git/repository/info');
       return Repository.fromJSON(data);
     } catch (error) {
       console.error('Failed to get current repository info:', error);

@@ -30,7 +30,7 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
         CACHE_TYPES.DIFF,
         params,
         async () => {
-          const response = await fetch(`${config.API_BASE_URL}/api/diff`, {
+          const response = await fetch(`${config.API_BASE_URL}/api/git/diff`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(params),
@@ -92,7 +92,7 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
 
   const renderUnifiedView = (file) => {
     const isExpanded = expandedFiles.has(file.path);
-    
+
     if (!file.content) {
       return (
         <div className="diff-file">
@@ -109,7 +109,7 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
         </div>
       );
     }
-    
+
     const lines = file.content.split('\n');
     const displayLines = isExpanded ? lines : lines.slice(0, 5);
 

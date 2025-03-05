@@ -32,7 +32,7 @@ function App() {
     const savedRepo = localStorage.getItem(STORAGE_KEYS.REPO_INFO);
     return savedRepo ? JSON.parse(savedRepo) : null;
   });
-  
+
   const [selectedBranches, setSelectedBranches] = useState(() => {
     const savedBranches = localStorage.getItem(STORAGE_KEYS.SELECTED_BRANCHES);
     return savedBranches ? JSON.parse(savedBranches) : { from: '', to: '' };
@@ -65,44 +65,43 @@ function App() {
     setError(null);
     setIsLoading(true);
     console.info('Selecting project:', dirInfo);
-    
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/set-repo`, {
+      const response = await fetch(`${API_BASE_URL}/api/git/repository/set`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify({ 
-          name: dirInfo.name,
-          samplePaths: dirInfo.samplePaths
+        body: JSON.stringify({
+          path: dirInfo.path
         })
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to set repository');
       }
-      
+
       const data = await response.json();
       console.info('Server response:', data);
-      
+
       if (!data.branches || data.branches.length === 0) {
         throw new Error('No branches found in repository');
       }
-      
+
       // Set repo info
       setRepoInfo(data);
-      
+
       // Set default branches
       const defaultBranches = {
         from: data.branches[0],
-        to: data.currentBranch || data.branches[0]
+        to: data.current || data.branches[0]
       };
-      
+
       console.info('Setting default branches:', defaultBranches);
       setSelectedBranches(defaultBranches);
-      
+
     } catch (error) {
       console.error('Error in handleProjectSelect:', error);
       setError(error.message);
@@ -118,12 +117,12 @@ function App() {
 
   const fetchDiffData = useCallback(async () => {
     if (!selectedBranches.from || !selectedBranches.to) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/diff`, {
+      const response = await fetch(`${API_BASE_URL}/api/git/diff`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -133,12 +132,12 @@ function App() {
           toBranch: selectedBranches.to
         }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch diff');
       }
-      
+
       const data = await response.json();
       setDiffData(data);
     } catch (error) {
@@ -158,11 +157,11 @@ function App() {
   // Update navigation component to use Link and handle active state
   const Navigation = () => {
     const location = useLocation();
-    
+
     return (
       <nav className="app-nav">
         <div className="nav-container">
-          <button 
+          <button
             className="theme-toggle mobile-menu-toggle"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle navigation menu"
@@ -179,11 +178,11 @@ function App() {
               )}
             </svg>
           </button>
-          
+
           <ul className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
             <li>
-              <Link 
-                to="/" 
+              <Link
+                to="/"
                 className={location.pathname === '/' ? 'active' : ''}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -191,8 +190,8 @@ function App() {
               </Link>
             </li>
             <li>
-              <Link 
-                to="/impact" 
+              <Link
+                to="/impact"
                 className={location.pathname === '/impact' ? 'active' : ''}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -200,8 +199,8 @@ function App() {
               </Link>
             </li>
             <li>
-              <Link 
-                to="/quality" 
+              <Link
+                to="/quality"
                 className={location.pathname === '/quality' ? 'active' : ''}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -209,8 +208,8 @@ function App() {
               </Link>
             </li>
             <li>
-              <Link 
-                to="/review" 
+              <Link
+                to="/review"
                 className={location.pathname === '/review' ? 'active' : ''}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -218,8 +217,8 @@ function App() {
               </Link>
             </li>
             <li>
-              <Link 
-                to="/ai-analysis" 
+              <Link
+                to="/ai-analysis"
                 className={location.pathname === '/ai-analysis' ? 'active' : ''}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -227,7 +226,7 @@ function App() {
               </Link>
             </li>
           </ul>
-          
+
           <div className="nav-end">
             <ThemeToggle />
           </div>
@@ -286,56 +285,56 @@ function App() {
                     <main className="app-main">
                       <div className="content-container">
                         <Routes>
-                          <Route 
-                            path="/" 
+                          <Route
+                            path="/"
                             element={
-                              <DiffViewer 
-                                diffData={diffData} 
+                              <DiffViewer
+                                diffData={diffData}
                                 isLoading={isLoading}
                                 fromBranch={selectedBranches.from}
                                 toBranch={selectedBranches.to}
                               />
-                            } 
+                            }
                           />
-                          <Route 
-                            path="/impact" 
+                          <Route
+                            path="/impact"
                             element={
-                              <ImpactView 
+                              <ImpactView
                                 diffData={diffData}
                                 fromBranch={selectedBranches.from}
                                 toBranch={selectedBranches.to}
                               />
-                            } 
+                            }
                           />
-                          <Route 
-                            path="/quality" 
+                          <Route
+                            path="/quality"
                             element={
-                              <QualityView 
+                              <QualityView
                                 diffData={diffData}
                                 fromBranch={selectedBranches.from}
                                 toBranch={selectedBranches.to}
                               />
-                            } 
+                            }
                           />
-                          <Route 
-                            path="/review" 
+                          <Route
+                            path="/review"
                             element={
-                              <ReviewPanel 
+                              <ReviewPanel
                                 diffData={diffData}
                                 fromBranch={selectedBranches.from}
                                 toBranch={selectedBranches.to}
                               />
-                            } 
+                            }
                           />
-                          <Route 
-                            path="/ai-analysis" 
+                          <Route
+                            path="/ai-analysis"
                             element={
-                              <AIAnalyzer 
+                              <AIAnalyzer
                                 diffData={diffData}
                                 fromBranch={selectedBranches.from}
                                 toBranch={selectedBranches.to}
                               />
-                            } 
+                            }
                           />
                         </Routes>
                       </div>

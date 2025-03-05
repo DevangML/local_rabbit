@@ -15,13 +15,13 @@ export class ApiDiffRepository extends DiffRepository {
    */
   async getDiff(repositoryId, fromBranch, toBranch) {
     try {
-      const data = await apiClient.get('/api/diff', {
+      const data = await apiClient.get('/api/git/diff', {
         params: {
           from: fromBranch,
           to: toBranch
         }
       });
-      
+
       return Diff.fromJSON(data);
     } catch (error) {
       console.error('Failed to get diff:', error);
@@ -38,13 +38,13 @@ export class ApiDiffRepository extends DiffRepository {
    */
   async analyzeDiff(repositoryId, fromBranch, toBranch) {
     try {
-      const data = await apiClient.get('/api/diff/analyze', {
+      const data = await apiClient.get('/api/git/diff/analyze', {
         params: {
           from: fromBranch,
           to: toBranch
         }
       });
-      
+
       return data;
     } catch (error) {
       console.error('Failed to analyze diff:', error);
