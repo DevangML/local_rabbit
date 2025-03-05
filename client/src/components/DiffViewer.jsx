@@ -17,15 +17,41 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
   const [expandedFiles, setExpandedFiles] = useState(new Set());
   const [viewMode, setViewMode] = useState('unified');
   const [searchParams, setSearchParams] = useState({ query: '', filters: {} });
+  const [retryCount, setRetryCount] = useState(0);
 
   const fetchDiffData = useCallback(async () => {
-    if (!fromBranch || !toBranch || propsDiffData) return;
+    if (!fromBranch || !toBranch) {
+      setError("Both 'from' and 'to' branches must be selected");
+      return;
+    }
+
+    if (propsDiffData) {
+      setDiffData(propsDiffData);
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
 
     try {
       const params = { fromBranch, toBranch };
+      const cacheKey = `diff:${fromBranch}:${toBranch}`;
+
+      // Try to get from cache first
+      const cachedData = localStorage.getItem(cacheKey);
+      if (cachedData) {
+        try {
+          const parsedData = JSON.parse(cachedData);
+          setDiffData(parsedData);
+          setIsLoading(false);
+          return;
+        } catch (e) {
+          console.warn('Failed to parse cached diff data', e);
+          localStorage.removeItem(cacheKey);
+        }
+      }
+
+      // Fetch from API if not in cache
       const data = await cacheInstance.getOrFetch(
         CACHE_TYPES.DIFF,
         params,
@@ -39,11 +65,21 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
             });
 
             if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.error || 'Failed to fetch diff data');
+              const errorText = await response.text();
+              let errorMessage;
+              try {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.error || 'Failed to fetch diff data';
+              } catch (e) {
+                errorMessage = `Failed to fetch diff data: ${response.status} ${response.statusText}`;
+              }
+              throw new Error(errorMessage);
             }
 
-            return response.json();
+            const responseData = await response.json();
+            // Cache the result in localStorage as well
+            localStorage.setItem(cacheKey, JSON.stringify(responseData));
+            return responseData;
           } catch (error) {
             console.error('Error fetching diff:', error);
             throw error;
@@ -52,26 +88,26 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
       );
 
       setDiffData(data);
-      if (data?.files?.length > 0) {
-        setSelectedFile(data.files[0]);
-      } else if (data?.diff) {
-        // Handle raw diff format
-        setDiffData({
-          ...data,
-          files: [{ path: 'Complete Diff', content: data.diff.split('\n') }]
-        });
-        setSelectedFile({ path: 'Complete Diff', content: data.diff.split('\n') });
-      }
     } catch (error) {
-      console.error('Failed to fetch diff data:', error);
-      setError(error.message || 'Failed to fetch diff data. Please try again.');
-      setDiffData(null);
+      console.error('Error in fetchDiffData:', error);
+      setError(error.message || 'Failed to fetch diff data');
+
+      // Auto-retry up to 3 times with exponential backoff
+      if (retryCount < 3) {
+        const timeout = Math.pow(2, retryCount) * 1000;
+        console.log(`Retrying in ${timeout}ms (attempt ${retryCount + 1}/3)`);
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+          fetchDiffData();
+        }, timeout);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [fromBranch, toBranch, propsDiffData]);
+  }, [fromBranch, toBranch, propsDiffData, retryCount]);
 
   useEffect(() => {
+    setRetryCount(0); // Reset retry count when branches change
     fetchDiffData();
   }, [fetchDiffData]);
 

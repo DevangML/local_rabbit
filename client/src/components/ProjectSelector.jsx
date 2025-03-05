@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { config } from '../config';
+import { cacheInstance } from '../utils/cache';
 import './ProjectSelector.css';
 
 // Maximum number of recent repositories to remember
@@ -103,6 +104,9 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
       setLoading(true);
       console.log('Selecting repository:', folderPath);
 
+      // Clear all caches before setting a new repository
+      cacheInstance.clear();
+
       // Use relative URL to let Vite proxy handle the request
       const response = await fetch(`/api/repository/set`, {
         method: 'POST',
@@ -145,6 +149,9 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
       if (input) {
         input.value = repoPath;
       }
+
+      // Clear all caches before setting a new repository
+      cacheInstance.clear();
 
       // Use relative URL to let Vite proxy handle the request
       const response = await fetch(`/api/repository/set`, {

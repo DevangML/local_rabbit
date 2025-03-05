@@ -4,7 +4,7 @@ import { themes } from '../themes';
 const getInitialTheme = () => {
   const savedTheme = localStorage.getItem('theme');
   if (savedTheme && themes[savedTheme]) return savedTheme;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark-default' : 'light-default';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'lunar-dark' : 'lunar-light';
 };
 
 const themeSlice = createSlice({
@@ -27,7 +27,7 @@ const themeSlice = createSlice({
       }
     },
     toggleTheme: (state) => {
-      const newTheme = state.isDark ? 'light-default' : 'dark-default';
+      const newTheme = state.isDark ? 'lunar-light' : 'lunar-dark';
       state.currentTheme = newTheme;
       state.isDark = !state.isDark;
       localStorage.setItem('theme', newTheme);

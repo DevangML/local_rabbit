@@ -3,6 +3,42 @@ const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes in milliseconds
 class Cache {
   constructor() {
     this.cache = new Map();
+    this.initializeFromLocalStorage();
+
+    // Set up event listener for storage changes in other tabs
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'cache_cleared') {
+        this.clear(false); // Clear without triggering another event
+      }
+    });
+  }
+
+  initializeFromLocalStorage() {
+    try {
+      const persistedCache = localStorage.getItem('app_cache');
+      if (persistedCache) {
+        const parsed = JSON.parse(persistedCache);
+        Object.entries(parsed).forEach(([key, value]) => {
+          this.cache.set(key, value);
+        });
+        console.log('Cache initialized from localStorage');
+      }
+    } catch (error) {
+      console.error('Failed to initialize cache from localStorage:', error);
+      localStorage.removeItem('app_cache');
+    }
+  }
+
+  persistToLocalStorage() {
+    try {
+      const cacheObj = {};
+      this.cache.forEach((value, key) => {
+        cacheObj[key] = value;
+      });
+      localStorage.setItem('app_cache', JSON.stringify(cacheObj));
+    } catch (error) {
+      console.error('Failed to persist cache to localStorage:', error);
+    }
   }
 
   generateKey(type, params) {
@@ -10,49 +46,81 @@ class Cache {
   }
 
   set(type, params, data) {
-    const key = this.generateKey(type, params);
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now()
-    });
+    try {
+      const key = this.generateKey(type, params);
+      this.cache.set(key, {
+        data,
+        timestamp: Date.now()
+      });
+      this.persistToLocalStorage();
+    } catch (error) {
+      console.error('Error setting cache:', error);
+    }
   }
 
   get(type, params) {
-    const key = this.generateKey(type, params);
-    const cached = this.cache.get(key);
-    
-    if (!cached) return null;
-    
-    // Check if cache has expired
-    if (Date.now() - cached.timestamp > CACHE_EXPIRY) {
-      this.cache.delete(key);
+    try {
+      const key = this.generateKey(type, params);
+      const cached = this.cache.get(key);
+
+      if (!cached) return null;
+
+      // Check if cache has expired
+      if (Date.now() - cached.timestamp > CACHE_EXPIRY) {
+        this.cache.delete(key);
+        this.persistToLocalStorage();
+        return null;
+      }
+
+      return cached.data;
+    } catch (error) {
+      console.error('Error getting from cache:', error);
       return null;
     }
-    
-    return cached.data;
   }
 
-  clear() {
+  clear(triggerEvent = true) {
     this.cache.clear();
+    localStorage.removeItem('app_cache');
+
+    if (triggerEvent) {
+      // Notify other tabs that cache was cleared
+      localStorage.setItem('cache_cleared', Date.now().toString());
+    }
+
+    console.log('Cache cleared');
   }
 
   clearType(type) {
+    let deleted = false;
     for (const key of this.cache.keys()) {
       if (key.startsWith(`${type}:`)) {
         this.cache.delete(key);
+        deleted = true;
       }
+    }
+
+    if (deleted) {
+      this.persistToLocalStorage();
     }
   }
 
   async getOrFetch(type, params, fetchFn) {
-    const cachedData = this.get(type, params);
-    if (cachedData) {
-      return cachedData;
+    try {
+      const cachedData = this.get(type, params);
+      if (cachedData) {
+        console.log(`Cache hit for ${type}`);
+        return cachedData;
+      }
+
+      console.log(`Cache miss for ${type}, fetching data...`);
+      const data = await fetchFn();
+      this.set(type, params, data);
+      return data;
+    } catch (error) {
+      console.error(`Error in getOrFetch for ${type}:`, error);
+      throw error;
     }
-    
-    const data = await fetchFn();
-    this.set(type, params, data);
-    return data;
   }
 }
 
