@@ -3,20 +3,34 @@ import { themes } from '../themes';
 
 const getInitialTheme = () => {
   try {
-    if (typeof localStorage !== 'undefined') {
-      const savedTheme = localStorage.getItem('theme');
-      if (savedTheme && themes[savedTheme]) return savedTheme;
+    // Check localStorage first
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme && themes[savedTheme]) {
+      return {
+        id: savedTheme,
+        ...themes[savedTheme]
+      };
     }
 
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'lunar-dark' : 'lunar-light';
+    // Check system preference
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return {
+        id: 'lunar-dark',
+        ...themes['lunar-dark']
+      };
     }
 
-    // Default fallback
-    return 'lunar-light';
+    // Default to light theme
+    return {
+      id: 'lunar-light',
+      ...themes['lunar-light']
+    };
   } catch (error) {
     console.error('Error determining initial theme:', error);
-    return 'lunar-light';
+    return {
+      id: 'lunar-light',
+      ...themes['lunar-light']
+    };
   }
 };
 
@@ -24,26 +38,46 @@ const themeSlice = createSlice({
   name: 'theme',
   initialState: {
     currentTheme: getInitialTheme(),
-    isDark: getInitialTheme().includes('dark'),
-    themes: Object.keys(themes).map(key => ({
-      id: key,
-      name: themes[key].name
+    isDark: getInitialTheme().id.includes('dark'),
+    availableThemes: Object.entries(themes).map(([id, theme]) => ({
+      id,
+      ...theme
     }))
   },
   reducers: {
     setTheme: (state, action) => {
       const themeId = action.payload;
       if (themes[themeId]) {
-        state.currentTheme = themeId;
+        state.currentTheme = {
+          id: themeId,
+          ...themes[themeId]
+        };
         state.isDark = themeId.includes('dark');
         localStorage.setItem('theme', themeId);
+
+        // Apply theme variables to root
+        Object.entries(themes[themeId].colors).forEach(([key, value]) => {
+          document.documentElement.style.setProperty(`--${key}`, value);
+        });
       }
     },
     toggleTheme: (state) => {
-      const newTheme = state.isDark ? 'lunar-light' : 'lunar-dark';
-      state.currentTheme = newTheme;
-      state.isDark = !state.isDark;
-      localStorage.setItem('theme', newTheme);
+      const baseTheme = state.currentTheme.id.includes('lunar') ? 'lunar' : 'light';
+      const newThemeId = state.isDark ? `${baseTheme}-light` : `${baseTheme}-dark`;
+
+      if (themes[newThemeId]) {
+        state.currentTheme = {
+          id: newThemeId,
+          ...themes[newThemeId]
+        };
+        state.isDark = !state.isDark;
+        localStorage.setItem('theme', newThemeId);
+
+        // Apply theme variables to root
+        Object.entries(themes[newThemeId].colors).forEach(([key, value]) => {
+          document.documentElement.style.setProperty(`--${key}`, value);
+        });
+      }
     }
   }
 });

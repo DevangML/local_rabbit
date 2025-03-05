@@ -1,65 +1,82 @@
 .theme-selector-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   position: relative;
 }
 
 .theme-mode-button {
-  background-color: var(--accent-color, #7aa2f7);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius-md);
+  color: var(--text-primary);
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all var(--animation-fast);
 }
 
 .theme-mode-button:hover {
-  background-color: var(--accent-hover-color, #89b4fa);
+  background-color: var(--surface-hover);
+  border-color: var(--accent);
+}
+
+.theme-mode-button svg {
+  transition: transform var(--animation-fast);
+}
+
+.theme-mode-button:hover svg {
+  transform: rotate(12deg);
 }
 
 .theme-dropdown {
   position: relative;
-  display: inline-block;
 }
 
 .theme-dropdown-button {
-  background-color: var(--surface-color, #24283b);
-  color: var(--text-primary-color, #c0caf5);
-  border: 1px solid var(--border-color, #3b4261);
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 14px;
-  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 150px;
-  justify-content: space-between;
+  height: 40px;
+  padding: 0 12px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius-md);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--animation-fast);
+  min-width: 140px;
 }
 
 .theme-dropdown-button:hover {
-  background-color: var(--surface-hover-color, #2f334d);
+  background-color: var(--surface-hover);
+  border-color: var(--accent);
 }
 
 .dropdown-arrow {
-  font-size: 10px;
+  transition: transform var(--animation-fast);
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
 }
 
 .theme-dropdown-content {
   position: absolute;
   right: 0;
   top: calc(100% + 4px);
-  background-color: var(--bg-secondary-color, #24283b);
-  min-width: 200px;
-  border-radius: 4px;
-  border: 1px solid var(--border-color, #3b4261);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  z-index: 100;
-  max-height: 400px;
-  overflow-y: auto;
+  width: 200px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius-md);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  z-index: 50;
+  overflow: hidden;
 }
 
 .theme-group {
@@ -67,50 +84,57 @@
 }
 
 .theme-group:not(:last-child) {
-  border-bottom: 1px solid var(--border-color, #3b4261);
+  border-bottom: 1px solid var(--border);
 }
 
 .theme-group h4 {
   margin: 0;
-  padding: 4px 12px;
-  font-size: 12px;
-  color: var(--text-secondary-color, #9aa5ce);
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .theme-option {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
-  text-align: left;
   padding: 8px 12px;
   background: none;
   border: none;
-  color: var(--text-primary-color, #c0caf5);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  text-align: left;
   cursor: pointer;
-  font-size: 14px;
+  transition: all var(--animation-fast);
 }
 
 .theme-option:hover {
-  background-color: var(--surface-hover-color, #2f334d);
+  background-color: var(--surface-hover);
 }
 
 .theme-option.active {
-  background-color: rgba(122, 162, 247, 0.1);
-  color: var(--accent-color, #7aa2f7);
+  color: var(--accent);
+  background-color: var(--surface-hover);
 }
 
 /* Responsive styles */
 @media (max-width: 768px) {
-  .theme-selector-container {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
   .theme-dropdown {
-    width: 100%;
+    position: static;
   }
-  
-  .theme-dropdown-button {
+
+  .theme-dropdown-content {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
     width: 100%;
+    border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+    max-height: 60vh;
+    overflow-y: auto;
   }
 } 

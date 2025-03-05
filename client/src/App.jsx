@@ -14,6 +14,7 @@ import ReviewPanel from './components/ReviewPanel';
 import AIAnalyzer from './components/AIAnalyzer';
 import ThemeToggle from './components/ThemeToggle';
 import ThemeSelector from './components/ThemeSelector';
+import { useSelector } from 'react-redux';
 
 // Route components
 const DiffViewer = React.lazy(() => import('./components/DiffViewer'));
@@ -43,6 +44,7 @@ function App() {
   const [error, setError] = useState(null);
   const [diffData, setDiffData] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { currentTheme } = useSelector(state => state.theme);
 
   // Persist repoInfo changes
   useEffect(() => {
@@ -153,85 +155,121 @@ function App() {
     console.log('Mobile menu state after:', !isMobileMenuOpen);
   };
 
+  useEffect(() => {
+    // Apply theme colors when theme changes
+    if (currentTheme && currentTheme.colors) {
+      Object.entries(currentTheme.colors).forEach(([key, value]) => {
+        document.documentElement.style.setProperty(`--${key}`, value);
+      });
+    }
+  }, [currentTheme]);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMobileMenuOpen && !event.target.closest('.nav-links') && !event.target.closest('.mobile-menu-toggle')) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMobileMenuOpen]);
+
   return (
     <Router>
       <div className="app">
         <header className="app-header">
           <div className="header-content">
             <div className="logo-container">
-              <Link to="/" className="logo">Local Rabbit</Link>
+              <Link to="/" className="logo">
+                Local Rabbit
+              </Link>
             </div>
+
             <button
               className="mobile-menu-toggle"
               onClick={toggleMobileMenu}
               aria-label="Toggle navigation menu"
+              aria-expanded={isMobileMenuOpen}
             >
               <span className="menu-icon"></span>
             </button>
-            <nav>
-              <ul className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-                <li><Link to="/">Diff</Link></li>
-                <li><Link to="/impact">Impact</Link></li>
-                <li><Link to="/quality">Quality</Link></li>
-                <li><ThemeToggle /></li>
-                <li><ThemeSelector /></li>
+
+            <nav className={`nav-container ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+              <ul className="nav-links">
+                <li><Link to="/" onClick={() => setIsMobileMenuOpen(false)}>Diff</Link></li>
+                <li><Link to="/impact" onClick={() => setIsMobileMenuOpen(false)}>Impact</Link></li>
+                <li><Link to="/quality" onClick={() => setIsMobileMenuOpen(false)}>Quality</Link></li>
               </ul>
+              <div className="theme-controls">
+                <ThemeToggle />
+                <ThemeSelector />
+              </div>
             </nav>
           </div>
         </header>
 
-        <main className="app-content">
-          <div className="project-selector-container">
-            <ProjectSelector
-              onProjectSelect={handleProjectSelect}
-              onBranchesChange={handleBranchesChange}
-              selectedBranches={selectedBranches}
-              repoInfo={repoInfo}
-              isLoading={isLoading}
-              error={error}
-            />
-          </div>
-
-          {error && (
-            <div className="error-message">
-              {error}
+        <main className="app-main">
+          <div className="container">
+            <div className="project-selector-container">
+              <ProjectSelector
+                onProjectSelect={handleProjectSelect}
+                onBranchesChange={handleBranchesChange}
+                selectedBranches={selectedBranches}
+                repoInfo={repoInfo}
+                isLoading={isLoading}
+                error={error}
+              />
             </div>
-          )}
 
-          <ErrorBoundary>
-            <Suspense fallback={<LoadingIndicator />}>
-              <Routes>
-                <Route path="/" element={
-                  <DiffViewer
-                    fromBranch={selectedBranches.from}
-                    toBranch={selectedBranches.to}
-                    diffData={diffData}
-                    isLoading={isLoading}
-                  />
-                } />
-                <Route path="/impact" element={
-                  <ImpactView
-                    fromBranch={selectedBranches.from}
-                    toBranch={selectedBranches.to}
-                    diffData={diffData}
-                    isLoading={isLoading}
-                  />
-                } />
-                <Route path="/quality" element={
-                  <QualityView
-                    fromBranch={selectedBranches.from}
-                    toBranch={selectedBranches.to}
-                    diffData={diffData}
-                    isLoading={isLoading}
-                  />
-                } />
-              </Routes>
-            </Suspense>
-          </ErrorBoundary>
+            {error && (
+              <div className="error-message">
+                {error}
+              </div>
+            )}
 
-          <ReviewPanel />
-          <AIAnalyzer />
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingIndicator />}>
+                <Routes>
+                  <Route path="/" element={
+                    <DiffViewer
+                      fromBranch={selectedBranches.from}
+                      toBranch={selectedBranches.to}
+                      diffData={diffData}
+                      isLoading={isLoading}
+                    />
+                  } />
+                  <Route path="/impact" element={
+                    <ImpactView
+                      fromBranch={selectedBranches.from}
+                      toBranch={selectedBranches.to}
+                      diffData={diffData}
+                      isLoading={isLoading}
+                    />
+                  } />
+                  <Route path="/quality" element={
+                    <QualityView
+                      fromBranch={selectedBranches.from}
+                      toBranch={selectedBranches.to}
+                      diffData={diffData}
+                      isLoading={isLoading}
+                    />
+                  } />
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
+
+            <ReviewPanel />
+            <AIAnalyzer />
+          </div>
         </main>
+
+        <footer className="app-footer">
+          <div className="container">
+            <p>&copy; {new Date().getFullYear()} Local Rabbit. All rights reserved.</p>
+          </div>
+        </footer>
       </div>
     </Router>
   );
