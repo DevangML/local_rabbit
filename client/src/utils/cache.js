@@ -6,15 +6,19 @@ class Cache {
     this.initializeFromLocalStorage();
 
     // Set up event listener for storage changes in other tabs
-    window.addEventListener('storage', (event) => {
-      if (event.key === 'cache_cleared') {
-        this.clear(false); // Clear without triggering another event
-      }
-    });
+    if (typeof window !== 'undefined' && window.addEventListener) {
+      window.addEventListener('storage', (event) => {
+        if (event.key === 'cache_cleared') {
+          this.clear(false); // Clear without triggering another event
+        }
+      });
+    }
   }
 
   initializeFromLocalStorage() {
     try {
+      if (typeof localStorage === 'undefined') return;
+
       const persistedCache = localStorage.getItem('app_cache');
       if (persistedCache) {
         const parsed = JSON.parse(persistedCache);
@@ -25,12 +29,20 @@ class Cache {
       }
     } catch (error) {
       console.error('Failed to initialize cache from localStorage:', error);
-      localStorage.removeItem('app_cache');
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('app_cache');
+        }
+      } catch (e) {
+        // Ignore errors when removing from localStorage
+      }
     }
   }
 
   persistToLocalStorage() {
     try {
+      if (typeof localStorage === 'undefined') return;
+
       const cacheObj = {};
       this.cache.forEach((value, key) => {
         cacheObj[key] = value;
@@ -81,11 +93,18 @@ class Cache {
 
   clear(triggerEvent = true) {
     this.cache.clear();
-    localStorage.removeItem('app_cache');
 
-    if (triggerEvent) {
-      // Notify other tabs that cache was cleared
-      localStorage.setItem('cache_cleared', Date.now().toString());
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('app_cache');
+
+        if (triggerEvent) {
+          // Notify other tabs that cache was cleared
+          localStorage.setItem('cache_cleared', Date.now().toString());
+        }
+      }
+    } catch (error) {
+      console.error('Error clearing cache from localStorage:', error);
     }
 
     console.log('Cache cleared');
