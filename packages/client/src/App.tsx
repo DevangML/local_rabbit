@@ -4,38 +4,38 @@ import { ThemeProvider } from '@mui/material/styles';
 import { ErrorBoundary } from '@local-rabbit/shared';
 import CssBaseline from '@mui/material/CssBaseline';
 import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
 import { theme } from './theme';
 
 const Home = React.lazy(() => import('./pages/Home'));
 
 function Loading() {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+    <Box 
+      display="flex" 
+      justifyContent="center" 
+      alignItems="center" 
+      minHeight="100vh"
+      bgcolor={theme.palette.background.default}
+    >
       <CircularProgress />
-    </div>
+    </Box>
   );
 }
 
 function App() {
-  return (
-    <div>
-      <h1>Welcome to Local Rabbit</h1>
-      <p>A modern monorepo with SSR support</p>
-    </div>
-  );
-}
-
-export default function Root() {
   return (
     <ErrorBoundary>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Suspense fallback={<Loading />}>
           <Routes>
-            <Route path="/" element={<App />} />
+            <Route path="/" element={<Home />} />
           </Routes>
         </Suspense>
       </ThemeProvider>
     </ErrorBoundary>
   );
-} 
+}
+
+export default App; 

@@ -81,9 +81,9 @@ app.get('*', async (req: Request, res: Response) => {
       throw new Error('Server entry point not found. Please run build:client:ssr first.');
     }
 
-    // Import the entry-server module using dynamic import with the file URL
-    const { renderPage } = await import(/* @vite-ignore */`file://${entryServerPath}`);
-    const rendered = await renderPage(req.url);
+    // Import the renderPage function directly instead of trying to access createTheme
+    const entryServer = await import(/* @vite-ignore */`file://${entryServerPath}`);
+    const rendered = await entryServer.renderPage(req.url);
     
     // Get the main client entry
     const mainFile = Object.entries(manifest).find(([key]) => key.includes('main'))?.['1']?.file || 'main.js';

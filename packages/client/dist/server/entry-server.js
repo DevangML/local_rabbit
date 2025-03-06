@@ -1,10 +1,9 @@
 import { jsxDEV, Fragment } from "react/jsx-dev-runtime";
 import React, { useState, createContext, useEffect, useContext, Suspense } from "react";
-import { Paper, Typography, Box, FormControl, InputLabel, Select, MenuItem, CircularProgress, useTheme as useTheme$1, useMediaQuery, AppBar, Toolbar, Tabs, Tab, IconButton, Container, TextField, Button, ThemeProvider as ThemeProvider$1, CssBaseline } from "@mui/material";
+import { Paper, Typography, Box, FormControl, InputLabel, Select, MenuItem, CircularProgress, useTheme as useTheme$1, useMediaQuery, AppBar, Toolbar, Tabs, Tab, IconButton, Container, TextField, Button, createTheme, ThemeProvider as ThemeProvider$1, CssBaseline } from "@mui/material";
 import { useLocation, Link, BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CompareArrows, GitHub, Brightness7, DarkMode, Folder, Analytics, Speed, Code } from "@mui/icons-material";
 import { motion } from "framer-motion";
-import { createTheme } from "@mui/material/styles/index.js";
 import { StaticRouter } from "react-router-dom/server.js";
 const BranchSelector = ({
   branches = [],
@@ -1192,17 +1191,22 @@ const App = () => {
     columnNumber: 5
   }, void 0);
 };
-function render(props) {
-  return /* @__PURE__ */ jsxDEV(StaticRouter, { location: props.url, children: /* @__PURE__ */ jsxDEV(App, {}, void 0, false, {
+function renderPage(url) {
+  return /* @__PURE__ */ jsxDEV(StaticRouter, { location: url, children: /* @__PURE__ */ jsxDEV(App, {}, void 0, false, {
     fileName: "/Users/devang/Documents/local_rabbit/packages/client/src/entry-server.tsx",
-    lineNumber: 8,
+    lineNumber: 10,
     columnNumber: 7
   }, this) }, void 0, false, {
     fileName: "/Users/devang/Documents/local_rabbit/packages/client/src/entry-server.tsx",
-    lineNumber: 7,
+    lineNumber: 9,
     columnNumber: 5
   }, this);
 }
+function render(props) {
+  const { url } = props;
+  return renderPage(url);
+}
 export {
-  render as default
+  render as default,
+  renderPage
 };
