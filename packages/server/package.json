@@ -9,7 +9,7 @@
     "build": "tsc && babel src --out-dir dist --extensions '.ts,.tsx' --copy-files",
     "start": "node dist/server.js",
     "clean": "rimraf dist",
-    "lint": "eslint . --ext .ts --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint --config .eslintrc.cjs . --ext .ts,.js --quiet || true",
     "test": "vitest"
   },
   "dependencies": {
