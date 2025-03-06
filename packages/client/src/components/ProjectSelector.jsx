@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { config } from '../config';
 import { cacheInstance } from '../utils/cache';
@@ -35,10 +35,10 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
       // Add to recent repositories
       addToRecentRepositories(selectedRepository);
     }
-  }, [selectedRepository]);
+  }, [selectedRepository, addToRecentRepositories]);
 
   // Add a repository to the recent repositories list
-  const addToRecentRepositories = (repo) => {
+  const addToRecentRepositories = useCallback((repo) => {
     try {
       // Create new array without the current repo (if it exists)
       const filteredRepos = recentRepositories.filter(
@@ -55,7 +55,7 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
     } catch (err) {
       console.error('Error saving recent repositories:', err);
     }
-  };
+  }, [recentRepositories]);
 
   const fetchBranches = async () => {
     try {
@@ -152,7 +152,7 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
   };
 
   const handleRecentRepoSelect = async (repoPath) => {
-    if (!repoPath) return;
+    if (!repoPath) {return;}
 
     try {
       setError(null);

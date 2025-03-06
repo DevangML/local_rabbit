@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Box, Typography } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -25,12 +25,12 @@ const TerminalLine = ({ content, delay }) => (
 
 const TerminalPreview = () => {
   const [lines, setLines] = useState([]);
-  const commands = [
+  const commands = useMemo(() => [
     { text: '$ local-rabbit init my-project', output: 'Initializing new project...' },
     { text: '✓ Project structure created', output: 'Installing dependencies...' },
     { text: '✓ Dependencies installed', output: 'Configuring development environment...' },
     { text: '✓ Development environment ready', output: 'Your project is ready! Happy coding 🚀' },
-  ];
+  ], []);
 
   useEffect(() => {
     let currentIndex = 0;
@@ -48,7 +48,7 @@ const TerminalPreview = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [commands]);
 
   return (
     <Box

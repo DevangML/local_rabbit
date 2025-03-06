@@ -68,7 +68,7 @@ class GeminiService {
    */
   enhancePrompt(userPrompt, diff, missingFields = []) {
     // Start with a system prompt that instructs Gemini how to respond
-    let enhancedPrompt = `
+    const enhancedPrompt = `
 You are a code review assistant analyzing a git diff. Please analyze the following diff and respond in a structured JSON format.
 
 ${missingFields.length > 0 ? `Your previous response was missing these fields: ${missingFields.join(', ')}. Please ensure they are included this time.` : ''}
@@ -205,9 +205,9 @@ ${JSON.stringify(diff, null, 2)}
     
     if (parsedResponse.issues && parsedResponse.issues.length > 0) {
       const issue = parsedResponse.issues[0];
-      if (!issue.title) missingFields.push('issues[].title');
-      if (!issue.description) missingFields.push('issues[].description');
-      if (!issue.severity) missingFields.push('issues[].severity');
+      if (!issue.title) {missingFields.push('issues[].title');}
+      if (!issue.description) {missingFields.push('issues[].description');}
+      if (!issue.severity) {missingFields.push('issues[].severity');}
     }
     
     return {

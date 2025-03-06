@@ -281,7 +281,7 @@ router.get('/diff', async (req, res) => {
           console.log(`Running command: ${command}`);
 
           const diffContent = await new Promise((resolve, reject) => {
-            exec(command, { cwd: repoPath }, (error, stdout, stderr) => {
+            exec(command, { cwd: repoPath }, (error, stdout, _stderr) => {
               if (error) {
                 console.error(`Error getting diff content for ${change.file}:`, error);
                 return reject(error);
@@ -368,7 +368,7 @@ router.post('/analyze', async (req, res) => {
         try {
           const command = `git diff ${fromBranch}..${toBranch} -- "${change.file}"`;
           const diffContent = await new Promise((resolve, reject) => {
-            exec(command, { cwd: currentRepoPath }, (error, stdout, stderr) => {
+            exec(command, { cwd: currentRepoPath }, (error, stdout, _stderr) => {
               if (error) {
                 console.error(`Error getting diff content for ${change.file}:`, error);
                 return reject(error);

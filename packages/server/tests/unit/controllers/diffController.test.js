@@ -3,7 +3,7 @@ const {
 } = require('@jest/globals');
 const diffController = require('../../../src/controllers/diffController');
 const GitService = require('../../../src/services/GitService');
-const AnalyzerService = require('../../../src/services/AnalyzerService');
+const _AnalyzerService = require('../../../src/services/AnalyzerService');
 
 jest.mock('../../../src/services/GitService');
 jest.mock('../../../src/services/AnalyzerService');

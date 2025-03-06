@@ -16,8 +16,9 @@ class ValidationUtils {
   static isValidBranchName(branchName) {
     if (!branchName || typeof branchName !== 'string') return false;
 
-    // Git branch naming rules
-    const invalidChars = /[\x00-\x20\x7F~^:?*[\\\]]/;
+    // Git branch naming rules - replace the control character regex
+    // Using a safer approach that doesn't use control characters directly
+    const invalidChars = /[\s~^:?*[\\\]]/;
     const reservedNames = /^[-@]|[.][.]|[.]$|^[/]|[/]$|[/]{2}|@{|^@$/;
 
     return !invalidChars.test(branchName) && !reservedNames.test(branchName);

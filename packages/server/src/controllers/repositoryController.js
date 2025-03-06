@@ -1,7 +1,10 @@
 const path = require('path');
-const os = require('os');
+const _os = require('os');
 const GitService = require('../services/GitService');
 const logger = require('../utils/logger');
+const _fs = require('fs');
+const { exec: _exec } = require('child_process');
+const { homedir } = require('os');
 
 // Create a GitService instance
 const gitService = new GitService();
@@ -17,19 +20,10 @@ gitService.loadState().catch((err) => {
  * @param {string} filePath - Path that may contain tilde
  * @returns {string} - Path with tilde expanded
  */
-const expandTilde = (filePath) => {
-  if (!filePath) return filePath;
-
-  // If path starts with ~/ or ~\, replace it with home directory
-  if (filePath.startsWith('~/') || filePath.startsWith('~\\')) {
-    return path.join(os.homedir(), filePath.substring(2));
+const _expandTilde = (filePath) => {
+  if (filePath.startsWith('~/')) {
+    return path.join(homedir(), filePath.slice(2));
   }
-
-  // If path is just ~, return home directory
-  if (filePath === '~') {
-    return os.homedir();
-  }
-
   return filePath;
 };
 

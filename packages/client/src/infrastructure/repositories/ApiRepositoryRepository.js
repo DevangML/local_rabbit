@@ -59,10 +59,9 @@ export class ApiRepositoryRepository extends RepositoryRepository {
 
   /**
    * Get branches for repository
-   * @param {string} id - Repository ID
    * @returns {Promise<Array>} - List of branches
    */
-  async getBranches(_id) {
+  async getBranches() {
     try {
       const data = await apiClient.get('/api/git/repository/branches');
       return data.branches || [];

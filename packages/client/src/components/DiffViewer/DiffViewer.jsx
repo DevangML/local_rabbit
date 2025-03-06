@@ -18,7 +18,7 @@ import {
   Remove as RemovedIcon,
   Compare as CompareIcon,
 } from '@mui/icons-material';
-import { motion } from 'framer-motion';
+import './DiffViewer.css';
 
 // Side-by-side diff line component
 const SideBySideDiffLine = ({ type, content, oldLineNumber, newLineNumber }) => {
@@ -402,4 +402,4 @@ const DiffViewer = ({ files }) => {
   );
 };
 
-export default DiffViewer; 
+export default DiffViewer;

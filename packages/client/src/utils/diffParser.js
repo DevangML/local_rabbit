@@ -23,7 +23,7 @@ const parseDiff = (diffText) => {
       continue;
     }
 
-    if (!currentFile) continue;
+    if (!currentFile) {continue;}
 
     if (line.startsWith('@@')) {
       const match = line.match(/@@ -(\d+),?\d* \+(\d+),?\d* @@/);

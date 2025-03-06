@@ -23,14 +23,14 @@ import {
 
 const QualityMetric = ({ title, score, maxScore, status }) => {
   const getColor = () => {
-    if (status === 'error') return 'error';
-    if (status === 'warning') return 'warning';
+    if (status === 'error') {return 'error';}
+    if (status === 'warning') {return 'warning';}
     return 'success';
   };
 
   const getIcon = () => {
-    if (status === 'error') return <ErrorIcon />;
-    if (status === 'warning') return <WarningIcon />;
+    if (status === 'error') {return <ErrorIcon />;}
+    if (status === 'warning') {return <WarningIcon />;}
     return <PassedIcon />;
   };
 

@@ -2,25 +2,29 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '../config';
 import './CommentsPanel.css';
 
-const CommentsPanel = ({ fileId, selectedFile }) => {
-  const [comments, setComments] = useState([]);
+const CommentsPanel = ({
+  comments,
+  isLoading,
+}) => {
   const [newComment, setNewComment] = useState('');
   const [selectedLine, setSelectedLine] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  
+
+  const fileId = "mock-file-id";
+  const setComments = () => { };
+
   const fetchComments = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/comments/${encodeURIComponent(fileId)}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch comments');
       }
-      
+
       const data = await response.json();
       setComments(data);
     } catch (error) {
@@ -28,20 +32,20 @@ const CommentsPanel = ({ fileId, selectedFile }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [fileId]);
-  
+  }, []);
+
   useEffect(() => {
     if (fileId) {
       fetchComments();
     }
-  }, [fileId, fetchComments]);
-  
+  }, [fetchComments]);
+
   const handleAddComment = async () => {
-    if (!newComment || !selectedLine) return;
-    
+    if (!newComment || !selectedLine) {return;}
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/comments/${encodeURIComponent(fileId)}`, {
         method: 'POST',
@@ -54,12 +58,12 @@ const CommentsPanel = ({ fileId, selectedFile }) => {
           type: 'comment'
         })
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to add comment');
       }
-      
+
       const data = await response.json();
       setComments([...comments, data]);
       setNewComment('');
@@ -70,21 +74,21 @@ const CommentsPanel = ({ fileId, selectedFile }) => {
       setIsLoading(false);
     }
   };
-  
+
   const handleDeleteComment = async (commentId) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/comments/${encodeURIComponent(fileId)}/${commentId}`, {
         method: 'DELETE'
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to delete comment');
       }
-      
+
       setComments(comments.filter(comment => comment.id !== commentId));
     } catch (error) {
       setError(error.message);
@@ -92,18 +96,18 @@ const CommentsPanel = ({ fileId, selectedFile }) => {
       setIsLoading(false);
     }
   };
-  
+
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
     return date.toLocaleString();
   };
-  
+
   return (
     <div className="comments-panel">
       <h3>Comments</h3>
-      
+
       {error && <div className="error">{error}</div>}
-      
+
       <div className="add-comment">
         <div className="comment-form">
           <div className="form-group">
@@ -117,7 +121,7 @@ const CommentsPanel = ({ fileId, selectedFile }) => {
               min="1"
             />
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="commentContent">Comment:</label>
             <textarea
@@ -128,16 +132,16 @@ const CommentsPanel = ({ fileId, selectedFile }) => {
               rows="3"
             />
           </div>
-          
-          <button 
-            onClick={handleAddComment} 
+
+          <button
+            onClick={handleAddComment}
             disabled={isLoading || !newComment || !selectedLine}
           >
             {isLoading ? 'Adding...' : 'Add Comment'}
           </button>
         </div>
       </div>
-      
+
       <div className="comments-list">
         {comments.length === 0 ? (
           <p className="no-comments">No comments yet</p>
@@ -147,8 +151,8 @@ const CommentsPanel = ({ fileId, selectedFile }) => {
               <div className="comment-header">
                 <span className="comment-line">Line {comment.line}</span>
                 <span className="comment-date">{formatTimestamp(comment.createdAt)}</span>
-                <button 
-                  className="delete-button" 
+                <button
+                  className="delete-button"
                   onClick={() => handleDeleteComment(comment.id)}
                   title="Delete comment"
                 >

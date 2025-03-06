@@ -7,7 +7,6 @@ import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
 import DiffViewer from '../../presentation/components/diff/DiffViewer';
 import themeReducer from '../../store/themeSlice';
-import { cacheInstance, CACHE_TYPES } from '../../utils/cache';
 import { DiffApiService } from '../mocks/DiffApiService';
 
 // Set up MSW handlers
@@ -48,19 +47,6 @@ const server = setupServer(...handlers);
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterAll(() => server.close());
 afterEach(() => server.resetHandlers());
-
-// Mock the cache instance
-vi.mock('../../utils/cache', () => ({
-  cacheInstance: {
-    get: vi.fn(),
-    set: vi.fn(),
-    clear: vi.fn(),
-    getOrFetch: vi.fn()
-  },
-  CACHE_TYPES: {
-    DIFF: 'diff'
-  }
-}));
 
 // Mock the child components
 vi.mock('../../components/CommentsPanel', () => ({

@@ -7,7 +7,12 @@ const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
 const routes = require('./routes/index.js');
-const gitRoutes = require('./routes/git');
+const _gitRoutes = require('./routes/git');
+const _authRoutes = require('./routes/authRoutes');
+const _repositoryRoutes = require('./routes/repositoryRoutes');
+const _diffRoutes = require('./routes/diffRoutes');
+const _codeReviewRoutes = require('./routes/codeReviewRoutes');
+const _secureGitRoutes = require('./routes/secureGitRoutes');
 
 // Debug environment variables at startup
 console.log('[SERVER] Checking environment variables at startup:');

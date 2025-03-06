@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   CircularProgress,
@@ -28,7 +28,7 @@ const DiffViewerContainer = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchDiff = async () => {
+  const fetchDiff = useCallback(async () => {
     if (!repoPath) {
       setError('Please select a repository first');
       return;
@@ -106,13 +106,13 @@ const DiffViewerContainer = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [repoPath, fromBranch, toBranch]);
 
   useEffect(() => {
     if (repoPath && fromBranch && toBranch) {
       fetchDiff();
     }
-  }, [repoPath, fromBranch, toBranch]);
+  }, [repoPath, fromBranch, toBranch, fetchDiff]);
 
   return (
     <Container maxWidth="xl">

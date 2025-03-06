@@ -44,7 +44,7 @@ export const useBranchSelection = (initialFromBranch = '', initialToBranch = '')
   const { data: branches } = useBranches();
   
   React.useEffect(() => {
-    if (!branches) return;
+    if (!branches) {return;}
     
     const branchNames = branches.map(branch => branch.name);
     

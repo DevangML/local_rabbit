@@ -1,6 +1,7 @@
 {
-  "name": "local_rabbit",
+  "name": "local-rabbit",
   "version": "1.0.0",
+  "type": "module",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -15,12 +16,18 @@
     "dev": "concurrently \"yarn dev:client\" \"yarn dev:server\"",
     "start": "cd packages/server && yarn start",
     "clean": "rimraf packages/*/dist",
-    "lint": "yarn workspaces run lint",
+    "lint": "node_modules/.bin/eslint . --ext .js,.ts,.tsx --fix",
+    "lint:check": "node_modules/.bin/eslint . --ext .js,.ts,.tsx",
     "lint:fix": "yarn workspaces run lint:fix",
     "lint:quiet": "yarn workspaces run lint:quiet"
   },
   "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@typescript-eslint/eslint-plugin": "^8.26.0",
+    "@typescript-eslint/parser": "^8.26.0",
     "concurrently": "^8.2.2",
+    "eslint": "^8.57.0",
+    "eslint-plugin-security": "^3.0.1",
     "rimraf": "^5.0.5",
     "typescript": "^5.3.3"
   },

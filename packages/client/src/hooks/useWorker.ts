@@ -5,7 +5,7 @@ interface WorkerInstance {
   fibonacci: (n: number) => Promise<number>;
   processArrayData: <T>(data: T[], options: {
     filterFn?: (item: T) => boolean;
-    mapFn?: (item: T) => any;
+    mapFn?: <R>(item: T) => R;
     sortFn?: (a: T, b: T) => number;
     groupFn?: (item: T) => string | number;
   }) => Promise<T[] | Record<string, T[]>>;
@@ -19,7 +19,7 @@ interface WorkerInstance {
 
 type WorkerApi = Comlink.Remote<WorkerInstance>;
 
-export function useWorker() {
+export const useWorker = () => {
   const workerRef = useRef<Worker | null>(null);
   const workerApiRef = useRef<WorkerApi | null>(null);
 

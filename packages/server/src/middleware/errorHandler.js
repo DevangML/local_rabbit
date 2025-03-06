@@ -4,7 +4,7 @@
  */
 const logger = require('../utils/logger');
 
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, _next) => {
   // Extract or generate error information
   const status = err.status || err.statusCode || 500;
   const error = err.message || 'Internal Server Error';

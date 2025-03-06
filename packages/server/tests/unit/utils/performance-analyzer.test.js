@@ -1,5 +1,5 @@
 const {
-  describe, expect, it, jest,
+  describe, expect, it, _jest,
 } = require('@jest/globals');
 const PerformanceAnalyzer = require('../../../src/utils/performance-analyzer');
 

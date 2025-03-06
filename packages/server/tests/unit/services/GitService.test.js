@@ -1,7 +1,7 @@
 const {
   describe, expect, it, jest, beforeEach,
 } = require('@jest/globals');
-const path = require('path');
+const _path = require('path');
 const fs = require('fs').promises;
 const GitService = require('../../../src/services/GitService');
 const logger = require('../../../src/utils/logger');

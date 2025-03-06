@@ -6,7 +6,7 @@ import config from '../../core/application/config';
  */
 const discoverServer = async () => {
   // Start with the configured base URL
-  let baseUrl = config.API_BASE_URL;
+  const baseUrl = config.API_BASE_URL;
   console.log(`[API] Starting server discovery with base URL: ${baseUrl}`);
 
   // If in development mode, try to auto-discover server port
@@ -25,7 +25,7 @@ const discoverServer = async () => {
         return baseUrl;
       }
     } catch (e) {
-      console.log(`[API] Initial URL not available: ${baseUrl}`);
+      console.log(`[API] Initial URL not available: ${baseUrl}`, e);
     }
 
     // If the original URL fails and contains IPv6 localhost (::1), try IPv4 localhost
@@ -39,7 +39,7 @@ const discoverServer = async () => {
           return ipv4Url;
         }
       } catch (e) {
-        console.log(`[API] IPv4 alternative not available: ${ipv4Url}`);
+        console.log(`[API] IPv4 alternative not available: ${ipv4Url}`, e);
       }
     }
 
@@ -54,7 +54,7 @@ const discoverServer = async () => {
           return ipv6Url;
         }
       } catch (e) {
-        console.log(`[API] IPv6 alternative not available: ${ipv6Url}`);
+        console.log(`[API] IPv6 alternative not available: ${ipv6Url}`, e);
       }
     }
 

@@ -104,7 +104,7 @@ const AIAnalyzer = ({
 
   // Render analysis results
   const renderAnalysisResults = () => {
-    if (!analysisResults) return null;
+    if (!analysisResults) {return null;}
 
     const { summary, files } = analysisResults;
 
@@ -150,8 +150,8 @@ const AIAnalyzer = ({
 
         <div className="files-analysis">
           <h4>Files Analysis</h4>
-          {files.map((file, index) => (
-            <div key={index} className="file-analysis">
+          {files.map((file) => (
+            <div key={file.path} className="file-analysis">
               <div className="file-header">
                 <span className="file-path">{file.path}</span>
                 <span className="file-type">{file.type}</span>
@@ -161,8 +161,8 @@ const AIAnalyzer = ({
                 <>
                   <h5>Issues</h5>
                   <ul className="file-issues">
-                    {file.issues.map((issue, idx) => (
-                      <li key={idx} className={`issue-item severity-border-${issue.severity}`}>
+                    {file.issues.map((issue) => (
+                      <li key={`${file.path}-${issue.line}-${issue.title}`} className={`issue-item severity-border-${issue.severity}`}>
                         <div className="issue-header">
                           <span className="issue-title">{issue.title}</span>
                           {renderSeverityBadge(issue.severity)}
@@ -182,7 +182,7 @@ const AIAnalyzer = ({
                   <h5>Suggestions</h5>
                   <ul className="file-suggestions">
                     {file.suggestions.map((suggestion, idx) => (
-                      <li key={idx} className="suggestion-item">
+                      <li key={`${file.path}-suggestion-${idx}`} className="suggestion-item">
                         {suggestion}
                       </li>
                     ))}

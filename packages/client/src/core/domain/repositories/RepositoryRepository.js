@@ -13,28 +13,25 @@ export class RepositoryRepository {
 
   /**
    * Get repository by ID
-   * @param {string} id - Repository ID
    * @returns {Promise<Object>} - Repository
    */
-  async getById(_id) {
+  async getById() {
     throw new Error('Method not implemented');
   }
 
   /**
    * Set current repository
-   * @param {string} path - Repository path
    * @returns {Promise<Object>} - Repository
    */
-  async setCurrent(_path) {
+  async setCurrent() {
     throw new Error('Method not implemented');
   }
 
   /**
    * Get branches for repository
-   * @param {string} id - Repository ID
    * @returns {Promise<Array>} - List of branches
    */
-  async getBranches(_id) {
+  async getBranches() {
     throw new Error('Method not implemented');
   }
 
@@ -45,4 +42,21 @@ export class RepositoryRepository {
   async getCurrentInfo() {
     throw new Error('Method not implemented');
   }
-} 
+
+  /**
+   * Get repository by path
+   * @returns {Promise<Object>} - Repository
+   */
+  async getByPath() {
+    throw new Error('Method not implemented');
+  }
+
+  /**
+   * Delete repository
+   */
+  async delete() {
+    throw new Error('Method not implemented');
+  }
+}
+
+export default RepositoryRepository; 

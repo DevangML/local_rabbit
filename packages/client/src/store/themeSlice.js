@@ -36,7 +36,7 @@ const getInitialTheme = () => {
 
 const applyThemeToDOM = (themeId) => {
   const theme = themes[themeId];
-  if (!theme || !theme.colors) return;
+  if (!theme || !theme.colors) {return;}
 
   // Set theme mode
   document.documentElement.setAttribute('data-theme', themeId.includes('dark') ? 'dark' : 'light');

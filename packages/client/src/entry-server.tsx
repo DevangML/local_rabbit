@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Force disable TypeScript checking for this file and all imports
 import React from 'react';
 import { StaticRouter } from 'react-router-dom/server';
 import { ThemeProvider } from '@mui/material/styles';
@@ -10,7 +8,7 @@ import { theme } from './theme.js';
 import { FeatureDemo } from './components/FeatureDemo.ssr.jsx';
 
 // Custom App component for SSR
-function SSRApp() {
+function SSRApp(): JSX.Element {
   return (
     <Box sx={{ 
       display: 'flex',
@@ -29,7 +27,7 @@ function SSRApp() {
 }
 
 // Export a named renderPage function for server.ts to use instead
-export function renderPage(url) {
+export function renderPage(url: string): JSX.Element {
   return (
     <StaticRouter location={url}>
       <SSRApp />
@@ -37,8 +35,12 @@ export function renderPage(url) {
   );
 }
 
+interface RenderProps {
+  url: string;
+}
+
 // Keep the default export for backward compatibility
-export default function render(props) {
+export default function render(props: RenderProps): JSX.Element {
   const { url } = props;
   return renderPage(url);
 } 

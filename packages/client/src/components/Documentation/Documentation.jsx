@@ -8,7 +8,6 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemIcon,
   Divider,
   CircularProgress,
   useTheme,
@@ -16,7 +15,6 @@ import {
 import {
   Article as ArticleIcon,
   Code as CodeIcon,
-  Settings as SettingsIcon,
   Build as BuildIcon,
 } from '@mui/icons-material';
 import ReactMarkdown from 'react-markdown';
@@ -75,12 +73,12 @@ const Documentation = () => {
 
   useEffect(() => {
     const fetchMarkdown = async (path) => {
-      if (!path) return;
+      if (!path) {return;}
 
       setIsLoading(true);
       try {
         const response = await fetch(path);
-        if (!response.ok) throw new Error('Failed to load documentation');
+        if (!response.ok) {throw new Error('Failed to load documentation');}
         const text = await response.text();
         setMarkdownContent(text);
       } catch (error) {
@@ -202,7 +200,7 @@ const Documentation = () => {
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
-                      code({ node, inline, className, children, ...props }) {
+                      code({ inline, className, children, ...props }) {
                         const match = /language-(\w+)/.exec(className || '');
                         const language = match ? match[1] : '';
 

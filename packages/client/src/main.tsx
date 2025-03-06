@@ -42,10 +42,13 @@ declare global {
   }
 }
 
-const initialState = window.__INITIAL_STATE__;
+const root = document.getElementById('root');
+if (!root) {
+  throw new Error('Root element not found');
+}
 
 hydrateRoot(
-  document.getElementById('root') as HTMLElement,
+  root,
   <React.StrictMode>
     <BrowserRouter>
       <App />

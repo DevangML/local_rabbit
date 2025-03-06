@@ -125,7 +125,7 @@ class StateManager {
       await this.resetAllState();
 
       for (const [storeName, items] of Object.entries(stateObj)) {
-        if (storeName === 'timestamp') continue;
+        if (storeName === 'timestamp') {continue;}
         for (const item of items) {
           await db.put(storeName, item.value, item.key);
         }
@@ -167,17 +167,9 @@ class StateManager {
     }
   }
 
-  async migrateState(_oldVersion, _newVersion) {
+  async migrateState() {
     try {
-      const _db = await this.dbPromise;
-      // const currentState = {
-      //   appState: await _db.getAll('appState'),
-      //   diffState: await _db.getAll('diffState'),
-      //   analyzerState: await _db.getAll('analyzerState')
-      // };
-
       // Migration logic would go here
-
       console.info('State migration completed');
       return true;
     } catch (error) {
@@ -190,7 +182,7 @@ class StateManager {
     try {
       const requiredKeys = ['appState', 'diffState', 'analyzerState', 'timestamp'];
       const hasAllKeys = requiredKeys.every(key => key in state);
-      if (!hasAllKeys) return false;
+      if (!hasAllKeys) {return false;}
 
       // Add more validation as needed
       return true;

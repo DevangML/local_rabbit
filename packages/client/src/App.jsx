@@ -1,11 +1,16 @@
-import React, { useState, useEffect, Suspense } from 'react';
-import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { CircularProgress, Box } from '@mui/material';
+import React, { useState /* useEffect */ } from 'react';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+// import { Provider } from 'react-redux';
+import { BrowserRouter as Router } from 'react-router-dom';
+// import { store } from './store';
+// import AppRoutes from './routes';
+// import config from './config';
+import { lightTheme, darkTheme } from './theme';
+import { ThemeProvider as MuiThemeProvider, CircularProgress, Box } from '@mui/material';
+import { Routes, Route, Navigate, Suspense } from 'react-router-dom';
 import MainLayout from './components/Layout/MainLayout';
-import { ThemeProvider, useTheme } from './contexts/ThemeContext';
-import getTheme from './theme/lunarTheme';
-import config from './config';
+import { useTheme } from './contexts/ThemeContext';
 
 // Lazy load route components
 const Products = React.lazy(() => import('./components/Products/Products'));
@@ -110,7 +115,7 @@ const AppContent = () => {
   };
 
   return (
-    <MuiThemeProvider theme={getTheme(isDarkMode ? 'dark' : 'light')}>
+    <MuiThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
       <CssBaseline />
       <MainLayout
         onRepoPathChange={handleRepoPathChange}

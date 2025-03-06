@@ -159,7 +159,7 @@ describe('Cache Utility', () => {
     cacheInstance.clear();
 
     // Create a new instance to trigger initialization
-    const cacheInstance2 = new Cache();
+    new Cache();
 
     // Verify localStorage was accessed
     expect(localStorage.getItem).toHaveBeenCalledWith('app_cache');

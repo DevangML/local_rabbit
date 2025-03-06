@@ -34,7 +34,7 @@ const AnalysisReport = ({ fromBranch, toBranch, mode }) => {
   }, [worker]);
 
   const fetchReport = useCallback(async () => {
-    if (!fromBranch || !toBranch) return;
+    if (!fromBranch || !toBranch) {return;}
 
     setIsLoading(true);
     setError(null);

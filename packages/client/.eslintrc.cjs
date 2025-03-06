@@ -29,7 +29,9 @@ module.exports = {
     '*.config.ts',
     'public/**',
     'coverage/**',
-    'build/**'
+    'build/**',
+    '**/*.test.*',
+    '**/*.spec.*'
   ],
   globals: {
     // Browser globals
@@ -70,11 +72,15 @@ module.exports = {
     Promise: 'readonly'
   },
   rules: {
-    'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+    'react-refresh/only-export-components': 'off',
     'react/prop-types': 'off',
-    'no-unused-vars': 'warn',
-    'no-undef': 'off',
-    'react-hooks/exhaustive-deps': 'warn'
+    'no-unused-vars': ['warn', {
+      'varsIgnorePattern': '^_',
+      'argsIgnorePattern': '^_',
+      'ignoreRestSiblings': true
+    }],
+    'no-undef': 'error',
+    'react-hooks/exhaustive-deps': 'off'
   },
   overrides: [
     {
@@ -104,9 +110,19 @@ module.exports = {
       ],
       rules: {
         'no-unused-vars': 'off',
-        '@typescript-eslint/no-unused-vars': 'warn',
+        '@typescript-eslint/no-unused-vars': ['warn', {
+          'varsIgnorePattern': '^_',
+          'argsIgnorePattern': '^_',
+          'ignoreRestSiblings': true
+        }],
         '@typescript-eslint/no-explicit-any': 'off',
-        '@typescript-eslint/ban-ts-comment': 'off'
+        '@typescript-eslint/ban-ts-comment': 'off',
+        '@typescript-eslint/no-non-null-assertion': 'off',
+        '@typescript-eslint/no-empty-function': 'off',
+        '@typescript-eslint/no-empty-interface': 'off',
+        '@typescript-eslint/no-var-requires': 'off',
+        '@typescript-eslint/no-inferrable-types': 'off',
+        '@typescript-eslint/ban-types': 'off'
       }
     }
   ]

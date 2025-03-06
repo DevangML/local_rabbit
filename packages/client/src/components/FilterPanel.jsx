@@ -1,12 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import { useWorker } from '../hooks/useWorker';
 import './FilterPanel.css';
 
 const FilterPanel = ({ filters, onFilterChange }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
   const [isProcessing, setIsProcessing] = useState(false);
-  const worker = useWorker();
 
   const handleFilterChange = useCallback(async (category, value) => {
     setIsProcessing(true);
@@ -21,16 +19,6 @@ const FilterPanel = ({ filters, onFilterChange }) => {
         delete updatedFilters[category];
       }
 
-      // Process the data with the worker
-      const processedData = await worker.processArrayData(
-        Object.entries(updatedFilters),
-        {
-          filterFn: ([_, val]) => val !== undefined && val !== null,
-          mapFn: ([key, val]) => ({ key, value: val }),
-          groupFn: item => item.key
-        }
-      );
-
       setActiveFilters(updatedFilters);
       onFilterChange(updatedFilters);
     } catch (error) {
@@ -38,7 +26,7 @@ const FilterPanel = ({ filters, onFilterChange }) => {
     } finally {
       setIsProcessing(false);
     }
-  }, [activeFilters, worker, onFilterChange]);
+  }, [activeFilters, onFilterChange]);
 
   const renderFilterInput = (filter) => {
     switch (filter.type) {
@@ -109,24 +97,6 @@ const FilterPanel = ({ filters, onFilterChange }) => {
         return null;
     }
   };
-
-  const getActiveFilterCount = useCallback(async () => {
-    if (Object.keys(activeFilters).length === 0) return 0;
-
-    try {
-      const processedFilters = await worker.processArrayData(
-        Object.entries(activeFilters),
-        {
-          filterFn: ([_, value]) => value !== undefined &&
-            (Array.isArray(value) ? value.length > 0 : true)
-        }
-      );
-      return processedFilters.length;
-    } catch (error) {
-      console.error('Error counting active filters:', error);
-      return Object.keys(activeFilters).length;
-    }
-  }, [activeFilters, worker]);
 
   const resetFilters = useCallback(async () => {
     setIsProcessing(true);

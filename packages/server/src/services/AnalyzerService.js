@@ -1,7 +1,8 @@
-const path = require('path');
+const _path = require('path');
 // eslint-disable-next-line no-unused-vars
 const fs = require('fs').promises;
 const logger = require('../utils/logger');
+const { _exec } = require('child_process');
 
 class AnalyzerService {
   static COMPLEXITY_THRESHOLDS = {

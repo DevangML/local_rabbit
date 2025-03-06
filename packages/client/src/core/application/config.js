@@ -18,7 +18,7 @@ const getEnvVar = (key, defaultValue) => {
 const detectServerUrl = () => {
   // First check for environment variable
   const configuredUrl = getEnvVar('VITE_API_URL', '');
-  if (configuredUrl) return configuredUrl;
+  if (configuredUrl) {return configuredUrl;}
 
   // For local development, use the configured port from environment
   const apiPort = getEnvVar('VITE_API_PORT', '3001');
@@ -67,15 +67,13 @@ console.log('[CLIENT] Config initialized:', {
   isDevelopment: config.isDevelopment
 });
 
-// Debug: Log API key information (client-side)
-const debugKey = config.GEMINI_API_KEY;
-if (debugKey) {
-  const keyLength = debugKey.length;
-  const firstChars = debugKey.substring(0, 4);
-  const lastChars = keyLength > 4 ? debugKey.substring(keyLength - 4) : '';
-  console.log(`[CLIENT] Gemini API key loaded with length ${keyLength}. Key starts with ${firstChars}... and ends with ...${lastChars}`);
-} else {
-  console.warn('[CLIENT] No Gemini API key found in client environment variables');
+// Safe development-only API key validation
+if (process.env.NODE_ENV === 'development') {
+  if (!config.GEMINI_API_KEY) {
+    console.warn('[DEV] No Gemini API key found in client environment variables');
+  } else {
+    console.log('[DEV] Gemini API key is configured');
+  }
 }
 
 export default config; 

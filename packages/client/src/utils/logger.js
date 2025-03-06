@@ -46,7 +46,9 @@ export class Logger {
    * @param {Object} [metadata] - Optional metadata
    */
   static warn(message, metadata = null) {
-    console.warn(this.formatMessage('warn', message, metadata));
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(this.formatMessage('warn', message, metadata));
+    }
   }
 
   /**

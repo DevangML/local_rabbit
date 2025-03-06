@@ -49,7 +49,7 @@ const BranchSelector = () => {
    */
   const toggleFromDropdown = () => {
     setIsFromOpen(!isFromOpen);
-    if (isToOpen) setIsToOpen(false);
+    if (isToOpen) {setIsToOpen(false);}
   };
 
   /**
@@ -57,7 +57,7 @@ const BranchSelector = () => {
    */
   const toggleToDropdown = () => {
     setIsToOpen(!isToOpen);
-    if (isFromOpen) setIsFromOpen(false);
+    if (isFromOpen) {setIsFromOpen(false);}
   };
 
   /**

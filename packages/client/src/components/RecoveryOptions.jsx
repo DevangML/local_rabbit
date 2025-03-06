@@ -11,7 +11,7 @@ const RecoveryOptions = ({ onRecover }) => {
       setIsExporting(true);
       setError(null);
       const state = await stateManager.exportState();
-      if (!state) throw new Error('Failed to export state');
+      if (!state) {throw new Error('Failed to export state');}
 
       // Create and download state file
       const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
@@ -35,15 +35,15 @@ const RecoveryOptions = ({ onRecover }) => {
       setIsImporting(true);
       setError(null);
       const file = event.target.files[0];
-      if (!file) return;
+      if (!file) {return;}
 
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
           const state = JSON.parse(e.target.result);
           const success = await stateManager.importState(state);
-          if (!success) throw new Error('Failed to import state');
-          if (onRecover) onRecover();
+          if (!success) {throw new Error('Failed to import state');}
+          if (onRecover) {onRecover();}
         } catch (err) {
           setError('Failed to import state: ' + err.message);
         } finally {
@@ -65,8 +65,8 @@ const RecoveryOptions = ({ onRecover }) => {
     try {
       setError(null);
       const success = await stateManager.resetAllState();
-      if (!success) throw new Error('Failed to reset state');
-      if (onRecover) onRecover();
+      if (!success) {throw new Error('Failed to reset state');}
+      if (onRecover) {onRecover();}
     } catch (err) {
       setError('Failed to reset state: ' + err.message);
     }

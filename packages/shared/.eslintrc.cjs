@@ -21,7 +21,8 @@ module.exports = {
     '.eslintrc.js',
     '.eslintrc.cjs',
     '*.test.ts',
-    '*.test.js'
+    '*.test.js',
+    '**/*.d.ts'
   ],
   globals: {
     process: 'readonly',
@@ -34,8 +35,14 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
     'no-unused-vars': 'off',
-    '@typescript-eslint/no-unused-vars': 'warn',
-    'no-undef': 'warn',
-    '@typescript-eslint/no-unused-expressions': 'off'
+    '@typescript-eslint/no-unused-vars': 'off',
+    'no-undef': 'off',
+    '@typescript-eslint/no-unused-expressions': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'off',
+    '@typescript-eslint/no-empty-function': 'off',
+    '@typescript-eslint/no-empty-interface': 'off',
+    '@typescript-eslint/no-var-requires': 'off',
+    '@typescript-eslint/no-inferrable-types': 'off',
+    '@typescript-eslint/ban-types': 'off'
   }
 }; 

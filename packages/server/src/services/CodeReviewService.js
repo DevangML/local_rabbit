@@ -1,5 +1,5 @@
 const path = require('path');
-const fs = require('fs').promises;
+const _fs = require('fs');
 const { execSync } = require('child_process');
 const axios = require('axios');
 const logger = require('../utils/logger');

@@ -2,7 +2,7 @@ const {
   describe, expect, it, jest,
 } = require('@jest/globals');
 const errorHandler = require('../../../src/middleware/errorHandler');
-const logger = require('../../../src/utils/logger');
+const _logger = require('../../../src/utils/logger');
 
 jest.mock('../../../src/utils/logger', () => ({
   error: jest.fn(),

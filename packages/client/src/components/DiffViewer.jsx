@@ -1,24 +1,19 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { config } from '../config.js'; // Add explicit .js extension
+import { config } from '../config.js';
 import { FaChevronDown, FaChevronRight } from 'react-icons/fa';
-import { cacheInstance, CACHE_TYPES } from '../utils/cache';
 import { useWorker } from '../hooks/useWorker';
-import CommentsPanel from './CommentsPanel';
 import DiffSearch from './DiffSearch';
-import RecoveryOptions from './RecoveryOptions';
 import './DiffViewer.css';
 
-const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
+const DiffViewer = ({ fromBranch, toBranch, propsDiffData }) => {
   const { isDark } = useSelector(state => state.theme);
   const [diffData, setDiffData] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
   const [expandedFiles, setExpandedFiles] = useState(new Set());
   const [viewMode, setViewMode] = useState('unified');
-  const [searchParams, setSearchParams] = useState({ query: '', filters: {} });
   const worker = useWorker();
 
   const fetchDiffData = useCallback(async () => {
@@ -55,7 +50,7 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || 'Failed to fetch diff data';
-        } catch (e) {
+        } catch {
           errorMessage = `Failed to fetch diff data: ${response.status} ${response.statusText}`;
         }
         throw new Error(errorMessage);
@@ -72,9 +67,6 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
       const diffAnalysis = await worker.analyzeDiff(data);
       setAnalysis(diffAnalysis);
 
-      if (data.files.length > 0) {
-        setSelectedFile(data.files[0]);
-      }
     } catch (error) {
       console.error('Error in fetchDiffData:', error);
       setError(error.message || 'Failed to fetch diff data');
@@ -171,7 +163,7 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
             Refresh
           </button>
         </div>
-        <DiffSearch onSearch={setSearchParams} />
+        <DiffSearch />
       </div>
 
       <div className="diff-content">

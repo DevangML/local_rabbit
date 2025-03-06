@@ -12,7 +12,7 @@ const RepoSelector = ({ onRepoSelect }) => {
       setLoading(true);
       try {
         const response = await fetch(`${config.API_BASE_URL}/api/repos`);
-        if (!response.ok) throw new Error('Failed to fetch repositories');
+        if (!response.ok) {throw new Error('Failed to fetch repositories');}
         const data = await response.json();
         setRepos(data);
       } catch (err) {
@@ -30,8 +30,8 @@ const RepoSelector = ({ onRepoSelect }) => {
     onRepoSelect(repo);
   };
 
-  if (loading) return <div className="loading">Loading repositories...</div>;
-  if (error) return <div className="error">{error}</div>;
+  if (loading) {return <div className="loading">Loading repositories...</div>;}
+  if (error) {return <div className="error">{error}</div>;}
 
   return (
     <div className="repo-selector">

@@ -1,4 +1,3 @@
-import { configureStore } from '@reduxjs/toolkit';
 import themeReducer, { setTheme, toggleTheme } from '../../store/themeSlice';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { themes } from '../../themes';

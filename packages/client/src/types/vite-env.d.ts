@@ -1,15 +1,41 @@
 /// <reference types="vite/client" />
 /// <reference types="vite-plugin-pwa/client" />
 
-declare module 'virtual:pwa-register' {
-  export interface RegisterSWOptions {
-    immediate?: boolean;
-    onNeedRefresh?: () => void;
-    onOfflineReady?: () => void;
-    onRegistered?: (registration: ServiceWorkerRegistration | undefined) => void;
-    onRegisterError?: (error: any) => void;
-  }
+interface ServiceWorkerRegistrationOptions {
+  scope?: string;
+  type?: 'classic' | 'module';
+  updateViaCache?: 'none' | 'all' | 'imports';
+}
 
+interface ServiceWorkerRegistration {
+  readonly active: ServiceWorker | null;
+  readonly installing: ServiceWorker | null;
+  readonly waiting: ServiceWorker | null;
+  readonly scope: string;
+  getNotifications(): Promise<Notification[]>;
+  showNotification(title: string, options?: NotificationOptions): Promise<void>;
+  update(): Promise<void>;
+  unregister(): Promise<boolean>;
+}
+
+interface ServiceWorkerUpdateEvent extends Event {
+  registration: ServiceWorkerRegistration;
+}
+
+interface ServiceWorkerErrorEvent extends Event {
+  error: Error;
+}
+
+interface RegisterSWOptions {
+  immediate?: boolean;
+  onNeedRefresh?: () => void;
+  onOfflineReady?: () => void;
+  onRegistered?: (registration: ServiceWorkerRegistration) => void;
+  onRegisterError?: (error: Error) => void;
+  onRegisteredSW?: (swScriptUrl: string, registration: ServiceWorkerRegistration) => void;
+}
+
+declare module 'virtual:pwa-register' {
   export function registerSW(options?: RegisterSWOptions): (reloadPage?: boolean) => Promise<void>;
 }
 

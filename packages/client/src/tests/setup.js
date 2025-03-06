@@ -363,7 +363,7 @@ class IDBObjectStore {
           for (const key in this._data) {
             if (query.includes(key)) {
               results.push(this._data[key]);
-              if (count && results.length >= count) break;
+              if (count && results.length >= count) {break;}
             }
           }
           request.result = results;
@@ -393,7 +393,7 @@ class IDBObjectStore {
           for (const key in this._data) {
             if (query.includes(key)) {
               results.push(key);
-              if (count && results.length >= count) break;
+              if (count && results.length >= count) {break;}
             }
           }
           request.result = results;
@@ -610,7 +610,7 @@ class IDBIndex {
         let filteredEntries = entries;
 
         if (range !== undefined && range !== null) {
-          filteredEntries = entries.filter(([_, value]) => {
+          filteredEntries = entries.filter(([, value]) => {
             const indexValue = this._getValueByKeyPath(value, this.keyPath);
             if (range instanceof IDBKeyRange) {
               return range.includes(indexValue);
@@ -646,7 +646,7 @@ class IDBIndex {
       const parts = keyPath.split('.');
       let value = obj;
       for (const part of parts) {
-        if (value === undefined || value === null) return undefined;
+        if (value === undefined || value === null) {return undefined;}
         value = value[part];
       }
       return value;
@@ -960,7 +960,7 @@ const indexedDBMock = {
   },
 
   cmp(a, b) {
-    if (a === b) return 0;
+    if (a === b) {return 0;}
     return a < b ? -1 : 1;
   }
 };

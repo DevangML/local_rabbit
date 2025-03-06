@@ -17,7 +17,7 @@ class Cache {
 
   initializeFromLocalStorage() {
     try {
-      if (typeof localStorage === 'undefined') return;
+      if (typeof localStorage === 'undefined') {return;}
 
       const persistedCache = localStorage.getItem('app_cache');
       if (persistedCache) {
@@ -33,7 +33,7 @@ class Cache {
         if (typeof localStorage !== 'undefined') {
           localStorage.removeItem('app_cache');
         }
-      } catch (e) {
+      } catch {
         // Ignore errors when removing from localStorage
       }
     }
@@ -41,7 +41,7 @@ class Cache {
 
   persistToLocalStorage() {
     try {
-      if (typeof localStorage === 'undefined') return;
+      if (typeof localStorage === 'undefined') {return;}
 
       const cacheObj = {};
       this.cache.forEach((value, key) => {
@@ -89,7 +89,7 @@ class Cache {
       const key = this.generateKey(type, params);
       const cached = this.cache.get(key);
 
-      if (!cached) return null;
+      if (!cached) {return null;}
 
       // Check if cache has expired
       if (Date.now() - cached.timestamp > CACHE_EXPIRY) {

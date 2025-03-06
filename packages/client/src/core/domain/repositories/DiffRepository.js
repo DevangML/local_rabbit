@@ -5,23 +5,35 @@
 export class DiffRepository {
   /**
    * Get diff between branches
-   * @param {string} repositoryId - Repository ID
-   * @param {string} fromBranch - Source branch
-   * @param {string} toBranch - Target branch
    * @returns {Promise<Object>} - Diff
    */
-  async getDiff(_repositoryId, _fromBranch, _toBranch) {
+  async getBranchDiff() {
     throw new Error('Method not implemented');
   }
 
   /**
    * Analyze diff between branches
-   * @param {string} repositoryId - Repository ID
-   * @param {string} fromBranch - Source branch
-   * @param {string} toBranch - Target branch
    * @returns {Promise<Object>} - Analyzed diff
    */
-  async analyzeDiff(_repositoryId, _fromBranch, _toBranch) {
+  async analyzeDiff() {
     throw new Error('Method not implemented');
   }
-} 
+
+  /**
+   * Returns a list of modified files.
+   * @returns {Promise<Array>} - List of modified files
+   */
+  getModifiedFiles() {
+    throw new Error('Method not implemented');
+  }
+
+  /**
+   * Returns diff for specific file.
+   * @returns {Promise<string>} - Diff content
+   */
+  getFileDiff() {
+    throw new Error('Method not implemented');
+  }
+}
+
+export default DiffRepository; 

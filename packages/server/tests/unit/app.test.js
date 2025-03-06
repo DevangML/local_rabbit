@@ -1,9 +1,10 @@
 const {
-  describe, expect, it, jest,
+  describe, expect, it,
 } = require('@jest/globals');
 const request = require('supertest');
 const express = require('express');
 const app = require('../../src/app');
+const _jest = require('jest');
 
 describe('Express App', () => {
   describe('Middleware Setup', () => {
