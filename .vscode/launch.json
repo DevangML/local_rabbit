@@ -19,8 +19,9 @@
         "NODE_ENV": "development",
         "DEBUG": "app:*",
         "PORT": "3001",
-        "HOST": "0.0.0.0",
-        "NODE_VERSION": "18"
+        "HOST": "127.0.0.1",
+        "NODE_VERSION": "18",
+        "UV_THREADPOOL_SIZE": "64"
       },
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
@@ -38,7 +39,7 @@
       "killBehavior": "polite",
       "serverReadyAction": {
         "pattern": "Server is running on port ([0-9]+)",
-        "uriFormat": "http://localhost:%s",
+        "uriFormat": "http://127.0.0.1:%s",
         "action": "startDebugging",
         "name": "Start Client"
       }
@@ -54,19 +55,20 @@
         "--port",
         "3000",
         "--strictPort",
-        "--host"
+        "--host",
+        "127.0.0.1"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "env": {
         "VITE_API_PORT": "3001",
-        "VITE_API_URL": "http://localhost:3001",
+        "VITE_API_URL": "http://127.0.0.1:3001",
         "DEBUG": "*",
         "NODE_OPTIONS": "--no-warnings --max-old-space-size=8192"
       },
       "serverReadyAction": {
-        "pattern": "Local:.+://localhost:([0-9]+)",
-        "uriFormat": "http://localhost:%s",
+        "pattern": "Local:.+://127.0.0.1:([0-9]+)",
+        "uriFormat": "http://127.0.0.1:%s",
         "action": "debugWithChrome"
       },
       "preLaunchTask": "ensure-node-version"
@@ -75,7 +77,7 @@
       "name": "Debug Client",
       "type": "chrome",
       "request": "launch",
-      "url": "http://localhost:3000",
+      "url": "http://127.0.0.1:3000",
       "webRoot": "${workspaceFolder}/client",
       "sourceMapPathOverrides": {
         "webpack:///src/*": "${webRoot}/src/*",
@@ -99,7 +101,8 @@
         "--no-first-run",
         "--no-default-browser-check",
         "--disable-popup-blocking",
-        "--disable-extensions"
+        "--disable-extensions",
+        "--disable-ipv6"
       ]
     }
   ],

@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => {
 
   // Determine server port with fallbacks
   const serverPort = getServerPort() || env.VITE_API_PORT || 3001;
-  const serverUrl = env.VITE_API_BASE_URL || `http://localhost:${serverPort}`;
+  const serverUrl = env.VITE_API_BASE_URL || `http://127.0.0.1:${serverPort}`;
 
   console.log(`[VITE] Configuring API proxy to: ${serverUrl}`);
 
@@ -57,13 +57,23 @@ export default defineConfig(({ mode }) => {
     server: {
       // Use available port from env or default to common development port
       port: parseInt(env.VITE_CLIENT_PORT || 3000),
-      strictPort: false, // Allow falling back to another port if the specified one is in use
+      strictPort: true, // Don't allow falling back to another port
+      host: '127.0.0.1', // Force IPv4
       proxy: {
         '/api': {
           target: serverUrl,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path
+          rewrite: (path) => path,
+          configure: (proxy, options) => {
+            proxy.on('error', (err, req, res) => {
+              console.log('proxy error', err);
+              res.writeHead(500, {
+                'Content-Type': 'text/plain',
+              });
+              res.end('Something went wrong. And we are reporting a custom error message.');
+            });
+          },
         }
       },
       // Add security headers
@@ -78,7 +88,7 @@ export default defineConfig(({ mode }) => {
       },
       // Restrict host access
       hmr: {
-        host: 'localhost',
+        host: '127.0.0.1', // Force IPv4
         // Use env port or fallback to prevent hardcoding
         clientPort: parseInt(env.VITE_CLIENT_PORT || 3000),
       },
