@@ -1,7 +1,8 @@
 {
   "eslint.workingDirectories": [
-    "./client",
-    "./server"
+    "./packages/client",
+    "./packages/server",
+    "./packages/shared"
   ],
   "eslint.format.enable": true,
   "eslint.lintTask.enable": true,

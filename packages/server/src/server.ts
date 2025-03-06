@@ -88,7 +88,7 @@ app.get('*', async (req: Request, res: Response) => {
               </body>
             </html>`);
         },
-        onError(error: Error) {
+        onError(error: unknown) {
           didError = true;
           console.error('Error during SSR:', error);
           res.statusCode = 500;
