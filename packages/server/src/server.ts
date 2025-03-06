@@ -26,7 +26,7 @@ const isDev = process.env.NODE_ENV === 'development';
 let manifest: Record<string, any>;
 try {
   manifest = JSON.parse(
-    fs.readFileSync(resolve(__dirname, '../../client/dist/manifest.json'), 'utf-8')
+    fs.readFileSync(resolve(__dirname, '../../../packages/client/dist/manifest.json'), 'utf-8')
   );
 } catch (error) {
   console.error('Failed to read manifest.json:', error);
@@ -48,18 +48,30 @@ app.use((err: Error, req: Request, res: Response, next: express.NextFunction) =>
   res.status(500).send('Something broke!');
 });
 
-// Serve static files
-app.use(sirv(resolve(__dirname, '../../client/dist'), {
+// API routes
+app.use('/api', (req, res, next) => {
+  // Your API routes here
+  if (req.path === '/server-info') {
+    res.json({ status: 'ok', mode: process.env.NODE_ENV });
+  } else if (req.path === '/git/branches') {
+    res.json({ branches: ['main', 'develop'] });
+  } else {
+    next();
+  }
+});
+
+// Serve static files from client dist
+app.use(sirv(resolve(__dirname, '../../../packages/client/dist'), {
   dev: isDev,
   etag: true,
   maxAge: isDev ? 0 : 31536000,
   immutable: !isDev,
 }));
 
-// SSR Route handler
+// SSR Route handler for all other routes
 app.get('*', async (req: Request, res: Response) => {
   try {
-    const { default: App } = await import('../../client/src/App');
+    const { default: App } = await import('../../../packages/client/src/App');
     let didError = false;
 
     const stream = renderToPipeableStream(
@@ -67,7 +79,7 @@ app.get('*', async (req: Request, res: Response) => {
         React.createElement(App)
       ),
       {
-        bootstrapScripts: manifest['index.html']?.file ? [manifest['index.html'].file] : [],
+        bootstrapScripts: manifest['index.html']?.file ? ['/'+manifest['index.html'].file] : [],
         onShellReady() {
           res.statusCode = didError ? 500 : 200;
           res.setHeader('Content-type', 'text/html');
@@ -78,7 +90,7 @@ app.get('*', async (req: Request, res: Response) => {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
                 <title>Local Rabbit</title>
                 ${manifest['index.html']?.css?.map((css: string) => 
-                  `<link rel="stylesheet" href="${css}" />`
+                  `<link rel="stylesheet" href="/${css}" />`
                 ).join('\n') || ''}
               </head>
               <body>

@@ -5,10 +5,20 @@ import { resolve } from 'path';
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir: 'dist',
     manifest: true,
     rollupOptions: {
       input: 'src/main.tsx',
+      output: {
+        manualChunks: undefined,
+      },
+    },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
     },
   },
   resolve: {

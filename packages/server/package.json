@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc && vite build",
+    "build": "tsc",
     "start": "node dist/server.js",
     "clean": "rm -rf dist",
-    "lint": "eslint src",
+    "lint": "eslint . --ext .ts --report-unused-disable-directives --max-warnings 0",
     "test": "vitest"
   },
   "dependencies": {
