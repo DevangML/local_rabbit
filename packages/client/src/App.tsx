@@ -6,6 +6,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import { theme } from './theme';
+import { FeatureDemo } from './components/FeatureDemo';
 
 const Home = React.lazy(() => import('./pages/Home'));
 
@@ -30,7 +31,8 @@ function App() {
         <CssBaseline />
         <Suspense fallback={<Loading />}>
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<FeatureDemo />} />
+            <Route path="/home" element={<Home />} />
           </Routes>
         </Suspense>
       </ThemeProvider>

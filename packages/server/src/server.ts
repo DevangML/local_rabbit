@@ -49,10 +49,13 @@ app.use(helmet({
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
       'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       'img-src': ["'self'", 'data:', 'blob:'],
+      'connect-src': ["'self'", 'ws:', 'wss:'],
+      'manifest-src': ["'self'"],
+      'worker-src': ["'self'"],
     },
   },
   crossOriginEmbedderPolicy: false,
-  crossOriginResourcePolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
 app.use(compression() as unknown as express.RequestHandler);
 app.use(morgan('dev'));
@@ -78,15 +81,44 @@ app.use('/api', (req, res, next) => {
 
 // Serve static files from client dist if the directory exists
 if (fs.existsSync(clientDistPath)) {
+  app.get('/sw.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.setHeader('Service-Worker-Allowed', '/');
+    res.sendFile(resolve(clientDistPath, 'sw.js'));
+  });
+
+  app.get('/manifest.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/manifest+json');
+    res.sendFile(resolve(clientDistPath, 'manifest.json'));
+  });
+
   app.use(sirv(clientDistPath, {
     dev: isDev,
     etag: true,
     maxAge: isDev ? 0 : 31536000,
     immutable: !isDev,
+    extensions: ['html', 'js', 'mjs', 'css'],
+    gzip: true
   }));
 } else {
   console.warn('Warning: Client dist directory not found. Static files will not be served.');
 }
+
+// Add catch-all route for client-side routing
+app.get(['/assets/*', '/*.js', '/*.css'], (req, res, next) => {
+  const filePath = resolve(clientDistPath, req.path.substring(1));
+  if (fs.existsSync(filePath)) {
+    const ext = req.path.split('.').pop();
+    if (ext === 'js' || ext === 'mjs') {
+      res.setHeader('Content-Type', 'application/javascript');
+    } else if (ext === 'css') {
+      res.setHeader('Content-Type', 'text/css');
+    }
+    res.sendFile(filePath);
+  } else {
+    next();
+  }
+});
 
 // SSR Route handler for all other routes
 app.get('*', async (req: Request, res: Response) => {
@@ -126,14 +158,16 @@ app.get('*', async (req: Request, res: Response) => {
           <script type="module" src="/${mainFile}"></script>
           <script>
             if ('serviceWorker' in navigator) {
-              window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                  .then(registration => {
-                    console.log('SW registered:', registration);
-                  })
-                  .catch(error => {
-                    console.log('SW registration failed:', error);
+              window.addEventListener('load', async () => {
+                try {
+                  const registration = await navigator.serviceWorker.register('/sw.js', {
+                    scope: '/',
+                    type: 'module'
                   });
+                  console.log('SW registered:', registration);
+                } catch (error) {
+                  console.error('SW registration failed:', error);
+                }
               });
             }
           </script>
