@@ -11,7 +11,8 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 'latest',
-    sourceType: 'module'
+    sourceType: 'module',
+    project: null
   },
   plugins: ['@typescript-eslint'],
   ignorePatterns: [
@@ -56,8 +57,8 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
     'no-unused-vars': 'off',
-    '@typescript-eslint/no-unused-vars': 'off',
-    'no-undef': 'off',
+    '@typescript-eslint/no-unused-vars': 'warn',
+    'no-undef': 'warn',
     '@typescript-eslint/no-var-requires': 'off',
     'no-control-regex': 'off'
   },

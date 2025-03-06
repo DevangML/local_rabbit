@@ -15,7 +15,9 @@
     "dev": "concurrently \"yarn dev:client\" \"yarn dev:server\"",
     "start": "cd packages/server && yarn start",
     "clean": "rimraf packages/*/dist",
-    "lint": "yarn workspaces run lint"
+    "lint": "yarn workspaces run lint",
+    "lint:fix": "yarn workspaces run lint:fix",
+    "lint:quiet": "yarn workspaces run lint:quiet"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
