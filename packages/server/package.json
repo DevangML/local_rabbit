@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "prebuild": "rimraf dist",
-    "build": "tsc --project tsconfig.server.json --outDir dist/server --skipLibCheck --emitDeclarationOnly && babel src --out-dir dist/server --extensions '.ts,.tsx' --copy-files",
+    "build": "tsc -p tsconfig.json && babel src --out-dir dist/server --extensions '.ts,.tsx' --copy-files",
     "start": "node dist/server/server.js",
     "clean": "rimraf dist",
     "lint": "eslint . --ext .ts --report-unused-disable-directives --max-warnings 0",
