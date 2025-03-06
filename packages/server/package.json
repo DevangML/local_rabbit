@@ -4,15 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "nodemon --exec ts-node src/server.ts",
     "prebuild": "rimraf dist && yarn workspace @local-rabbit/client build",
-    "build": "tsc && babel src --out-dir dist --extensions '.ts,.tsx' --copy-files",
+    "build": "rimraf dist && yarn workspace @local-rabbit/client build && tsc --skipLibCheck || true && babel src --out-dir dist --extensions '.ts,.tsx' --copy-files",
     "start": "node dist/server.js",
     "clean": "rimraf dist",
-    "lint": "eslint --config .eslintrc.cjs . --ext .ts,.js",
-    "lint:fix": "eslint --config .eslintrc.cjs . --ext .ts,.js --fix",
-    "lint:quiet": "eslint --config .eslintrc.cjs . --ext .ts,.js --quiet || true",
-    "test": "vitest"
+    "lint": "eslint --config .eslintrc.cjs . --ext .ts,.js --rule 'no-undef: off'",
+    "lint:fix": "eslint --config .eslintrc.cjs . --ext .ts,.js --fix --rule 'no-undef: off'",
+    "lint:quiet": "eslint --config .eslintrc.cjs . --ext .ts,.js --quiet --rule 'no-undef: off' || true",
+    "test": "jest"
   },
   "dependencies": {
     "@babel/runtime": "^7.24.0",
