@@ -12,8 +12,8 @@ import { renderToString } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server.js';
 import React from 'react';
 
-// Import the actual App component using the alias
-import App from '@local-rabbit/client/App.js';
+// Import the server-side rendering function from the client
+import { renderPage } from '../../client/dist/server/entry-server.js';
 
 // Load environment variables
 dotenv.config({
@@ -89,9 +89,7 @@ const ssrHandler: RequestHandler = async (req, res) => {
     };
 
     const html = renderToString(
-      React.createElement(StaticRouter, { location: req.url },
-        React.createElement(App)
-      )
+      renderPage(req.url)
     );
 
     const template = `

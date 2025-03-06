@@ -1,21 +1,22 @@
 const winston = require('winston');
+const { format, _transports } = winston;
 const path = require('path');
 const chalk = require('chalk');
-const config = require('../config');
+const _config = require('../config');
 
 // Define log format
 // eslint-disable-next-line no-unused-vars
-const logFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  winston.format.errors({ stack: true }),
-  winston.format.splat(),
-  winston.format.json(),
+const logFormat = format.combine(
+  format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  format.errors({ stack: true }),
+  format.splat(),
+  format.json(),
 );
 
 // Custom formatter for console with enhanced colors using chalk
-const consoleFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  winston.format.printf(({
+const _consoleFormat = format.combine(
+  format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  format.printf(({
     level, message, timestamp, ...meta
   }) => {
     // Define color scheme for different log levels
@@ -51,7 +52,7 @@ const consoleFormat = winston.format.combine(
 );
 
 // Add a new format for machine-readable output
-const machineFormat = winston.format.printf(({
+const _machineFormat = format.printf(({
   level, message, _timestamp, file, line, column, ...meta
 }) => {
   // Default to logger.js if no file is specified
@@ -60,17 +61,17 @@ const machineFormat = winston.format.printf(({
   const sourceColumn = column || '1';
 
   return `${sourceFile}:${sourceLine}:${sourceColumn}: ${level} ${message} ${Object.keys(meta).length ? JSON.stringify(meta) : ''
-  }`;
+    }`;
 });
 
 // Create the logger
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.errors({ stack: true }),
-    winston.format.splat(),
-    winston.format.json(),
+  format: format.combine(
+    format.timestamp(),
+    format.errors({ stack: true }),
+    format.splat(),
+    format.json(),
   ),
   transports: [
     new winston.transports.File({
@@ -85,9 +86,9 @@ const logger = winston.createLogger({
 
 if (process.env.NODE_ENV !== 'production') {
   logger.add(new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.simple(),
+    format: format.combine(
+      format.colorize(),
+      format.simple(),
     ),
   }));
 }

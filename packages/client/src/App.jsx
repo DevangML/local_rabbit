@@ -1,4 +1,4 @@
-import React, { useState /* useEffect */ } from 'react';
+import React, { useState, Suspense /* useEffect */ } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 // import { Provider } from 'react-redux';
@@ -8,7 +8,7 @@ import { BrowserRouter as Router } from 'react-router-dom';
 // import config from './config';
 import { lightTheme, darkTheme } from './theme';
 import { ThemeProvider as MuiThemeProvider, CircularProgress, Box } from '@mui/material';
-import { Routes, Route, Navigate, Suspense } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './components/Layout/MainLayout';
 import { useTheme } from './contexts/ThemeContext';
 
@@ -20,7 +20,7 @@ const Documentation = React.lazy(() => import('./components/Documentation/Docume
 const DiffViewer = React.lazy(() => import('./components/DiffViewer/DiffViewerContainer'));
 const ImpactView = React.lazy(() => import('./components/ImpactView/ImpactView'));
 const QualityCheck = React.lazy(() => import('./components/QualityCheck/QualityCheck'));
-const AIAnalyzer = React.lazy(() => import('./components/AIAnalyzer'));
+const AIAnalyzer = React.lazy(() => import('./components/AIAnalyzer/AIAnalyzer'));
 
 // Loading component
 const LoadingFallback = () => (
@@ -192,4 +192,5 @@ const App = () => {
   );
 };
 
-export default App;
+// Export the App component for server-side rendering
+export { App as default };

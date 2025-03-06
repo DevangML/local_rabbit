@@ -1,33 +1,21 @@
 import React from 'react';
 import { StaticRouter } from 'react-router-dom/server';
-import { ThemeProvider } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import CssBaseline from '@mui/material/CssBaseline';
 import { Routes, Route } from 'react-router-dom';
-import { theme } from './theme.js';
-import { FeatureDemo } from './components/FeatureDemo.ssr.jsx';
 
-// Custom App component for SSR
-function SSRApp(): JSX.Element {
+// Create a simplified SSR App without MUI components to avoid import issues
+function SSRApp() {
   return (
-    <Box sx={{ 
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: '100vh'
-    }}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Routes>
-          <Route path="/" element={<FeatureDemo />} />
-          <Route path="/home" element={<div>Home Page</div>} />
-        </Routes>
-      </ThemeProvider>
-    </Box>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <Routes>
+        <Route path="/" element={<div>Welcome to Local Rabbit</div>} />
+        <Route path="/home" element={<div>Home Page</div>} />
+      </Routes>
+    </div>
   );
 }
 
-// Export a named renderPage function for server.ts to use instead
-export function renderPage(url: string): JSX.Element {
+// Export a named renderPage function for server.ts to use
+export function renderPage(url) {
   return (
     <StaticRouter location={url}>
       <SSRApp />
@@ -35,12 +23,8 @@ export function renderPage(url: string): JSX.Element {
   );
 }
 
-interface RenderProps {
-  url: string;
-}
-
 // Keep the default export for backward compatibility
-export default function render(props: RenderProps): JSX.Element {
+export default function render(props) {
   const { url } = props;
   return renderPage(url);
 } 

@@ -9,11 +9,8 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import { renderToString } from 'react-dom/server';
-import { StaticRouter } from 'react-router-dom/server.js';
-import React from 'react';
-
-// Import the actual App component using the alias
-import App from '@local-rabbit/client/App.js';
+// Import the server-side rendering function from the client
+import { renderPage } from '../../client/dist/server/entry-server.js';
 
 // Load environment variables
 dotenv.config({
@@ -89,9 +86,7 @@ const ssrHandler = async (req, res) => {
       url: req.url,
       env: process.env.NODE_ENV
     };
-    const html = renderToString(/*#__PURE__*/React.createElement(StaticRouter, {
-      location: req.url
-    }, /*#__PURE__*/React.createElement(App)));
+    const html = renderToString(renderPage(req.url));
     const template = `
       <!DOCTYPE html>
       <html lang="en">

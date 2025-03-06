@@ -56,7 +56,7 @@ class SecureGitService {
     }
 
     return new Promise((resolve, reject) => {
-      exec('git branch', { cwd: this.currentRepoPath }, (error, stdout, stderr) => {
+      exec('git branch', { cwd: this.currentRepoPath }, (error, stdout, _stderr) => {
         if (error) {
           logger.error(`Error getting branches: ${error.message}`);
           return reject(error);
@@ -93,7 +93,7 @@ class SecureGitService {
 
     return new Promise((resolve, reject) => {
       const cmd = `git diff --name-status ${fromBranch}..${toBranch}`;
-      exec(cmd, { cwd: this.currentRepoPath }, (error, stdout, stderr) => {
+      exec(cmd, { cwd: this.currentRepoPath }, (error, stdout, _stderr) => {
         if (error) {
           logger.error(`Error getting diff: ${error.message}`);
           return reject(error);
