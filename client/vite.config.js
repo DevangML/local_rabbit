@@ -64,14 +64,26 @@ export default defineConfig(({ mode }) => {
           target: serverUrl,
           changeOrigin: true,
           secure: false,
+          ws: true, // Enable WebSocket proxy
+          xfwd: true, // Add x-forward headers
           rewrite: (path) => path,
           configure: (proxy, options) => {
             proxy.on('error', (err, req, res) => {
-              console.log('proxy error', err);
-              res.writeHead(500, {
-                'Content-Type': 'text/plain',
-              });
-              res.end('Something went wrong. And we are reporting a custom error message.');
+              console.error('[VITE] Proxy error:', err);
+              if (!res.headersSent) {
+                res.writeHead(500, {
+                  'Content-Type': 'application/json',
+                });
+                res.end(JSON.stringify({
+                  error: 'Proxy Error',
+                  message: 'Failed to connect to the API server. Please ensure it is running.',
+                  details: err.message
+                }));
+              }
+            });
+
+            proxy.on('proxyReq', (proxyReq, req, res) => {
+              proxyReq.setHeader('Origin', serverUrl);
             });
           },
         }
@@ -82,6 +94,9 @@ export default defineConfig(({ mode }) => {
         'Cross-Origin-Opener-Policy': 'same-origin',
         'Cross-Origin-Resource-Policy': 'same-site',
         'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Credentials': 'true',
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
         'X-XSS-Protection': '1; mode=block',

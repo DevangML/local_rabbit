@@ -20,12 +20,13 @@ const detectServerUrl = () => {
   const configuredUrl = getEnvVar('VITE_API_URL', '');
   if (configuredUrl) return configuredUrl;
 
-  // For local development, use relative path to work with Vite's proxy
+  // For local development, use the configured port from environment
+  const apiPort = getEnvVar('VITE_API_PORT', '3001');
   const hostname = window.location.hostname || 'localhost';
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    // In development, rely on the proxy configuration in Vite
-    // This prevents CORS issues by proxying all API requests
-    return '';  // Empty string means use relative paths
+
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
+    // Prefer IPv4 localhost for compatibility
+    return `http://127.0.0.1:${apiPort}`;
   }
 
   // In production, assume API is on the same host
@@ -37,7 +38,7 @@ const detectServerUrl = () => {
  * Application configuration
  */
 const config = {
-  // API configuration - dynamically determine base URL
+  // API configuration
   API_BASE_URL: detectServerUrl(),
 
   // Environment

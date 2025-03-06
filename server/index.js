@@ -31,6 +31,8 @@ const app = express();
 // Get port from environment or use a range of fallbacks
 const DEFAULT_PORT = 3000;
 const PORT = parseInt(process.env.PORT) || DEFAULT_PORT;
+// Get host from environment or default to 0.0.0.0 (all interfaces)
+const HOST = process.env.HOST || '0.0.0.0';
 
 // CORS configuration - dynamically allow client origins based on environment
 const corsOptions = {
@@ -153,18 +155,22 @@ app.use((err, req, res, _next) => {
 const saveServerPort = (port) => {
   try {
     const serverInfoPath = path.join(__dirname, '.server-info.json');
-    fs.writeFileSync(serverInfoPath, JSON.stringify({ port, timestamp: Date.now() }));
-    console.log(`[SERVER] Wrote port information to ${serverInfoPath}`);
+    fs.writeFileSync(serverInfoPath, JSON.stringify({
+      port,
+      host: HOST,
+      timestamp: Date.now()
+    }));
+    console.log(`[SERVER] Wrote server information to ${serverInfoPath}`);
   } catch (err) {
-    console.error('[SERVER] Failed to save port information:', err);
+    console.error('[SERVER] Failed to save server information:', err);
   }
 };
 
 // Function to try different ports
 const startServer = (port) => {
   try {
-    const server = app.listen(port, () => {
-      console.log(`[SERVER] Server running on port ${port}`);
+    const server = app.listen(port, HOST, () => {
+      console.log(`[SERVER] Server running on ${HOST}:${port}`);
       // Save port information for client discovery
       saveServerPort(port);
     });

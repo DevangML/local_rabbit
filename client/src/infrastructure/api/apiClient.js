@@ -28,6 +28,36 @@ const discoverServer = async () => {
       console.log(`[API] Initial URL not available: ${baseUrl}`);
     }
 
+    // If the original URL fails and contains IPv6 localhost (::1), try IPv4 localhost
+    if (baseUrl.includes('://::1:')) {
+      const ipv4Url = baseUrl.replace('://::1:', '://127.0.0.1:');
+      try {
+        console.log(`[API] Trying IPv4 alternative: ${ipv4Url}`);
+        const ipv4Response = await fetch(`${ipv4Url}/api/server-info`);
+        if (ipv4Response.ok) {
+          console.log(`[API] Server found at IPv4 URL: ${ipv4Url}`);
+          return ipv4Url;
+        }
+      } catch (e) {
+        console.log(`[API] IPv4 alternative not available: ${ipv4Url}`);
+      }
+    }
+
+    // If the original URL fails and contains IPv4 localhost (127.0.0.1), try IPv6 localhost
+    if (baseUrl.includes('://127.0.0.1:')) {
+      const ipv6Url = baseUrl.replace('://127.0.0.1:', '://[::1]:');
+      try {
+        console.log(`[API] Trying IPv6 alternative: ${ipv6Url}`);
+        const ipv6Response = await fetch(`${ipv6Url}/api/server-info`);
+        if (ipv6Response.ok) {
+          console.log(`[API] Server found at IPv6 URL: ${ipv6Url}`);
+          return ipv6Url;
+        }
+      } catch (e) {
+        console.log(`[API] IPv6 alternative not available: ${ipv6Url}`);
+      }
+    }
+
     // Try using the relative path with Vite's proxy
     try {
       console.log('[API] Trying server via proxy');
