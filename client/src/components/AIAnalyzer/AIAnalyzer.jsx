@@ -44,15 +44,15 @@ const AIAnalyzer = ({
     setError(null);
 
     try {
-      const response = await fetch('/api/analyze', {
+      const response = await fetch('/api/code-review/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           repoPath,
-          fromBranch,
-          toBranch,
+          baseBranch: fromBranch,
+          headBranch: toBranch,
           prompt: prompt.trim(),
         }),
       });
@@ -112,19 +112,21 @@ const AIAnalyzer = ({
         </Box>
 
         <Box sx={{ mb: 3 }}>
-          <FormControl fullWidth>
-            <InputLabel htmlFor="ai-prompt">Custom Instructions for AI Analysis</InputLabel>
-            <TextField
-              id="ai-prompt"
-              multiline
-              rows={3}
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Enter specific instructions for the AI analysis (e.g., 'Focus on security issues' or 'Explain the changes in simple terms')"
-              disabled={isAnalyzing}
-              sx={{ backgroundColor: 'background.paper' }}
-            />
-          </FormControl>
+          <Typography variant="subtitle1" gutterBottom>
+            Custom Instructions for AI Analysis
+          </Typography>
+          <TextField
+            id="ai-prompt"
+            multiline
+            rows={3}
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Enter specific instructions for the AI analysis (e.g., 'Focus on security issues' or 'Explain the changes in simple terms')"
+            disabled={isAnalyzing}
+            fullWidth
+            variant="outlined"
+            sx={{ backgroundColor: 'background.paper' }}
+          />
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>

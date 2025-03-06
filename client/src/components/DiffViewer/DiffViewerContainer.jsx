@@ -22,12 +22,18 @@ const DiffViewerContainer = ({
   branches,
   onFromBranchChange,
   onToBranchChange,
+  repoPath,
 }) => {
   const [diffData, setDiffData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const fetchDiff = async () => {
+    if (!repoPath) {
+      setError('Please select a repository first');
+      return;
+    }
+
     if (!fromBranch || !toBranch) {
       setError('Please select both branches to compare');
       return;
@@ -37,14 +43,62 @@ const DiffViewerContainer = ({
     setError(null);
 
     try {
+      // First ensure repository is set on the server
+      const setRepoResponse = await fetch('/api/git/repository/set', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ path: repoPath }),
+      });
+
+      if (!setRepoResponse.ok) {
+        const errorData = await setRepoResponse.json();
+        throw new Error(errorData.error || 'Failed to set repository');
+      }
+
+      // Then fetch the diff
       const response = await fetch(`/api/git/diff?from=${fromBranch}&to=${toBranch}`);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch diff data');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch diff data');
       }
 
-      const data = await response.text();
-      const formattedDiff = formatDiff(data);
+      const data = await response.json();
+      console.log('Received diff data:', data);
+
+      const formattedDiff = data.diff.map(item => {
+        console.log('Processing item:', item);
+        // Check if diffContent is empty or undefined
+        if (!item.diffContent) {
+          console.warn('No diff content for file:', item.file);
+          return {
+            path: item.file,
+            status: item.status,
+            changes: []
+          };
+        }
+
+        try {
+          const parsedChanges = formatDiff(item.diffContent);
+          console.log('Parsed changes:', parsedChanges);
+          return {
+            path: item.file,
+            status: item.status,
+            changes: parsedChanges[0]?.changes || []
+          };
+        } catch (error) {
+          console.error('Error parsing diff for', item.file, error);
+          return {
+            path: item.file,
+            status: item.status,
+            changes: []
+          };
+        }
+      });
+
+      console.log('Formatted diff data:', formattedDiff);
       setDiffData(formattedDiff);
     } catch (err) {
       console.error('Error fetching diff:', err);
@@ -55,10 +109,10 @@ const DiffViewerContainer = ({
   };
 
   useEffect(() => {
-    if (fromBranch && toBranch) {
+    if (repoPath && fromBranch && toBranch) {
       fetchDiff();
     }
-  }, [fromBranch, toBranch]);
+  }, [repoPath, fromBranch, toBranch]);
 
   return (
     <Container maxWidth="xl">

@@ -1,6 +1,7 @@
 const path = require('path');
 const os = require('os');
 const fs = require('fs').promises;
+const { exec } = require('child_process');
 const logger = require('../utils/logger');
 
 class SecureGitService {
@@ -30,6 +31,10 @@ class SecureGitService {
     return false;
   }
 
+  getRepositoryPath() {
+    return this.currentRepoPath;
+  }
+
   isPathAllowed(pathToCheck) {
     return this.allowedDirectories.some((dir) => pathToCheck.startsWith(dir) && !pathToCheck.includes('..'));
   }
@@ -43,6 +48,68 @@ class SecureGitService {
     } catch {
       return false;
     }
+  }
+
+  async getBranches() {
+    if (!this.currentRepoPath) {
+      throw new Error('No repository selected');
+    }
+
+    return new Promise((resolve, reject) => {
+      exec('git branch', { cwd: this.currentRepoPath }, (error, stdout, stderr) => {
+        if (error) {
+          logger.error(`Error getting branches: ${error.message}`);
+          return reject(error);
+        }
+
+        const all = stdout
+          .split('\n')
+          .map((branch) => branch.trim())
+          .filter((branch) => branch)
+          .map((branch) => branch.replace('* ', '')); // Remove the asterisk from current branch
+
+        const current = stdout
+          .split('\n')
+          .find((branch) => branch.trim().startsWith('* '));
+
+        const currentBranch = current ? current.replace('* ', '').trim() : '';
+
+        resolve({
+          all,
+          current: currentBranch,
+        });
+      });
+    });
+  }
+
+  async getDiff(fromBranch, toBranch) {
+    if (!this.currentRepoPath) {
+      throw new Error('No repository selected');
+    }
+
+    if (!fromBranch || !toBranch) {
+      throw new Error('Both branches must be specified');
+    }
+
+    return new Promise((resolve, reject) => {
+      const cmd = `git diff --name-status ${fromBranch}..${toBranch}`;
+      exec(cmd, { cwd: this.currentRepoPath }, (error, stdout, stderr) => {
+        if (error) {
+          logger.error(`Error getting diff: ${error.message}`);
+          return reject(error);
+        }
+
+        const changes = stdout
+          .split('\n')
+          .filter((line) => line.trim())
+          .map((line) => {
+            const [status, file] = line.split('\t');
+            return { status, file };
+          });
+
+        resolve(changes);
+      });
+    });
   }
 
   static async findRepositories() {

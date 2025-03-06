@@ -17,7 +17,7 @@ const handlers = [
   }),
 
   rest.post('/api/git/repository/set', (req, res, ctx) => {
-    const { path } = req.body;
+    const path = req.body;
     return res(ctx.json({
       name: 'Test Repo',
       path: path,

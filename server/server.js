@@ -6,11 +6,22 @@
 // Load environment variables
 require('dotenv').config();
 
+const express = require('express');
 const app = require('./src/app');
 const config = require('./src/config');
 const logger = require('./src/utils/logger');
 
+// Add body parsing middleware before requiring routes
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Import routes after middleware
+const apiRoutes = require('./routes/index');
+
 const port = config.port || 3001;
+
+// Mount routes
+app.use('/api', apiRoutes);
 
 // Create HTTP server instance
 const server = app.listen(port, () => {

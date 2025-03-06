@@ -1,26 +1,51 @@
 import { createTheme } from '@mui/material/styles';
 
-const lunarTheme = createTheme({
+const getTheme = (mode) => createTheme({
   palette: {
-    mode: 'dark',
-    primary: {
-      main: '#9d7cd8',
-      light: '#bb9af7',
-      dark: '#7aa2f7',
-    },
-    secondary: {
-      main: '#7dcfff',
-      light: '#89ddff',
-      dark: '#565f89',
-    },
-    background: {
-      default: '#1a1b26',
-      paper: '#24283b',
-    },
-    text: {
-      primary: '#c0caf5',
-      secondary: '#a9b1d6',
-    },
+    mode,
+    ...(mode === 'light'
+      ? {
+        // Light mode
+        primary: {
+          main: '#9d7cd8',
+          light: '#bb9af7',
+          dark: '#7aa2f7',
+        },
+        secondary: {
+          main: '#7dcfff',
+          light: '#89ddff',
+          dark: '#565f89',
+        },
+        background: {
+          default: '#f7f9fc',
+          paper: '#ffffff',
+        },
+        text: {
+          primary: '#1a1b26',
+          secondary: '#4e5969',
+        },
+      }
+      : {
+        // Dark mode
+        primary: {
+          main: '#9d7cd8',
+          light: '#bb9af7',
+          dark: '#7aa2f7',
+        },
+        secondary: {
+          main: '#7dcfff',
+          light: '#89ddff',
+          dark: '#565f89',
+        },
+        background: {
+          default: '#1a1b26',
+          paper: '#24283b',
+        },
+        text: {
+          primary: '#c0caf5',
+          secondary: '#a9b1d6',
+        },
+      }),
     error: {
       main: '#f7768e',
     },
@@ -98,4 +123,4 @@ const lunarTheme = createTheme({
   },
 });
 
-export default lunarTheme; 
+export default getTheme; 

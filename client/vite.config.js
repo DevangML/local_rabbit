@@ -1,10 +1,41 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import fs from 'fs'
+
+// Try to get server port from the server-info file
+const getServerPort = () => {
+  try {
+    // Check for server info file in the server directory
+    const serverInfoPath = path.resolve(__dirname, '../server/.server-info.json');
+
+    if (fs.existsSync(serverInfoPath)) {
+      const serverInfo = JSON.parse(fs.readFileSync(serverInfoPath, 'utf8'));
+
+      // Check if the data is fresh (less than 1 hour old)
+      const isDataFresh = Date.now() - serverInfo.timestamp < 3600000;
+
+      if (isDataFresh && serverInfo.port) {
+        console.log(`[VITE] Found server running on port ${serverInfo.port}`);
+        return serverInfo.port;
+      }
+    }
+  } catch (err) {
+    console.warn('[VITE] Could not read server port from info file:', err.message);
+  }
+
+  return null; // Default to null if not found
+};
 
 export default defineConfig(({ mode }) => {
   // Load env files
   const env = loadEnv(mode, process.cwd(), '');
+
+  // Determine server port with fallbacks
+  const serverPort = getServerPort() || env.VITE_API_PORT || 3001;
+  const serverUrl = env.VITE_API_BASE_URL || `http://localhost:${serverPort}`;
+
+  console.log(`[VITE] Configuring API proxy to: ${serverUrl}`);
 
   return {
     plugins: [
@@ -24,13 +55,16 @@ export default defineConfig(({ mode }) => {
       extensions: ['.js', '.jsx', '.ts', '.tsx']
     },
     server: {
-      port: 3000,
+      // Use available port from env or default to common development port
+      port: parseInt(env.VITE_CLIENT_PORT || 3000),
+      strictPort: false, // Allow falling back to another port if the specified one is in use
       proxy: {
         '/api': {
-          target: env.VITE_API_BASE_URL || 'http://localhost:3001',
+          target: serverUrl,
           changeOrigin: true,
           secure: false,
-        },
+          rewrite: (path) => path
+        }
       },
       // Add security headers
       headers: {
@@ -45,7 +79,8 @@ export default defineConfig(({ mode }) => {
       // Restrict host access
       hmr: {
         host: 'localhost',
-        clientPort: 3000,
+        // Use env port or fallback to prevent hardcoding
+        clientPort: parseInt(env.VITE_CLIENT_PORT || 3000),
       },
     },
     build: {
@@ -81,7 +116,7 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       'process.env': {}, // This ensures process.env is defined but empty
-      'import.meta.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL || 'http://localhost:3001'),
+      'import.meta.env.VITE_API_BASE_URL': JSON.stringify(serverUrl),
       'import.meta.env.VITE_NODE_ENV': JSON.stringify(env.VITE_NODE_ENV || 'development')
     },
   }

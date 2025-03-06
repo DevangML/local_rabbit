@@ -5,7 +5,7 @@ const config = {
     directory: 'logs',
   },
   cors: {
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: process.env.CORS_ORIGIN || ['http://localhost:3000', 'http://127.0.0.1:3000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,

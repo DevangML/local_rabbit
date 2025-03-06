@@ -9,17 +9,14 @@ import {
   IconButton,
   useTheme,
   useMediaQuery,
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   TextField,
   Button,
   Divider,
+  Tabs,
+  Tab,
+  Paper,
 } from '@mui/material';
 import {
-  Menu as MenuIcon,
   GitHub as GitHubIcon,
   DarkMode as DarkModeIcon,
   CompareArrows as DiffIcon,
@@ -27,21 +24,40 @@ import {
   Speed as ImpactIcon,
   Code as QualityIcon,
   Folder as FolderIcon,
+  Brightness7 as Brightness7Icon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import BranchSelector from '../BranchSelector/BranchSelector';
 
-const MainLayout = ({ children, onRepoPathChange }) => {
+const MainLayout = ({
+  children,
+  onRepoPathChange,
+  branches,
+  fromBranch,
+  toBranch,
+  onFromBranchChange,
+  onToBranchChange,
+  isLoadingBranches,
+  onToggleTheme,
+  isDarkMode,
+}) => {
   const theme = useTheme();
   const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [isDrawerOpen, setIsDrawerOpen] = useState(!isMobile);
   const [repoPath, setRepoPath] = useState('');
 
-  const menuItems = [
-    { text: 'Diff Viewer', icon: <DiffIcon />, path: '/diff' },
-    { text: 'AI Analyzer', icon: <AnalyticsIcon />, path: '/analyze' },
-    { text: 'Impact View', icon: <ImpactIcon />, path: '/impact' },
-    { text: 'Quality Check', icon: <QualityIcon />, path: '/quality' },
+  const tabs = [
+    { label: 'Products', path: '/products' },
+    { label: 'About Us', path: '/about' },
+    { label: 'Contact Us', path: '/contact' },
+    { label: 'Documentation', path: '/docs' },
+  ];
+
+  const secondaryTabs = [
+    { label: 'Diff Viewer', icon: <DiffIcon />, path: '/diff' },
+    { label: 'AI Analyzer', icon: <AnalyticsIcon />, path: '/analyze' },
+    { label: 'Impact View', icon: <ImpactIcon />, path: '/impact' },
+    { label: 'Quality Check', icon: <QualityIcon />, path: '/quality' },
   ];
 
   const handleRepoSubmit = (e) => {
@@ -49,81 +65,8 @@ const MainLayout = ({ children, onRepoPathChange }) => {
     onRepoPathChange?.(repoPath);
   };
 
-  const toggleDrawer = () => {
-    setIsDrawerOpen(!isDrawerOpen);
-  };
-
-  const drawer = (
-    <Box sx={{ width: 280, pt: 2 }}>
-      <form onSubmit={handleRepoSubmit}>
-        <Box sx={{ px: 2, mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
-            Repository Path
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <TextField
-              size="small"
-              fullWidth
-              placeholder="/path/to/repo"
-              value={repoPath}
-              onChange={(e) => setRepoPath(e.target.value)}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  backgroundColor: 'background.paper',
-                },
-              }}
-            />
-            <IconButton size="small" onClick={() => {/* Handle folder selection */ }}>
-              <FolderIcon />
-            </IconButton>
-          </Box>
-        </Box>
-      </form>
-
-      <Divider />
-
-      <List>
-        {menuItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <ListItem
-              button
-              component={Link}
-              to={item.path}
-              key={item.text}
-              selected={isActive}
-              onClick={() => isMobile && setIsDrawerOpen(false)}
-              sx={{
-                py: 1.5,
-                color: isActive ? 'primary.main' : 'text.primary',
-                backgroundColor: isActive ? 'rgba(157, 124, 216, 0.08)' : 'transparent',
-                '&:hover': {
-                  backgroundColor: 'rgba(157, 124, 216, 0.08)',
-                },
-                '&.Mui-selected': {
-                  backgroundColor: 'rgba(157, 124, 216, 0.12)',
-                  '&:hover': {
-                    backgroundColor: 'rgba(157, 124, 216, 0.16)',
-                  },
-                },
-              }}
-            >
-              <ListItemIcon sx={{ color: isActive ? 'primary.main' : 'inherit', minWidth: 40 }}>
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText
-                primary={item.text}
-                primaryTypographyProps={{
-                  fontSize: '0.875rem',
-                  fontWeight: isActive ? 600 : 500,
-                }}
-              />
-            </ListItem>
-          );
-        })}
-      </List>
-    </Box>
-  );
+  const isToolPage = ['/diff', '/analyze', '/impact', '/quality'].includes(location.pathname);
+  const isProductsPage = location.pathname === '/products';
 
   return (
     <Box sx={{
@@ -139,15 +82,6 @@ const MainLayout = ({ children, onRepoPathChange }) => {
             transition={{ duration: 0.5 }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <IconButton
-                color="inherit"
-                aria-label="open drawer"
-                edge="start"
-                onClick={toggleDrawer}
-                sx={{ mr: 2 }}
-              >
-                <MenuIcon />
-              </IconButton>
               <Typography
                 variant="h6"
                 component={Link}
@@ -167,6 +101,29 @@ const MainLayout = ({ children, onRepoPathChange }) => {
             </Box>
           </motion.div>
 
+          <Tabs
+            value={tabs.find(tab => tab.path === location.pathname) ? location.pathname : false}
+            sx={{
+              '& .MuiTab-root': {
+                color: 'text.secondary',
+                '&.Mui-selected': {
+                  color: 'primary.main',
+                },
+              },
+            }}
+          >
+            {tabs.map((tab) => (
+              <Tab
+                key={tab.path}
+                label={tab.label}
+                value={tab.path}
+                component={Link}
+                to={tab.path}
+                sx={{ minWidth: 100 }}
+              />
+            ))}
+          </Tabs>
+
           <Box sx={{ display: 'flex', gap: 2 }}>
             <IconButton
               color="inherit"
@@ -178,47 +135,120 @@ const MainLayout = ({ children, onRepoPathChange }) => {
             >
               <GitHubIcon />
             </IconButton>
-            <IconButton color="inherit" aria-label="toggle theme">
-              <DarkModeIcon />
+            <IconButton
+              color="inherit"
+              aria-label="toggle theme"
+              onClick={onToggleTheme}
+            >
+              {isDarkMode ? <Brightness7Icon /> : <DarkModeIcon />}
             </IconButton>
           </Box>
         </Toolbar>
       </AppBar>
 
-      <Drawer
-        anchor="left"
-        open={isDrawerOpen}
-        onClose={() => isMobile && setIsDrawerOpen(false)}
-        variant={isMobile ? 'temporary' : 'persistent'}
-        sx={{
-          '& .MuiDrawer-paper': {
-            backgroundColor: 'background.default',
-            borderRight: '1px solid',
-            borderColor: 'divider',
-          },
-        }}
-      >
-        {drawer}
-      </Drawer>
-
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          pl: !isMobile && isDrawerOpen ? '280px' : 0,
-          transition: theme.transitions.create('padding', {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen,
-          }),
+          pt: '64px', // Height of AppBar
         }}
       >
-        <Toolbar /> {/* Spacer for fixed AppBar */}
+        <Container maxWidth="xl" sx={{ py: 3 }}>
+          {isProductsPage && (
+            <>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  mb: 3,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <form onSubmit={handleRepoSubmit}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
+                    Repository Path
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      placeholder="/path/to/repo"
+                      value={repoPath}
+                      onChange={(e) => setRepoPath(e.target.value)}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          backgroundColor: 'background.paper',
+                        },
+                      }}
+                    />
+                    <IconButton size="small" onClick={() => {/* Handle folder selection */ }}>
+                      <FolderIcon />
+                    </IconButton>
+                    <Button
+                      variant="contained"
+                      type="submit"
+                      sx={{ minWidth: 100 }}
+                    >
+                      Set Repo
+                    </Button>
+                  </Box>
+                </form>
+              </Paper>
 
-        <Container maxWidth="xl" sx={{
-          mt: 4,
-          mb: 8,
-          position: 'relative',
-        }}>
+              {repoPath && (
+                <>
+                  <BranchSelector
+                    branches={branches}
+                    fromBranch={fromBranch}
+                    toBranch={toBranch}
+                    onFromBranchChange={onFromBranchChange}
+                    onToBranchChange={onToBranchChange}
+                    isLoadingBranches={isLoadingBranches}
+                  />
+
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      mb: 3,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Tabs
+                      value={isToolPage ? location.pathname : false}
+                      variant="scrollable"
+                      scrollButtons="auto"
+                      sx={{
+                        borderBottom: 1,
+                        borderColor: 'divider',
+                        '& .MuiTab-root': {
+                          minHeight: 48,
+                        },
+                      }}
+                    >
+                      {secondaryTabs.map((tab) => (
+                        <Tab
+                          key={tab.path}
+                          label={tab.label}
+                          icon={tab.icon}
+                          iconPosition="start"
+                          value={tab.path}
+                          component={Link}
+                          to={tab.path}
+                          sx={{
+                            minHeight: 48,
+                            textTransform: 'none',
+                          }}
+                        />
+                      ))}
+                    </Tabs>
+                  </Paper>
+                </>
+              )}
+            </>
+          )}
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

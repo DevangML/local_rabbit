@@ -41,7 +41,7 @@ exports.getDiff = async (req, res) => {
     let currentFile = null;
     let currentContent = [];
 
-    diff.split('\n').forEach(line => {
+    diff.split('\n').forEach((line) => {
       if (line.startsWith('diff --git')) {
         if (currentFile) {
           currentFile.content = currentContent.join('\n');
@@ -64,15 +64,15 @@ exports.getDiff = async (req, res) => {
     // Set cache control headers to prevent 304s
     res.set({
       'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
+      Pragma: 'no-cache',
+      Expires: '0',
     });
 
     return res.json({
       files,
       fromBranch,
       toBranch,
-      repository: gitService.repoPath
+      repository: gitService.repoPath,
     });
   } catch (error) {
     logger.error('Error getting diff:', error);

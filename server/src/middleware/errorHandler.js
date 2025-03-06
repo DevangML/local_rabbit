@@ -1,34 +1,43 @@
-const logger = require('../utils/logger');
-const config = require('../config');
-
 /**
- * Error handling middleware
- * @param {Error} err - Error object
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next function
+ * Global error handling middleware
+ * Provides consistent error responses with detailed information
  */
+const logger = require('../utils/logger');
+
 const errorHandler = (err, req, res, next) => {
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  // Extract or generate error information
+  const status = err.status || err.statusCode || 500;
+  const error = err.message || 'Internal Server Error';
 
-  logger.error('Error:', {
-    message: err.message,
-    stack: err.stack,
-    path: req.path,
-    method: req.method,
-  });
+  // Get source location information
+  const stack = err.stack || new Error().stack;
+  const lineMatch = stack.split('\n')[1]?.match(/(\d+):\d+\)/);
+  const lineNumber = err.lineNumber || (lineMatch ? lineMatch[1] : null);
 
-  const status = err.status || 500;
-  const response = {
-    error: 'Internal Server Error',
-    message: isDevelopment ? err.message : 'Something went wrong',
-  };
-
-  if (isDevelopment) {
-    response.stack = err.stack;
+  // Log the error
+  logger.error(`Error: ${error}`);
+  if (stack) {
+    logger.error(`Stack: ${stack}`);
   }
 
-  res.status(status).json(response);
+  // Generate a standardized error response
+  const errorResponse = {
+    error,
+    status,
+    path: req.originalUrl,
+    method: req.method,
+    timestamp: new Date().toISOString(),
+    details: err.details || err.cause || null,
+    line: lineNumber
+  };
+
+  // Include stack trace in development mode only
+  if (process.env.NODE_ENV !== 'production') {
+    errorResponse.stack = stack;
+  }
+
+  // Send the error response
+  res.status(status).json(errorResponse);
 };
 
 module.exports = errorHandler;

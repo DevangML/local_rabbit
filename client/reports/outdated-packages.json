@@ -2,14 +2,14 @@
   "@mui/icons-material": {
     "current": "5.16.14",
     "wanted": "5.16.14",
-    "latest": "6.4.6",
+    "latest": "6.4.7",
     "dependent": "client",
     "location": "/Users/devang/Documents/local_rabbit/client/node_modules/@mui/icons-material"
   },
   "@mui/material": {
     "current": "5.16.14",
     "wanted": "5.16.14",
-    "latest": "6.4.6",
+    "latest": "6.4.7",
     "dependent": "client",
     "location": "/Users/devang/Documents/local_rabbit/client/node_modules/@mui/material"
   },
@@ -93,7 +93,7 @@
   "tailwindcss": {
     "current": "3.4.17",
     "wanted": "3.4.17",
-    "latest": "4.0.9",
+    "latest": "4.0.10",
     "dependent": "client",
     "location": "/Users/devang/Documents/local_rabbit/client/node_modules/tailwindcss"
   },
