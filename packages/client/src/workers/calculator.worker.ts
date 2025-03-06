@@ -4,6 +4,10 @@ interface GroupedData<T> {
   [key: string]: T[];
 }
 
+interface Change {
+  type: 'add' | 'remove';
+}
+
 class Calculator {
   // Example heavy computation
   async fibonacci(n: number): Promise<number> {
@@ -157,8 +161,8 @@ class Calculator {
     let complexity = 0;
     
     // Count added/removed lines
-    const addedLines = (file.changes || []).filter(c => c.type === 'add').length;
-    const removedLines = (file.changes || []).filter(c => c.type === 'remove').length;
+    const addedLines = (file.changes || []).filter((c: Change) => c.type === 'add').length;
+    const removedLines = (file.changes || []).filter((c: Change) => c.type === 'remove').length;
     
     // More changes = higher complexity
     complexity += (addedLines + removedLines) * 0.1;
