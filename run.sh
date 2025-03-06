@@ -576,74 +576,61 @@ start_app() {
 # Display animated menu
 show_menu() {
     clear
-    play_sound "menu"
+    echo -e "${CYAN}=== Development Environment Menu ===${NC}"
+    echo "1) Start Application"
+    echo "2) Start Application (Debug Mode)"
+    echo "3) Run Tests"
+    echo "4) Build Project"
+    echo "5) Lint Code"
+    echo "6) Exit"
     
-    local menu_title="LocalCodeRabbit - Development Tools"
-    local menu_width=60
-    local padding=$(( (TERM_WIDTH - menu_width) / 2 ))
+    read -p "Select an option: " choice
     
-    # Top border with animation
-    printf "%${padding}s" ""
-    printf "${CYAN}╔"
-    for (( i=1; i<$((menu_width-1)); i++ )); do
-        printf "═"
-        if (( i % 5 == 0 )); then
-            sleep 0.01
-        fi
-    done
-    printf "╗${NC}\n"
+    case $choice in
+        1) start_app ;;
+        2) start_debug_mode ;;
+        3) run_tests ;;
+        4) build_project ;;
+        5) run_lint ;;
+        6) exit 0 ;;
+        *) print_error "Invalid option" && sleep 2 && show_menu ;;
+    esac
+}
+
+# Debug mode function
+start_debug_mode() {
+    print_step "Starting application in debug mode"
     
-    # Title
-    printf "%${padding}s" ""
-    printf "${CYAN}║"
-    title_padding=$(( (menu_width - 2 - ${#menu_title}) / 2 ))
-    printf "%${title_padding}s${YELLOW}%s${NC}%${title_padding}s" "" "$menu_title" ""
-    if [ $(( title_padding * 2 + ${#menu_title} )) -lt $((menu_width - 2)) ]; then
-        printf " "
+    # Start server with Node inspector
+    cd server
+    NODE_ENV=development node --inspect=9229 src/index.js &
+    SERVER_PID=$!
+    print_success "Server debug mode started on port 9229"
+    
+    # Start client with different inspector port
+    cd ../client
+    BROWSER=none PORT=3000 node --inspect=9230 src/index.js &
+    CLIENT_PID=$!
+    print_success "Client debug mode started on port 9230"
+    
+    # Open Chrome DevTools for both debuggers
+    if command -v open >/dev/null; then
+        sleep 2  # Give time for debuggers to start
+        open "chrome://inspect"
+        print_success "Opening Chrome DevTools"
     fi
-    printf "${CYAN}║${NC}\n"
     
-    # Separator
-    printf "%${padding}s" ""
-    printf "${CYAN}╠"
-    printf '═%.0s' $(seq 1 $((menu_width-2)))
-    printf "╣${NC}\n"
+    # Open VS Code with debugger
+    code . --goto .vscode/launch.json
     
-    # Menu options
-    local options=(
-        "Check System Requirements" 
-        "Clean Installation" 
-        "Install Dependencies" 
-        "Update Package Scripts" 
-        "Create Missing Files" 
-        "Clear Cache" 
-        "Optimize Database" 
-        "Run Linter" 
-        "Run VS Code Linter"
-        "Run Tests" 
-        "Run Security Audit" 
-        "Start Application" 
-        "Run Complete Setup"
-        "Fix Server Package Issues"
-        "Fix Client Package Issues"
-        "Exit"
-    )
+    print_warning "To debug:"
+    print_warning "1. Open Chrome DevTools (chrome://inspect)"
+    print_warning "2. Click 'Open dedicated DevTools for Node'"
+    print_warning "3. Or use VS Code debugger: Select 'Server + Client' configuration"
     
-    for i in "${!options[@]}"; do
-        printf "%${padding}s" ""
-        printf "${CYAN}║ ${GREEN}%2d${NC}) ${WHITE}%-$(($menu_width - 8))s${CYAN} ║${NC}\n" "$((i+1))" "${options[$i]}"
-        sleep 0.03
-    done
-    
-    # Bottom border
-    printf "%${padding}s" ""
-    printf "${CYAN}╚"
-    printf '═%.0s' $(seq 1 $((menu_width-2)))
-    printf "╝${NC}\n"
-    
-    # Prompt
-    printf "%${padding}s" ""
-    printf "${YELLOW}Select an option [1-${#options[@]}]:${NC} "
+    # Wait for both processes
+    cd ..
+    wait $SERVER_PID $CLIENT_PID
 }
 
 # Utility Functions
@@ -919,174 +906,8 @@ EOF
     wait $CLIENT_PID $SERVER_PID
 }
 
-# Process menu choice
-process_choice() {
-    local choice=$1
-    local success=false
-    
-    # Clear the screen but maintain a header
-    clear
-    printf "${CYAN}╔═══════════════════════════════════════════════════════════════╗${NC}\n"
-    printf "${CYAN}║ ${YELLOW}LocalCodeRabbit - Running: %-33s${CYAN} ║${NC}\n" "${options[$((choice-1))]}"
-    printf "${CYAN}╚═══════════════════════════════════════════════════════════════╝${NC}\n\n"
-    
-    case $choice in
-        1) check_system_requirements && {
-                validate_env_files "client" &&
-                validate_env_files "server" &&
-                success=true
-            }
-            ;;
-            
-        2) clean_install && {
-                validate_node_modules "client" || yarn install --mode=update-lockfile &&
-                validate_node_modules "server" || yarn install --mode=update-lockfile &&
-                success=true
-            }
-            ;;
-            
-        3) (cd client && yarn install) && 
-            (cd server && yarn install) && 
-            success=true
-            ;;
-            
-        4) update_package_scripts && {
-                (cd client && yarn install) &&
-                (cd server && yarn install) &&
-                success=true
-            }
-            ;;
-            
-        5) create_missing_files && {
-                validate_env_files "client" &&
-                validate_env_files "server" &&
-                check_db_status &&
-                success=true
-            }
-            ;;
-            
-        6) clear_cache && {
-                rm -rf client/.cache client/node_modules/.cache &&
-                rm -rf server/.cache server/node_modules/.cache &&
-                success=true
-            }
-            ;;
-            
-        7) optimize_db && {
-                check_db_status &&
-                (cd client && node scripts/optimize-db.js) &&
-                success=true
-            }
-            ;;
-            
-        8) (cd client && yarn lint) && 
-            (cd server && yarn lint) && 
-            success=true
-            ;;
-            
-        9) run_lint_for_vscode && success=true
-            ;;
-            
-        10) (cd client && yarn test) && 
-            (cd server && yarn test) && 
-            success=true
-            ;;
-            
-        11) run_security_audit && {
-                (cd client && yarn audit) &&
-                (cd server && yarn audit) &&
-                success=true
-            }
-            ;;
-            
-        12) print_step "Starting development servers..."
-            
-            # Start both servers in parallel
-            (run_server_dev) & 
-            local server_pid=$!
-            
-            sleep 2  # Give the server time to start
-            
-            (run_vite_dev) &
-            local client_pid=$!
-            
-            # Wait for both processes
-            wait $server_pid
-            wait $client_pid
-            
-            success=true
-            ;;
-            
-        13) run_complete_setup && success=true
-            ;;
-            
-        14) fix_server_package_issues && success=true
-            ;;
-            
-        15) fix_client_package_issues && success=true
-            ;;
-            
-        16) exit 0
-            ;;
-            
-        *) print_error "Invalid option"
-            ;;
-    esac
-    
-    if $success; then
-        echo
-        echo -e "${GREEN}Operation completed successfully.${NC}"
-    else
-        echo
-        echo -e "${RED}Operation failed or was interrupted.${NC}"
-    fi
-    
-    echo -e "\n${WHITE}Press any key to return to the menu...${NC}"
-    read -n 1 -s
-}
-
-# Parse command line arguments
-parse_args() {
-    # Process any command line arguments
-    for arg in "$@"; do
-        case $arg in
-            --no-animation)
-                NO_ANIMATION=true
-                ;;
-            --no-sound)
-                NO_SOUND=true
-                ;;
-            --test-mode)
-                TEST_MODE=true
-                ;;
-            --test-option=*)
-                TEST_OPTION="${arg#*=}"
-                ;;
-            lint-vscode)
-                run_lint_for_vscode
-                exit $?
-                ;;
-            --help)
-                echo "Usage: $0 [options]"
-                echo
-                echo "Options:"
-                echo "  --no-animation    Disable animations"
-                echo "  --no-sound        Disable sound effects"
-                echo "  --test-mode       Run in test mode"
-                echo "  --test-option=N   Run specific option in test mode"
-                echo "  lint-vscode       Run ESLint for VS Code problems tab"
-                echo "  --help            Show this help message"
-                exit 0
-                ;;
-        esac
-    done
-}
-
 # Main execution
 main() {
-    # Parse command line arguments
-    parse_args "$@"
-    
     # Show intro unless disabled
     if [ "$NO_ANIMATION" != "true" ]; then
         show_intro
@@ -1108,28 +929,7 @@ main() {
     
     # Main menu loop
     while true; do
-        options=(
-            "Check System Requirements" 
-            "Clean Installation" 
-            "Install Dependencies" 
-            "Update Package Scripts" 
-            "Create Missing Files" 
-            "Clear Cache" 
-            "Optimize Database" 
-            "Run Linter" 
-            "Run VS Code Linter"
-            "Run Tests" 
-            "Run Security Audit" 
-            "Start Application" 
-            "Run Complete Setup"
-            "Fix Server Package Issues"
-            "Fix Client Package Issues"
-            "Exit"
-        )
-        
         show_menu
-        read -r choice
-        process_choice "$choice"
     done
 }
 
