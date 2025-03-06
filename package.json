@@ -1,18 +1,26 @@
 {
-  "name": "local-rabbit",
+  "name": "local_rabbit",
+  "version": "1.0.0",
   "private": true,
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "dev": "yarn workspace @local-rabbit/server dev",
-    "build": "yarn workspaces run build",
-    "start": "yarn workspace @local-rabbit/server start",
+    "build:client": "cd packages/client && vite build",
+    "build:client:ssr": "cd packages/client && vite build --ssr src/entry-server.tsx --outDir dist/server",
+    "build:server": "cd packages/server && yarn build",
+    "build": "yarn build:client && yarn build:client:ssr && yarn build:server",
+    "dev:client": "cd packages/client && vite build --watch",
+    "dev:server": "cd packages/server && tsx watch src/server.ts",
+    "dev": "concurrently \"yarn dev:client\" \"yarn dev:server\"",
+    "start": "cd packages/server && yarn start",
+    "clean": "rimraf packages/*/dist",
     "lint": "yarn workspaces run lint"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2",
-    "nodemon": "^3.1.9"
+    "concurrently": "^8.2.2",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.3.3"
   },
   "packageManager": "yarn@1.22.22",
   "engines": {

@@ -18,7 +18,7 @@ import {
   Remove as RemovedIcon,
   Compare as CompareIcon,
 } from '@mui/icons-material';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 // Side-by-side diff line component
 const SideBySideDiffLine = ({ type, content, oldLineNumber, newLineNumber }) => {

@@ -1,18 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { CircularProgress, Box } from '@mui/material';
 import MainLayout from './components/Layout/MainLayout';
-import Products from './components/Products/Products';
-import About from './components/About/About';
-import Contact from './components/Contact/Contact';
-import Documentation from './components/Documentation/Documentation';
-import DiffViewerContainer from './components/DiffViewer/DiffViewerContainer';
-import AIAnalyzer from './components/AIAnalyzer';
-import ImpactView from './components/ImpactView/ImpactView';
-import QualityCheck from './components/QualityCheck/QualityCheck';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import getTheme from './theme/lunarTheme';
 import config from './config';
+
+// Lazy load route components
+const Products = React.lazy(() => import('./components/Products/Products'));
+const About = React.lazy(() => import('./components/About/About'));
+const Contact = React.lazy(() => import('./components/Contact/Contact'));
+const Documentation = React.lazy(() => import('./components/Documentation/Documentation'));
+const DiffViewer = React.lazy(() => import('./components/DiffViewer/DiffViewerContainer'));
+const ImpactView = React.lazy(() => import('./components/ImpactView/ImpactView'));
+const QualityCheck = React.lazy(() => import('./components/QualityCheck/QualityCheck'));
+const AIAnalyzer = React.lazy(() => import('./components/AIAnalyzer'));
+
+// Loading component
+const LoadingFallback = () => (
+  <Box
+    sx={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '200px'
+    }}
+  >
+    <CircularProgress />
+  </Box>
+);
 
 const AppContent = () => {
   const { isDarkMode, toggleTheme } = useTheme();
@@ -101,58 +118,60 @@ const AppContent = () => {
         isDarkMode={isDarkMode}
         {...commonProps}
       >
-        <Routes>
-          <Route path="/" element={<Navigate to="/products" replace />} />
-          <Route
-            path="/products"
-            element={
-              <Products
-                {...commonProps}
-                repoPath={repoPath}
-              />
-            }
-          />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/docs" element={<Documentation />} />
-          <Route
-            path="/diff"
-            element={
-              <DiffViewerContainer
-                {...commonProps}
-                repoPath={repoPath}
-              />
-            }
-          />
-          <Route
-            path="/analyze"
-            element={
-              <AIAnalyzer
-                {...commonProps}
-                repoPath={repoPath}
-              />
-            }
-          />
-          <Route
-            path="/impact"
-            element={
-              <ImpactView
-                {...commonProps}
-                repoPath={repoPath}
-              />
-            }
-          />
-          <Route
-            path="/quality"
-            element={
-              <QualityCheck
-                {...commonProps}
-                repoPath={repoPath}
-              />
-            }
-          />
-          <Route path="*" element={<Navigate to="/products" replace />} />
-        </Routes>
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/products" replace />} />
+            <Route
+              path="/products"
+              element={
+                <Products
+                  {...commonProps}
+                  repoPath={repoPath}
+                />
+              }
+            />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/docs" element={<Documentation />} />
+            <Route
+              path="/diff"
+              element={
+                <DiffViewer
+                  {...commonProps}
+                  repoPath={repoPath}
+                />
+              }
+            />
+            <Route
+              path="/analyze"
+              element={
+                <AIAnalyzer
+                  {...commonProps}
+                  repoPath={repoPath}
+                />
+              }
+            />
+            <Route
+              path="/impact"
+              element={
+                <ImpactView
+                  {...commonProps}
+                  repoPath={repoPath}
+                />
+              }
+            />
+            <Route
+              path="/quality"
+              element={
+                <QualityCheck
+                  {...commonProps}
+                  repoPath={repoPath}
+                />
+              }
+            />
+            <Route path="*" element={<Navigate to="/products" replace />} />
+          </Routes>
+        </Suspense>
       </MainLayout>
     </MuiThemeProvider>
   );

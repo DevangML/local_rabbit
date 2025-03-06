@@ -3,12 +3,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
-import { renderToPipeableStream } from 'react-dom/server';
-import { StaticRouter } from 'react-router-dom/server';
 import sirv from 'sirv';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
-import React from 'react';
 import fs from 'fs';
 import dotenv from 'dotenv';
 
@@ -23,14 +20,18 @@ const PORT = process.env.PORT || 3000;
 const isDev = process.env.NODE_ENV === 'development';
 
 // Read the client manifest
-let manifest: Record<string, any>;
+let manifest: Record<string, any> = {};
+const clientDistPath = resolve(__dirname, '../../../packages/client/dist');
+const manifestPath = resolve(clientDistPath, 'manifest.json');
+
 try {
-  manifest = JSON.parse(
-    fs.readFileSync(resolve(__dirname, '../../../packages/client/dist/manifest.json'), 'utf-8')
-  );
+  if (fs.existsSync(manifestPath)) {
+    manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+  } else {
+    console.warn('Warning: manifest.json not found. Running in development mode or build not completed.');
+  }
 } catch (error) {
   console.error('Failed to read manifest.json:', error);
-  manifest = {};
 }
 
 // Middleware
@@ -38,7 +39,7 @@ app.use(cors());
 app.use(helmet({
   contentSecurityPolicy: isDev ? false : undefined,
 }));
-app.use(compression());
+app.use(compression() as express.RequestHandler);
 app.use(morgan(isDev ? 'dev' : 'combined'));
 app.use(express.json());
 
@@ -60,56 +61,47 @@ app.use('/api', (req, res, next) => {
   }
 });
 
-// Serve static files from client dist
-app.use(sirv(resolve(__dirname, '../../../packages/client/dist'), {
-  dev: isDev,
-  etag: true,
-  maxAge: isDev ? 0 : 31536000,
-  immutable: !isDev,
-}));
+// Serve static files from client dist if the directory exists
+if (fs.existsSync(clientDistPath)) {
+  app.use(sirv(clientDistPath, {
+    dev: isDev,
+    etag: true,
+    maxAge: isDev ? 0 : 31536000,
+    immutable: !isDev,
+  }));
+} else {
+  console.warn('Warning: Client dist directory not found. Static files will not be served.');
+}
 
 // SSR Route handler for all other routes
 app.get('*', async (req: Request, res: Response) => {
   try {
-    const { default: App } = await import('../../../packages/client/src/App');
-    let didError = false;
+    const { renderPage } = await import('@client/entry-server');
+    const rendered = await renderPage(req.url);
+    
+    // Get the main client entry
+    const mainFile = Object.entries(manifest).find(([key]) => key.includes('main'))?.['1']?.file || 'main.js';
 
-    const stream = renderToPipeableStream(
-      React.createElement(StaticRouter, { location: req.url },
-        React.createElement(App)
-      ),
-      {
-        bootstrapScripts: manifest['index.html']?.file ? ['/'+manifest['index.html'].file] : [],
-        onShellReady() {
-          res.statusCode = didError ? 500 : 200;
-          res.setHeader('Content-type', 'text/html');
-          res.write(`<!DOCTYPE html>
-            <html lang="en">
-              <head>
-                <meta charset="UTF-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                <title>Local Rabbit</title>
-                ${manifest['index.html']?.css?.map((css: string) => 
-                  `<link rel="stylesheet" href="/${css}" />`
-                ).join('\n') || ''}
-              </head>
-              <body>
-                <div id="root">`);
-          stream.pipe(res);
-          res.write(`</div>
-              </body>
-            </html>`);
-        },
-        onError(error: unknown) {
-          didError = true;
-          console.error('Error during SSR:', error);
-          res.statusCode = 500;
-          res.end('<!DOCTYPE html><html><body><h1>Server Error</h1></body></html>');
-        },
-      }
-    );
+    res.send(`<!DOCTYPE html>
+      <html ${rendered.htmlAttrs || ''} lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>Local Rabbit</title>
+          ${rendered.headTags || ''}
+          ${Object.values(manifest)
+            .filter((chunk: any) => chunk.css)
+            .map((chunk: any) => chunk.css.map((css: string) => 
+              `<link rel="stylesheet" href="/${css}" />`
+            ).join('\n')).join('\n')}
+        </head>
+        <body ${rendered.bodyAttrs || ''}>
+          <div id="root">${rendered.appHtml}</div>
+          <script type="module" src="/${mainFile}"></script>
+        </body>
+      </html>`);
   } catch (error) {
-    console.error('Failed to load App:', error);
+    console.error('Failed to render:', error);
     res.status(500).send('<!DOCTYPE html><html><body><h1>Server Error</h1></body></html>');
   }
 });

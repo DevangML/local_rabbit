@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Typography,
@@ -8,7 +8,6 @@ import {
   CardContent,
   CardActions,
   Button,
-  Chip,
 } from '@mui/material';
 import {
   Timeline as TimelineIcon,
@@ -18,8 +17,6 @@ import {
 } from '@mui/icons-material';
 
 const Products = () => {
-  const [selectedBranch, setSelectedBranch] = useState('');
-
   const analysisCards = [
     {
       title: 'Diff Viewer',

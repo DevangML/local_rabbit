@@ -573,13 +573,15 @@ start_app() {
         # Start development mode
         print_step "Starting SSR development server..."
         
-        # First build client for development
-        (cd packages/client && yarn build:dev) || {
-            print_error "Client development build failed"
+        # Build client first
+        print_step "Building client for SSR..."
+        (cd packages/client && yarn build) || {
+            print_error "Client build failed"
             return 1
         }
         
-        # Start server in SSR mode (it will handle both API and client rendering)
+        # Start server with SSR
+        print_step "Starting server with SSR..."
         (cd packages/server && NODE_ENV=development SSR_MODE=true yarn dev) &
         SERVER_PID=$!
         

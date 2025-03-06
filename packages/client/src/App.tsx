@@ -1,32 +1,38 @@
-import { Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { ThemeProvider, CssBaseline, CircularProgress } from '@mui/material';
+import { ThemeProvider } from '@mui/material/styles';
 import { ErrorBoundary } from '@local-rabbit/shared';
+import CssBaseline from '@mui/material/CssBaseline';
+import CircularProgress from '@mui/material/CircularProgress';
 import { theme } from './theme';
 
-// Loading component
-const Loading = () => (
-  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-    <CircularProgress />
-  </div>
-);
+const Home = React.lazy(() => import('./pages/Home'));
 
-// Lazy load components
-const Home = () => (
-  <div>
-    <h1>Welcome to Local Rabbit</h1>
-    <p>A modern monorepo with SSR support</p>
-  </div>
-);
+function Loading() {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <CircularProgress />
+    </div>
+  );
+}
 
-export default function App() {
+function App() {
+  return (
+    <div>
+      <h1>Welcome to Local Rabbit</h1>
+      <p>A modern monorepo with SSR support</p>
+    </div>
+  );
+}
+
+export default function Root() {
   return (
     <ErrorBoundary>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Suspense fallback={<Loading />}>
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<App />} />
           </Routes>
         </Suspense>
       </ThemeProvider>
