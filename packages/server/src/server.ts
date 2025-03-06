@@ -35,13 +35,27 @@ try {
   console.error('Failed to read manifest.json:', error);
 }
 
+// Configure MIME types
+express.static.mime.define({
+  'application/javascript': ['js', 'mjs', 'jsx', 'ts', 'tsx'],
+  'text/javascript': ['js', 'mjs', 'jsx', 'ts', 'tsx']
+});
+
 // Middleware
 app.use(cors());
 app.use(helmet({
-  contentSecurityPolicy: isDev ? false : undefined,
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      'img-src': ["'self'", 'data:', 'blob:'],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: false,
 }));
 app.use(compression() as unknown as express.RequestHandler);
-app.use(morgan(isDev ? 'dev' : 'combined'));
+app.use(morgan('dev'));
 app.use(express.json());
 
 // Error handling middleware
