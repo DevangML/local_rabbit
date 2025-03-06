@@ -1,0 +1,30 @@
+{
+  "chalk": {
+    "current": "4.1.2",
+    "wanted": "4.1.2",
+    "latest": "5.4.1",
+    "dependent": "server",
+    "location": "/Users/devang/Documents/local_rabbit/server/node_modules/chalk"
+  },
+  "eslint": {
+    "current": "8.57.1",
+    "wanted": "8.57.1",
+    "latest": "9.21.0",
+    "dependent": "server",
+    "location": "/Users/devang/Documents/local_rabbit/server/node_modules/eslint"
+  },
+  "helmet": {
+    "current": "7.2.0",
+    "wanted": "7.2.0",
+    "latest": "8.0.0",
+    "dependent": "server",
+    "location": "/Users/devang/Documents/local_rabbit/server/node_modules/helmet"
+  },
+  "supertest": {
+    "current": "6.3.4",
+    "wanted": "6.3.4",
+    "latest": "7.0.0",
+    "dependent": "server",
+    "location": "/Users/devang/Documents/local_rabbit/server/node_modules/supertest"
+  }
+}

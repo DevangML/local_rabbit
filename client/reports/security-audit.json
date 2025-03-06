@@ -1,7 +1,0 @@
-{
-  "error": {
-    "code": "ERESOLVE",
-    "summary": "could not resolve",
-    "detail": "While resolving: @vitest/coverage-v8@3.0.7\nFound: vitest@1.6.1\nnode_modules/vitest\n  dev vitest@\"^1.6.1\" from the root project\n\nCould not resolve dependency:\npeer vitest@\"3.0.7\" from @vitest/coverage-v8@3.0.7\nnode_modules/@vitest/coverage-v8\n  dev @vitest/coverage-v8@\"^3.0.7\" from the root project\n\nConflicting peer dependency: vitest@3.0.7\nnode_modules/vitest\n  peer vitest@\"3.0.7\" from @vitest/coverage-v8@3.0.7\n  node_modules/@vitest/coverage-v8\n    dev @vitest/coverage-v8@\"^3.0.7\" from the root project\n\nFix the upstream dependency conflict, or retry\nthis command with --force or --legacy-peer-deps\nto accept an incorrect (and potentially broken) dependency resolution.\n\n\nFor a full report see:\n/Users/devang/.npm/_logs/2025-03-06T07_23_19_642Z-eresolve-report.txt"
-  }
-}

@@ -209,6 +209,58 @@
         "reveal": "never"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Build All",
+      "type": "npm",
+      "script": "build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [
+        "$tsc"
+      ]
+    },
+    {
+      "label": "Start Dev Server",
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "ready in"
+        }
+      }
+    },
+    {
+      "label": "Clean",
+      "type": "npm",
+      "script": "clean",
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Server",
+      "type": "npm",
+      "script": "build",
+      "path": "packages/server",
+      "problemMatcher": [
+        "$tsc"
+      ]
+    },
+    {
+      "label": "Build Client",
+      "type": "npm",
+      "script": "build",
+      "path": "packages/client",
+      "problemMatcher": [
+        "$tsc"
+      ]
     }
   ]
 }

@@ -2,138 +2,90 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Server",
+      "name": "Server: Debug",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/nodemon",
-      "program": "${workspaceFolder}/server/index.js",
-      "cwd": "${workspaceFolder}/server",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--loader",
+        "tsx"
+      ],
+      "args": [
+        "${workspaceFolder}/packages/server/src/server.ts"
+      ],
+      "cwd": "${workspaceFolder}",
+      "internalConsoleOptions": "openOnSessionStart",
       "skipFiles": [
-        "<node_internals>/**",
-        "${workspaceFolder}/node_modules/**"
+        "<node_internals>/**"
       ],
-      "outFiles": [
-        "${workspaceFolder}/server/dist/**/*.js"
-      ],
+      "envFile": "${workspaceFolder}/.env.development",
       "env": {
         "NODE_ENV": "development",
-        "DEBUG": "app:*",
-        "PORT": "3001",
-        "HOST": "0.0.0.0",
-        "NODE_VERSION": "18",
-        "UV_THREADPOOL_SIZE": "64"
+        "DEBUG": "local-rabbit:*"
       },
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "restart": true,
-      "autoAttachChildProcesses": true,
-      "resolveSourceMapLocations": [
-        "${workspaceFolder}/server/**",
-        "!**/node_modules/**"
-      ],
-      "sourceMaps": true,
-      "preLaunchTask": "clear-debug",
-      "smartStep": true,
-      "trace": true,
-      "outputCapture": "std",
-      "killBehavior": "polite",
-      "serverReadyAction": {
-        "pattern": "Server is running on port ([0-9]+)",
-        "uriFormat": "http://127.0.0.1:%s",
-        "action": "startDebugging",
-        "name": "Start Client"
-      }
+      "outFiles": [
+        "${workspaceFolder}/packages/server/dist/**/*.js"
+      ]
     },
     {
-      "name": "Start Client",
-      "type": "node",
-      "request": "launch",
-      "runtimeExecutable": "${workspaceFolder}/client/node_modules/.bin/vite",
-      "runtimeVersion": "18",
-      "cwd": "${workspaceFolder}/client",
-      "args": [
-        "--port",
-        "3000",
-        "--strictPort",
-        "--host",
-        "127.0.0.1"
-      ],
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "env": {
-        "VITE_API_PORT": "3001",
-        "VITE_API_URL": "http://127.0.0.1:3001",
-        "DEBUG": "*",
-        "NODE_OPTIONS": "--no-warnings --max-old-space-size=8192"
-      },
-      "serverReadyAction": {
-        "pattern": "Local:.+://127.0.0.1:([0-9]+)",
-        "uriFormat": "http://127.0.0.1:%s",
-        "action": "debugWithChrome"
-      },
-      "preLaunchTask": "ensure-node-version"
-    },
-    {
-      "name": "Debug Client",
+      "name": "Client: Debug",
       "type": "chrome",
       "request": "launch",
-      "url": "http://127.0.0.1:3000",
-      "webRoot": "${workspaceFolder}/client",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/packages/client",
       "sourceMapPathOverrides": {
-        "webpack:///src/*": "${webRoot}/src/*",
-        "/@fs/*": "*",
-        "/@vite/client": "${workspaceFolder}/client/node_modules/vite/dist/client/client.mjs"
+        "webpack:///src/*": "${webRoot}/src/*"
       },
-      "userDataDir": "${workspaceFolder}/.vscode/chrome-debug-profile",
-      "preLaunchTask": "wait-for-client",
-      "sourceMaps": true,
-      "trace": true,
-      "smartStep": true,
-      "skipFiles": [
-        "**/node_modules/**",
-        "**/@vite/**",
-        "**/vite/**"
-      ],
-      "port": 9222,
-      "timeout": 30000,
+      "userDataDir": false
+    },
+    {
+      "name": "Full Stack: Debug",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
       "runtimeArgs": [
-        "--remote-debugging-port=9222",
-        "--no-first-run",
-        "--no-default-browser-check",
-        "--disable-popup-blocking",
-        "--disable-extensions",
-        "--disable-ipv6"
-      ]
+        "run",
+        "dev"
+      ],
+      "cwd": "${workspaceFolder}",
+      "serverReadyAction": {
+        "pattern": "Local:.*http://localhost:([0-9]+)",
+        "uriFormat": "http://localhost:%s",
+        "action": "debugWithChrome"
+      },
+      "outFiles": [
+        "${workspaceFolder}/packages/server/dist/**/*.js",
+        "${workspaceFolder}/packages/client/dist/**/*.js"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "Jest: Debug Current Test",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/jest",
+      "args": [
+        "${fileBasename}",
+        "--runInBand",
+        "--watchAll=false",
+        "--testTimeout=100000"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "windows": {
+        "program": "${workspaceFolder}/node_modules/jest/bin/jest"
+      }
     }
   ],
   "compounds": [
     {
-      "name": "Server + Client",
+      "name": "Full Stack: Manual Debug",
       "configurations": [
-        "Debug Server",
-        "Start Client",
-        "Debug Client"
-      ],
-      "presentation": {
-        "hidden": false,
-        "group": "fullstack",
-        "order": 1,
-        "focus": true
-      },
-      "stopAll": true,
-      "preLaunchTask": "clear-debug",
-      "postDebugTask": "terminate-all"
-    }
-  ],
-  "inputs": [
-    {
-      "id": "serverPort",
-      "type": "command",
-      "command": "shellCommand.execute",
-      "args": {
-        "command": "cat ${workspaceFolder}/.vscode/server-port.txt",
-        "cwd": "${workspaceFolder}"
-      }
+        "Server: Debug",
+        "Client: Debug"
+      ]
     }
   ]
 }
