@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # ANSI color codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -555,46 +557,79 @@ run_security_audit() {
 
 # Start application
 start_app() {
-    print_step "Starting application..."
-    
-    # In a real implementation, this would start the client and server
-    # For this example, we'll just simulate it
-    (
-        echo "Initializing server..."
-        sleep 1
-        echo "Starting client application..."
-        sleep 1
-        echo "Environment ready!"
-    ) &
-    
-    spinner $! "Launching development environment..."
-    
-    print_success "Development environment started"
-    return 0
+    local mode=${1:-"development"}
+    print_step "Starting application in ${mode} mode..."
+
+    # Ensure directories exist
+    mkdir -p packages/server packages/client
+
+    # Validate environment
+    validate_env_files "packages/server" || return 1
+    validate_env_files "packages/client" || return 1
+    validate_node_modules "packages/server" || return 1
+    validate_node_modules "packages/client" || return 1
+
+    if [ "$mode" = "development" ]; then
+        # Start development mode
+        print_step "Starting development servers..."
+        
+        # Start server in background
+        (cd packages/server && NODE_ENV=development yarn dev) &
+        SERVER_PID=$!
+        
+        # Give server time to start
+        sleep 2
+        
+        # Start client in background
+        (cd packages/client && yarn dev) &
+        CLIENT_PID=$!
+        
+        # Store PIDs for cleanup
+        echo $SERVER_PID > .server.pid
+        echo $CLIENT_PID > .client.pid
+        
+        print_success "Development servers started"
+        echo "Server running on http://localhost:3000"
+        echo "Client running on http://localhost:5173"
+        
+        # Wait for both processes
+        wait $SERVER_PID $CLIENT_PID
+    else
+        # Start production mode
+        print_step "Building for production..."
+        
+        # Build client
+        (cd packages/client && yarn build) || {
+            print_error "Client build failed"
+            return 1
+        }
+        
+        # Build server
+        (cd packages/server && yarn build) || {
+            print_error "Server build failed"
+            return 1
+        }
+        
+        print_step "Starting production server..."
+        # Start server in production mode
+        (cd packages/server && NODE_ENV=production yarn start)
+    fi
 }
 
 # Display animated menu
 show_menu() {
     clear
     echo -e "${CYAN}=== Development Environment Menu ===${NC}"
-    echo "1) Start Application"
-    echo "2) Start Application (Debug Mode)"
-    echo "3) Run Tests"
-    echo "4) Build Project"
-    echo "5) Lint Code"
-    echo "6) Exit"
+    echo "1) Start Development Mode"
+    echo "2) Start Production Mode"
+    echo "3) Start Debug Mode"
+    echo "4) Run Tests"
+    echo "5) Build Project"
+    echo "6) Lint Code"
+    echo "7) Exit"
     
     read -p "Select an option: " choice
-    
-    case $choice in
-        1) start_app ;;
-        2) start_debug_mode ;;
-        3) run_tests ;;
-        4) build_project ;;
-        5) run_lint ;;
-        6) exit 0 ;;
-        *) print_error "Invalid option" && sleep 2 && show_menu ;;
-    esac
+    process_choice "$choice"
 }
 
 # Debug mode function
@@ -651,16 +686,46 @@ validate_node_modules() {
 
 validate_env_files() {
     local dir=$1
+    print_step "Setting up environment files for $dir..."
+    
+    # Create directory if it doesn't exist
+    mkdir -p "$dir"
+    
+    # If no .env file exists in the target directory
     if [ ! -f "$dir/.env" ]; then
+        # First check for .env.example in the target directory
         if [ -f "$dir/.env.example" ]; then
-            print_step "Creating .env from example..."
+            print_step "Creating .env from $dir/.env.example..."
             cp "$dir/.env.example" "$dir/.env"
+        # Then check for environment files in the root
+        elif [ -f ".env.development" ] && [[ "$dir" == *"server"* || "$dir" == *"client"* ]]; then
+            print_step "Creating .env from root .env.development..."
+            cp ".env.development" "$dir/.env"
+            print_success "Created .env file in $dir"
         else
-            print_warning "No .env or .env.example found in $dir"
-            return 1
+            print_warning "No .env or .env.example found. Creating default .env..."
+            # Create a basic .env file based on the directory
+            if [[ "$dir" == *"server"* ]]; then
+                echo "PORT=3000
+NODE_ENV=development
+API_URL=http://localhost:3000
+VITE_API_URL=http://localhost:3000" > "$dir/.env"
+            elif [[ "$dir" == *"client"* ]]; then
+                echo "VITE_API_URL=http://localhost:3000
+PORT=5173
+NODE_ENV=development" > "$dir/.env"
+            fi
+            print_success "Created default .env file in $dir"
         fi
     fi
-    return 0
+    
+    # Verify the .env file was created
+    if [ -f "$dir/.env" ]; then
+        return 0
+    else
+        print_error "Failed to create .env file in $dir"
+        return 1
+    fi
 }
 
 check_db_status() {
@@ -906,6 +971,21 @@ EOF
     
     # Wait for both processes
     wait $CLIENT_PID $SERVER_PID
+}
+
+# Process menu choice
+process_choice() {
+    local choice=$1
+    case $choice in
+        1) start_app "development" ;;
+        2) start_app "production" ;;
+        3) start_debug_mode ;;
+        4) run_tests ;;
+        5) build_project ;;
+        6) run_lint ;;
+        7) exit 0 ;;
+        *) print_error "Invalid option" && sleep 2 && show_menu ;;
+    esac
 }
 
 # Main execution
