@@ -2,8 +2,40 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "clear-debug",
+      "type": "shell",
+      "command": "pkill -f node || true && pkill -f Chrome || true && rm -rf ${workspaceFolder}/.vscode/chrome-debug-profile && sleep 2",
+      "presentation": {
+        "reveal": "never",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "wait-for-server",
+      "type": "shell",
+      "command": "until nc -z localhost 3001; do sleep 1; done",
+      "presentation": {
+        "reveal": "never"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ensure-node-version",
+      "type": "shell",
+      "command": "source ~/.nvm/nvm.sh && nvm install 18 && nvm use 18 && node --version",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Start Development",
-      "dependsOn": ["Start Client", "Start Server"],
+      "dependsOn": [
+        "Start Client",
+        "Start Server"
+      ],
       "group": {
         "kind": "build",
         "isDefault": true
@@ -16,7 +48,10 @@
       "isBackground": true,
       "problemMatcher": {
         "owner": "client",
-        "fileLocation": ["relative", "${workspaceFolder}/client"],
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}/client"
+        ],
         "pattern": {
           "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error|info)\\s+(.*)$",
           "file": 1,
@@ -39,7 +74,10 @@
       "isBackground": true,
       "problemMatcher": {
         "owner": "server",
-        "fileLocation": ["relative", "${workspaceFolder}/server"],
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}/server"
+        ],
         "pattern": {
           "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error|info)\\s+(.*)$",
           "file": 1,
@@ -58,7 +96,10 @@
       "problemMatcher": [
         {
           "owner": "eslint-client",
-          "fileLocation": ["relative", "${workspaceFolder}"],
+          "fileLocation": [
+            "relative",
+            "${workspaceFolder}"
+          ],
           "pattern": [
             {
               "regexp": "^([^:]+):(\\d+):(\\d+):\\s+(warning|error)\\s+(.+)$",
@@ -77,7 +118,10 @@
         },
         {
           "owner": "eslint-server",
-          "fileLocation": ["relative", "${workspaceFolder}"],
+          "fileLocation": [
+            "relative",
+            "${workspaceFolder}"
+          ],
           "pattern": [
             {
               "regexp": "^([^:]+):(\\d+):(\\d+):\\s+(warning|error)\\s+(.+)$",
@@ -108,7 +152,10 @@
       "command": "source $HOME/.nvm/nvm.sh && nvm use && (cd client && yarn eslint --format unix src/) && (cd server && yarn eslint --format unix ./)",
       "problemMatcher": {
         "owner": "eslint",
-        "fileLocation": ["relative", "${workspaceFolder}"],
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}"
+        ],
         "pattern": {
           "regexp": "^([^:]+):(\\d+):(\\d+):\\s+(warning|error)\\s+(.+)$",
           "file": 1,
@@ -131,10 +178,35 @@
     },
     {
       "label": "Start Development with Linting",
-      "dependsOn": ["Start Client", "Start Server", "Run ESLint (Watch Mode)"],
+      "dependsOn": [
+        "Start Client",
+        "Start Server",
+        "Run ESLint (Watch Mode)"
+      ],
       "group": {
         "kind": "build",
         "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "wait-for-client",
+      "type": "shell",
+      "command": "mkdir -p ${workspaceFolder}/.vscode/chrome-debug-profile && until nc -z localhost 3000; do sleep 1; done",
+      "presentation": {
+        "reveal": "never"
+      },
+      "dependsOn": [
+        "wait-for-server"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "terminate-all",
+      "type": "shell",
+      "command": "pkill -f node || true && pkill -f Chrome || true && rm -rf ${workspaceFolder}/.vscode/chrome-debug-profile",
+      "presentation": {
+        "reveal": "never"
       },
       "problemMatcher": []
     }

@@ -603,33 +603,35 @@ start_debug_mode() {
     
     # Start server with Node inspector
     cd server
-    NODE_ENV=development node --inspect=9229 src/index.js &
+    NODE_ENV=development yarn dev --inspect=9229 &
     SERVER_PID=$!
     print_success "Server debug mode started on port 9229"
     
+    # Give server time to start
+    sleep 2
+    
     # Start client with different inspector port
     cd ../client
-    BROWSER=none PORT=3000 node --inspect=9230 src/index.js &
+    BROWSER=none PORT=3000 yarn dev --inspect=9230 &
     CLIENT_PID=$!
     print_success "Client debug mode started on port 9230"
     
-    # Open Chrome DevTools for both debuggers
-    if command -v open >/dev/null; then
-        sleep 2  # Give time for debuggers to start
-        open "chrome://inspect"
-        print_success "Opening Chrome DevTools"
-    fi
+    # Give processes time to start
+    sleep 2
     
-    # Open VS Code with debugger
-    code . --goto .vscode/launch.json
+    # Open VS Code debugger
+    code --reuse-window .
     
-    print_warning "To debug:"
-    print_warning "1. Open Chrome DevTools (chrome://inspect)"
-    print_warning "2. Click 'Open dedicated DevTools for Node'"
-    print_warning "3. Or use VS Code debugger: Select 'Server + Client' configuration"
+    print_warning "To start debugging:"
+    print_warning "1. Press F5 or click the Debug icon in VS Code"
+    print_warning "2. Select 'Server + Client' from the dropdown"
+    print_warning "3. Set breakpoints in your code"
+    print_warning "4. The debugger will automatically attach"
+    
+    # Keep the script running
+    echo "Press Ctrl+C to stop the application..."
     
     # Wait for both processes
-    cd ..
     wait $SERVER_PID $CLIENT_PID
 }
 

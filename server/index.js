@@ -44,7 +44,7 @@ const corsOptions = {
 
     // If CORS_ORIGIN is not set, allow common development ports
     if (allowedOrigins.length === 0) {
-      const commonPorts = [3000, 3001, 5173, 5174, 8080, 8081];
+      const commonPorts = [3000, 3001, 5173, 5174, 8080, 8081, 4000];
       commonPorts.forEach(port => {
         allowedOrigins.push(`http://localhost:${port}`);
       });

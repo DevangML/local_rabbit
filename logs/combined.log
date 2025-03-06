@@ -2,3 +2,7 @@
 {"column":"8","file":"/Users/devang/Documents/local_rabbit/server/src/index.js","level":"warn","line":"14","message":"This is a test warning","timestamp":"2025-03-06T08:32:03.253Z"}
 {"column":"8","file":"/Users/devang/Documents/local_rabbit/server/src/index.js","level":"error","line":"15","message":"This is a test error","timestamp":"2025-03-06T08:32:03.253Z"}
 {"level":"info","message":"✅ Logger initialized successfully","timestamp":"2025-03-06T08:32:03.253Z"}
+{"column":"8","file":"/Users/devang/Documents/local_rabbit/server/src/index.js","level":"info","line":"12","message":"Server starting...","timestamp":"2025-03-06T08:35:43.900Z"}
+{"column":"8","file":"/Users/devang/Documents/local_rabbit/server/src/index.js","level":"warn","line":"14","message":"This is a test warning","timestamp":"2025-03-06T08:35:43.901Z"}
+{"column":"8","file":"/Users/devang/Documents/local_rabbit/server/src/index.js","level":"error","line":"15","message":"This is a test error","timestamp":"2025-03-06T08:35:43.902Z"}
+{"level":"info","message":"✅ Logger initialized successfully","timestamp":"2025-03-06T08:35:43.903Z"}
