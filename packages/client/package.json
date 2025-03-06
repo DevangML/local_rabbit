@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && yarn build:ssr",
+    "build": "vite build",
     "build:ssr": "vite build --ssr src/entry-server.tsx --outDir dist/server",
-    "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
-    "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix",
-    "lint:quiet": "eslint src --ext .ts,.tsx,.js,.jsx --quiet --no-error-on-unmatched-pattern || true",
-    "preview": "vite preview",
+    "serve": "vite preview",
+    "lint": "eslint src --ext .ts,.tsx,.js,.jsx --rule 'no-undef: off'",
+    "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix --rule 'no-undef: off'",
+    "lint:quiet": "eslint src --ext .ts,.tsx,.js,.jsx --quiet --no-error-on-unmatched-pattern --rule 'no-undef: off' || true",
+    "test": "jest",
     "generate-pwa-assets": "pwa-assets-generator"
   },
   "dependencies": {

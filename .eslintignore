@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/.build
+**/*.config.js
+**/*.config.ts
+**/coverage
+**/build
+**/tests
+**/*.test.*
+**/*.spec.*
+**/scripts
+**/public
+**/.eslintrc.js
+**/.eslintrc.cjs 
