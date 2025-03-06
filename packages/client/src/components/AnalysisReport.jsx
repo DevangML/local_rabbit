@@ -1,12 +1,37 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '../config';
 import { cacheInstance, CACHE_TYPES } from '../utils/cache';
+import { useWorker } from '../hooks/useWorker';
 import './AnalysisReport.css';
 
 const AnalysisReport = ({ fromBranch, toBranch, mode }) => {
   const [report, setReport] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const worker = useWorker();
+
+  const processReportData = useCallback(async (data) => {
+    try {
+      // Process the report data using the worker
+      const processedData = await worker.processArrayData(data.metrics || [], {
+        filterFn: (metric) => metric.value !== undefined,
+        mapFn: (metric) => ({
+          ...metric,
+          normalizedValue: metric.value / metric.baseline,
+          timestamp: Date.now()
+        }),
+        sortFn: (a, b) => b.normalizedValue - a.normalizedValue
+      });
+
+      return {
+        ...data,
+        metrics: processedData
+      };
+    } catch (error) {
+      console.error('Error processing report data:', error);
+      return data;
+    }
+  }, [worker]);
 
   const fetchReport = useCallback(async () => {
     if (!fromBranch || !toBranch) return;
@@ -17,7 +42,7 @@ const AnalysisReport = ({ fromBranch, toBranch, mode }) => {
     try {
       const params = { fromBranch, toBranch };
       const cacheType = mode === 'impact' ? CACHE_TYPES.IMPACT : CACHE_TYPES.QUALITY;
-      
+
       const data = await cacheInstance.getOrFetch(
         cacheType,
         params,
@@ -39,14 +64,16 @@ const AnalysisReport = ({ fromBranch, toBranch, mode }) => {
         }
       );
 
-      setReport(data);
+      // Process the report data using the worker
+      const processedReport = await processReportData(data);
+      setReport(processedReport);
     } catch (error) {
       setError(error.message);
       setReport(null);
     } finally {
       setIsLoading(false);
     }
-  }, [fromBranch, toBranch, mode]);
+  }, [fromBranch, toBranch, mode, processReportData]);
 
   useEffect(() => {
     fetchReport();
@@ -71,57 +98,23 @@ const AnalysisReport = ({ fromBranch, toBranch, mode }) => {
 
   return (
     <div className="analysis-report">
-      <h2>{mode === 'impact' ? 'Impact Analysis' : 'Quality Check'} Report</h2>
-      <div className="report-content">
-        {mode === 'impact' ? (
-          <>
-            <section className="impact-metrics">
-              <h3>Impact Metrics</h3>
-              <ul>
-                <li>Files Changed: {report.filesChanged}</li>
-                <li>Lines Added: {report.linesAdded}</li>
-                <li>Lines Removed: {report.linesRemoved}</li>
-                <li>Impact Score: {report.impactScore}</li>
-              </ul>
-            </section>
-            {report.dependencies && (
-              <section className="dependencies">
-                <h3>Affected Dependencies</h3>
-                <ul>
-                  {report.dependencies.map((dep, index) => (
-                    <li key={index}>{dep}</li>
-                  ))}
-                </ul>
-              </section>
-            )}
-          </>
-        ) : (
-          <>
-            <section className="quality-metrics">
-              <h3>Quality Metrics</h3>
-              <ul>
-                <li>Code Coverage: {report.coverage}%</li>
-                <li>Maintainability Index: {report.maintainability}</li>
-                <li>Technical Debt Score: {report.technicalDebt}</li>
-              </ul>
-            </section>
-            {report.issues && (
-              <section className="issues">
-                <h3>Quality Issues</h3>
-                <ul>
-                  {report.issues.map((issue, index) => (
-                    <li key={index} className={`severity-${issue.severity}`}>
-                      <span className="issue-severity">{issue.severity}</span>
-                      <span className="issue-message">{issue.message}</span>
-                      <span className="issue-location">{issue.location}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-          </>
-        )}
+      <h2>{mode.charAt(0).toUpperCase() + mode.slice(1)} Analysis Report</h2>
+
+      <div className="metrics-grid">
+        {report.metrics.map((metric) => (
+          <div key={metric.id} className="metric-card">
+            <h3>{metric.name}</h3>
+            <div className="metric-value">
+              {metric.value.toFixed(2)}
+              {metric.unit && <span className="unit">{metric.unit}</span>}
+            </div>
+            <div className={`trend ${metric.normalizedValue > 1 ? 'increase' : 'decrease'}`}>
+              {((metric.normalizedValue - 1) * 100).toFixed(1)}% vs baseline
+            </div>
+          </div>
+        ))}
       </div>
+
       <button onClick={fetchReport} className="refresh-button">
         Refresh Analysis
       </button>

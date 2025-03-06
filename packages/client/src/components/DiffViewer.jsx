@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { config } from '../config.js'; // Add explicit .js extension
 import { FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import { cacheInstance, CACHE_TYPES } from '../utils/cache';
+import { useWorker } from '../hooks/useWorker';
 import CommentsPanel from './CommentsPanel';
 import DiffSearch from './DiffSearch';
 import RecoveryOptions from './RecoveryOptions';
@@ -11,12 +12,14 @@ import './DiffViewer.css';
 const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
   const { isDark } = useSelector(state => state.theme);
   const [diffData, setDiffData] = useState(null);
+  const [analysis, setAnalysis] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [expandedFiles, setExpandedFiles] = useState(new Set());
   const [viewMode, setViewMode] = useState('unified');
   const [searchParams, setSearchParams] = useState({ query: '', filters: {} });
+  const worker = useWorker();
 
   const fetchDiffData = useCallback(async () => {
     if (!fromBranch || !toBranch) {
@@ -64,6 +67,11 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
       }
 
       setDiffData(data);
+
+      // Analyze diff data using web worker
+      const diffAnalysis = await worker.analyzeDiff(data);
+      setAnalysis(diffAnalysis);
+
       if (data.files.length > 0) {
         setSelectedFile(data.files[0]);
       }
@@ -73,7 +81,7 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [fromBranch, toBranch, propsDiffData]);
+  }, [fromBranch, toBranch, propsDiffData, worker]);
 
   useEffect(() => {
     fetchDiffData();
@@ -180,6 +188,32 @@ const DiffViewer = ({ fromBranch, toBranch, diffData: propsDiffData }) => {
           </div>
         ))}
       </div>
+
+      {/* Add analysis display */}
+      {analysis && (
+        <div className="diff-analysis">
+          <h3>Diff Analysis</h3>
+          <div className="analysis-summary">{analysis.summary}</div>
+          <div className="analysis-metrics">
+            <div className="metric">
+              <label>Risk Score:</label>
+              <span className={analysis.riskScore > 50 ? 'high-risk' : 'low-risk'}>
+                {analysis.riskScore}
+              </span>
+            </div>
+            <div className="metric">
+              <label>Complexity Change:</label>
+              <span className={analysis.complexity.overall > 0 ? 'increased' : 'decreased'}>
+                {Math.abs(analysis.complexity.overall)}
+              </span>
+            </div>
+            <div className="metric">
+              <label>Impacted Areas:</label>
+              <span>{analysis.impactedAreas.size}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

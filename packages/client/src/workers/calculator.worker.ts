@@ -1,5 +1,9 @@
 import * as Comlink from 'comlink';
 
+interface GroupedData<T> {
+  [key: string]: T[];
+}
+
 class Calculator {
   // Example heavy computation
   async fibonacci(n: number): Promise<number> {
@@ -11,26 +15,183 @@ class Calculator {
     return a + b;
   }
 
-  // Example data processing
-  async processData(data: any[]): Promise<any[]> {
-    return data.map(item => ({
-      ...item,
-      processed: true,
-      timestamp: Date.now()
-    }));
+  // Data processing with filtering, mapping, and sorting
+  async processArrayData<T>(data: T[], options: {
+    filterFn?: (item: T) => boolean;
+    mapFn?: (item: T) => any;
+    sortFn?: (a: T, b: T) => number;
+    groupFn?: (item: T) => string | number;
+  }): Promise<T[] | GroupedData<T>> {
+    let result = [...data];
+
+    // Apply filter
+    if (options.filterFn) {
+      result = result.filter(options.filterFn);
+    }
+
+    // Apply map
+    if (options.mapFn) {
+      result = result.map(options.mapFn);
+    }
+
+    // Apply sort
+    if (options.sortFn) {
+      result = result.sort(options.sortFn);
+    }
+
+    // Apply grouping
+    if (options.groupFn) {
+      const grouped: GroupedData<T> = {};
+      result.forEach(item => {
+        const key = options.groupFn!(item).toString();
+        if (!grouped[key]) {
+          grouped[key] = [];
+        }
+        grouped[key].push(item);
+      });
+      return grouped;
+    }
+
+    return result;
   }
 
-  // Example image processing (simulated)
-  async processImage(imageData: ImageData): Promise<ImageData> {
-    // Simulate image processing by inverting colors
-    const data = imageData.data;
-    for (let i = 0; i < data.length; i += 4) {
-      data[i] = 255 - data[i];         // red
-      data[i + 1] = 255 - data[i + 1]; // green
-      data[i + 2] = 255 - data[i + 2]; // blue
-      // alpha remains unchanged
+  // Image processing with various operations
+  async processImage(imageData: ImageData, operations: {
+    invert?: boolean;
+    grayscale?: boolean;
+    blur?: boolean;
+    brightness?: number;
+  } = {}): Promise<ImageData> {
+    const data = new Uint8ClampedArray(imageData.data);
+    
+    if (operations.invert) {
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = 255 - data[i];         // red
+        data[i + 1] = 255 - data[i + 1]; // green
+        data[i + 2] = 255 - data[i + 2]; // blue
+      }
     }
-    return imageData;
+
+    if (operations.grayscale) {
+      for (let i = 0; i < data.length; i += 4) {
+        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        data[i] = avg;     // red
+        data[i + 1] = avg; // green
+        data[i + 2] = avg; // blue
+      }
+    }
+
+    if (operations.blur) {
+      // Simple box blur
+      const width = imageData.width;
+      const height = imageData.height;
+      const kernel = [1/9, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9];
+      const tempData = new Uint8ClampedArray(data);
+      
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          for (let c: number = 0; c < 3; c++) {
+            let sum = 0;
+            for (let ky = -1; ky <= 1; ky++) {
+              for (let kx = -1; kx <= 1; kx++) {
+                const idx = ((y + ky) * width + (x + kx)) * 4 + c;
+                sum += tempData[idx] * kernel[(ky + 1) * 3 + (kx + 1)];
+              }
+            }
+            data[(y * width + x) * 4 + c] = sum;
+          }
+        }
+      }
+    }
+
+    if (operations.brightness !== undefined) {
+      const factor = Math.max(-1, Math.min(1, operations.brightness));
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = Math.min(255, data[i] * (1 + factor));
+        data[i + 1] = Math.min(255, data[i + 1] * (1 + factor));
+        data[i + 2] = Math.min(255, data[i + 2] * (1 + factor));
+      }
+    }
+
+    return new ImageData(data, imageData.width, imageData.height);
+  }
+
+  // Diff analysis
+  async analyzeDiff(diffData: any): Promise<any> {
+    const analysis = {
+      summary: '',
+      complexity: {
+        overall: 0,
+        filesIncreased: 0,
+        filesDecreased: 0
+      },
+      impactedAreas: new Set<string>(),
+      riskScore: 0
+    };
+
+    let totalComplexityChange = 0;
+    const processedFiles = new Set<string>();
+
+    for (const file of diffData.files || []) {
+      const fileComplexity = this.calculateFileComplexity(file);
+      totalComplexityChange += fileComplexity;
+
+      if (fileComplexity > 0) analysis.complexity.filesIncreased++;
+      if (fileComplexity < 0) analysis.complexity.filesDecreased++;
+
+      const fileDir = file.path.split('/').slice(0, -1).join('/');
+      analysis.impactedAreas.add(fileDir);
+
+      processedFiles.add(file.path);
+    }
+
+    analysis.complexity.overall = totalComplexityChange;
+    analysis.riskScore = this.calculateRiskScore(diffData, processedFiles);
+    analysis.summary = this.generateSummary(analysis);
+
+    return analysis;
+  }
+
+  private calculateFileComplexity(file: any): number {
+    // Simple complexity calculation based on changes
+    let complexity = 0;
+    
+    // Count added/removed lines
+    const addedLines = (file.changes || []).filter(c => c.type === 'add').length;
+    const removedLines = (file.changes || []).filter(c => c.type === 'remove').length;
+    
+    // More changes = higher complexity
+    complexity += (addedLines + removedLines) * 0.1;
+    
+    // New files have higher complexity
+    if (file.status === 'added') complexity += 5;
+    
+    // Modifications to existing files have medium complexity
+    if (file.status === 'modified') complexity += 2;
+    
+    return complexity;
+  }
+
+  private calculateRiskScore(diffData: any, processedFiles: Set<string>): number {
+    let risk = 0;
+    
+    // More files changed = higher risk
+    risk += processedFiles.size * 2;
+    
+    // Changes to critical paths increase risk
+    const criticalPaths = ['src/core', 'src/auth', 'src/api'];
+    for (const file of processedFiles) {
+      if (criticalPaths.some(path => file.includes(path))) {
+        risk += 5;
+      }
+    }
+    
+    return Math.min(100, risk);
+  }
+
+  private generateSummary(analysis: any): string {
+    return `Analysis found changes affecting ${analysis.impactedAreas.size} areas with a risk score of ${analysis.riskScore}. ` +
+           `Complexity ${analysis.complexity.overall > 0 ? 'increased' : 'decreased'} in ${Math.abs(analysis.complexity.overall)} units.`;
   }
 }
 
