@@ -571,34 +571,31 @@ start_app() {
 
     if [ "$mode" = "development" ]; then
         # Start development mode
-        print_step "Starting development servers..."
+        print_step "Starting SSR development server..."
         
-        # Start server in background
-        (cd packages/server && NODE_ENV=development yarn dev) &
+        # First build client for development
+        (cd packages/client && yarn build:dev) || {
+            print_error "Client development build failed"
+            return 1
+        }
+        
+        # Start server in SSR mode (it will handle both API and client rendering)
+        (cd packages/server && NODE_ENV=development SSR_MODE=true yarn dev) &
         SERVER_PID=$!
         
-        # Give server time to start
-        sleep 2
-        
-        # Start client in background
-        (cd packages/client && yarn dev) &
-        CLIENT_PID=$!
-        
-        # Store PIDs for cleanup
+        # Store PID for cleanup
         echo $SERVER_PID > .server.pid
-        echo $CLIENT_PID > .client.pid
         
-        print_success "Development servers started"
-        echo "Server running on http://localhost:3000"
-        echo "Client running on http://localhost:5173"
+        print_success "SSR Development server started"
+        echo "Application running on http://localhost:3000"
         
-        # Wait for both processes
-        wait $SERVER_PID $CLIENT_PID
+        # Wait for the server process
+        wait $SERVER_PID
     else
         # Start production mode
         print_step "Building for production..."
         
-        # Build client
+        # Build client for production
         (cd packages/client && yarn build) || {
             print_error "Client build failed"
             return 1
@@ -611,8 +608,8 @@ start_app() {
         }
         
         print_step "Starting production server..."
-        # Start server in production mode
-        (cd packages/server && NODE_ENV=production yarn start)
+        # Start server in production mode with SSR
+        (cd packages/server && NODE_ENV=production SSR_MODE=true yarn start)
     fi
 }
 
@@ -708,12 +705,13 @@ validate_env_files() {
             if [[ "$dir" == *"server"* ]]; then
                 echo "PORT=3000
 NODE_ENV=development
-API_URL=http://localhost:3000
-VITE_API_URL=http://localhost:3000" > "$dir/.env"
+SSR_MODE=true
+HOST=localhost" > "$dir/.env"
             elif [[ "$dir" == *"client"* ]]; then
-                echo "VITE_API_URL=http://localhost:3000
-PORT=5173
-NODE_ENV=development" > "$dir/.env"
+                echo "VITE_SSR=true
+NODE_ENV=development
+HOST=localhost
+PORT=3000" > "$dir/.env"
             fi
             print_success "Created default .env file in $dir"
         fi
