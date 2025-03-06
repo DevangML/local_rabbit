@@ -1,4 +1,3 @@
-"use strict";
 const config = {
     nodeEnv: process.env.NODE_ENV || 'development',
     logging: {
@@ -18,3 +17,4 @@ const config = {
     },
 };
 module.exports = config;
+export {};

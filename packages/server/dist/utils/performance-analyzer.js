@@ -1,4 +1,3 @@
-"use strict";
 /**
  * Performance Analyzer
  *
@@ -345,3 +344,4 @@ class PerformanceAnalyzer {
     }
 }
 module.exports = PerformanceAnalyzer;
+export {};

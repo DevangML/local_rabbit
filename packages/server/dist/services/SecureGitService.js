@@ -1,4 +1,3 @@
-"use strict";
 const path = require('path');
 const os = require('os');
 const fs = require('fs').promises;
@@ -135,3 +134,4 @@ class SecureGitService {
     }
 }
 module.exports = SecureGitService;
+export {};

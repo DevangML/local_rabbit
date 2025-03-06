@@ -1,7 +1,11 @@
+// @ts-check
 import React, { useState, useCallback } from 'react';
+import { Box, Button, Typography, Paper, CircularProgress } from '@mui/material';
 import { useWorker } from '../hooks/useWorker';
 
-export const FeatureDemo: React.FC = () => {
+interface FeatureDemoProps {}
+
+export const FeatureDemo: React.FC<FeatureDemoProps> = React.memo(function FeatureDemo() {
   const worker = useWorker();
   const [result, setResult] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -74,46 +78,53 @@ export const FeatureDemo: React.FC = () => {
   }, [worker]);
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Feature Demo</h2>
-      
-      <div className="space-y-6">
-        {/* Fibonacci Calculator */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-xl font-semibold mb-2">Web Worker Demo</h3>
-          <button
+    <Box sx={{ p: 3, maxWidth: 600, mx: 'auto' }}>
+      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h4" gutterBottom>
+          Web Worker Demo
+        </Typography>
+        <Typography variant="body1" paragraph>
+          This demo calculates Fibonacci(40) using a web worker to avoid blocking the main thread.
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+          <Button
+            variant="contained"
             onClick={calculateFibonacci}
             disabled={loading}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
           >
-            {loading ? 'Calculating...' : 'Calculate Fibonacci(40)'}
-          </button>
-          {result !== null && (
-            <p className="mt-2">Result: {result}</p>
-          )}
-        </div>
-
-        {/* Image Processing */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-xl font-semibold mb-2">Image Processing Demo</h3>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => e.target.files?.[0] && processImage(e.target.files[0])}
-            className="mb-4"
-          />
-          <div id="result-container" className="mt-4 space-y-4">
-            {/* Processed images will be added here */}
-          </div>
-        </div>
-
-        {/* Error Display */}
+            Calculate Fibonacci(40)
+          </Button>
+          {loading && <CircularProgress size={24} />}
+        </Box>
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {error}
-          </div>
+          <Typography color="error" sx={{ mt: 2 }}>
+            Error: {error}
+          </Typography>
         )}
-      </div>
-    </div>
+        {result !== null && (
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            Result: {result}
+          </Typography>
+        )}
+      </Paper>
+
+      <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h4" gutterBottom>
+          Image Processing Demo
+        </Typography>
+        <Typography variant="body1" paragraph>
+          This demo processes an image using a web worker.
+        </Typography>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => e.target.files?.[0] && processImage(e.target.files[0])}
+          className="mb-4"
+        />
+        <div id="result-container" className="mt-4 space-y-4">
+          {/* Processed images will be added here */}
+        </div>
+      </Paper>
+    </Box>
   );
-}; 
+}); 

@@ -1,4 +1,3 @@
-"use strict";
 const express = require('express');
 const repositoryController = require('../controllers/repositoryController');
 const router = express.Router();
@@ -27,3 +26,4 @@ router.get('/git/repository/branches', repositoryController.getBranches);
  */
 router.get('/git/repository/info', repositoryController.getRepositoryInfo);
 module.exports = router;
+export {};

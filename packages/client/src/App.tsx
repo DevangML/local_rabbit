@@ -1,43 +1,35 @@
 import React, { Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
-import { ErrorBoundary } from '@local-rabbit/shared';
-import CssBaseline from '@mui/material/CssBaseline';
-import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
-import { theme } from './theme';
+import CircularProgress from '@mui/material/CircularProgress';
+import CssBaseline from '@mui/material/CssBaseline';
+import { Routes, Route } from 'react-router-dom';
+import { theme } from './theme.js';
 import { FeatureDemo } from './components/FeatureDemo';
 
-const Home = React.lazy(() => import('./pages/Home'));
+// Lazy load home component
+const Home = React.lazy(() => import('./pages/Home.js'));
 
-function Loading() {
+export default function App() {
   return (
-    <Box 
-      display="flex" 
-      justifyContent="center" 
-      alignItems="center" 
-      minHeight="100vh"
-      bgcolor={theme.palette.background.default}
-    >
-      <CircularProgress />
-    </Box>
-  );
-}
-
-function App() {
-  return (
-    <ErrorBoundary>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Suspense fallback={<Loading />}>
+    <Box sx={{ 
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: '100vh'
+    }}>
+      <Suspense fallback={
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <CircularProgress />
+        </Box>
+      }>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
           <Routes>
             <Route path="/" element={<FeatureDemo />} />
             <Route path="/home" element={<Home />} />
           </Routes>
-        </Suspense>
-      </ThemeProvider>
-    </ErrorBoundary>
+        </ThemeProvider>
+      </Suspense>
+    </Box>
   );
-}
-
-export default App; 
+} 

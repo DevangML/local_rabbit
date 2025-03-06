@@ -1,4 +1,3 @@
-"use strict";
 const cors = require('cors');
 const config = require('../config');
 /**
@@ -12,3 +11,4 @@ const corsMiddleware = cors({
     optionsSuccessStatus: 200,
 });
 module.exports = corsMiddleware;
+export {};

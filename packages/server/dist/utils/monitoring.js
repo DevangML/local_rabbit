@@ -1,4 +1,3 @@
-"use strict";
 const os = require('os');
 const logger = require('./logger');
 class MonitoringUtils {
@@ -76,3 +75,4 @@ class MonitoringUtils {
     }
 }
 module.exports = MonitoringUtils;
+export {};

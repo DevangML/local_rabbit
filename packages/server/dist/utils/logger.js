@@ -1,4 +1,3 @@
-"use strict";
 const winston = require('winston');
 const path = require('path');
 const chalk = require('chalk');
@@ -112,3 +111,4 @@ logger.table = (data, meta = {}) => {
 };
 // Export the enhanced logger
 module.exports = enhanceLogger(logger);
+export {};

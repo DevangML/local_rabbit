@@ -1,4 +1,3 @@
-"use strict";
 const express = require('express');
 const diffController = require('../controllers/diffController');
 const router = express.Router();
@@ -15,3 +14,4 @@ router.get('/git/diff', diffController.getDiff);
  */
 router.post('/git/diff/analyze', diffController.analyzeDiff);
 module.exports = router;
+export {};

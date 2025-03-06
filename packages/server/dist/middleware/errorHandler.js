@@ -1,4 +1,3 @@
-"use strict";
 /**
  * Global error handling middleware
  * Provides consistent error responses with detailed information
@@ -35,3 +34,4 @@ const errorHandler = (err, req, res, next) => {
     res.status(status).json(errorResponse);
 };
 module.exports = errorHandler;
+export {};

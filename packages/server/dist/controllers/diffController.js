@@ -1,4 +1,3 @@
-"use strict";
 const GitService = require('../services/GitService');
 const AnalyzerService = require('../services/AnalyzerService');
 const logger = require('../utils/logger');
@@ -101,3 +100,4 @@ exports.analyzeDiff = async (req, res) => {
         return res.status(500).json({ error: 'Failed to analyze diff', details: error.message });
     }
 };
+export {};

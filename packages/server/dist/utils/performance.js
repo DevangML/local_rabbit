@@ -1,4 +1,3 @@
-"use strict";
 /**
  * Performance utilities using Lodash and Async
  * This file provides optimized utility functions for common operations
@@ -135,3 +134,4 @@ module.exports = {
     _,
     async,
 };
+export {};

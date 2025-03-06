@@ -1,4 +1,3 @@
-"use strict";
 const path = require('path');
 const fs = require('fs').promises;
 const { execSync } = require('child_process');
@@ -477,3 +476,4 @@ ${JSON.stringify(filesDiffSummary, null, 2)}
     }
 }
 module.exports = CodeReviewService;
+export {};

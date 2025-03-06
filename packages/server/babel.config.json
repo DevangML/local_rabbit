@@ -5,14 +5,27 @@
       {
         "targets": {
           "node": "current"
-        }
+        },
+        "modules": false
       }
     ],
     "@babel/preset-typescript",
     [
       "@babel/preset-react",
       {
-        "runtime": "automatic"
+        "runtime": "automatic",
+        "development": true,
+        "importSource": "@babel/runtime/helpers/esm"
+      }
+    ]
+  ],
+  "plugins": [
+    [
+      "@babel/plugin-transform-runtime",
+      {
+        "regenerator": true,
+        "helpers": true,
+        "useESModules": true
       }
     ]
   ]

@@ -1,4 +1,3 @@
-"use strict";
 const simpleGit = require('simple-git');
 const path = require('path');
 const fs = require('fs').promises;
@@ -307,3 +306,4 @@ class GitService {
     }
 }
 module.exports = GitService;
+export {};

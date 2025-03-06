@@ -1,4 +1,3 @@
-"use strict";
 const path = require('path');
 // eslint-disable-next-line no-unused-vars
 const fs = require('fs').promises;
@@ -211,3 +210,4 @@ AnalyzerService.COMPLEXITY_THRESHOLDS = {
     HIGH: 50
 };
 module.exports = AnalyzerService;
+export {};

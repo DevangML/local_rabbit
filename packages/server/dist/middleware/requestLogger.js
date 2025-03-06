@@ -1,4 +1,3 @@
-"use strict";
 const logger = require('../utils/logger');
 /**
  * Request logging middleware
@@ -29,3 +28,4 @@ const requestLogger = (req, res, next) => {
     next();
 };
 module.exports = requestLogger;
+export {};

@@ -4,124 +4,132 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import sirv from 'sirv';
-import { resolve } from 'path';
+import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import dotenv from 'dotenv';
+import { renderToString } from 'react-dom/server';
+import { StaticRouter } from 'react-router-dom/server.js';
+import React from 'react';
+// Import the actual App component
+import App from '../../client/src/App.js';
 // Load environment variables
 dotenv.config({
     path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
 });
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isDev = process.env.NODE_ENV === 'development';
-// Read the client manifest
-let manifest = {};
-const clientDistPath = resolve(__dirname, '../../../packages/client/dist');
-const manifestPath = resolve(clientDistPath, 'manifest.json');
-const entryServerPath = resolve(clientDistPath, 'server/entry-server.js');
-try {
-    if (fs.existsSync(manifestPath)) {
-        manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
-    }
-    else {
-        console.warn('Warning: manifest.json not found. Running in development mode or build not completed.');
-    }
-}
-catch (error) {
-    console.error('Failed to read manifest.json:', error);
-}
+// Configure MIME types
+express.static.mime.define({
+    'application/javascript': ['js', 'mjs', 'jsx', 'ts', 'tsx'],
+    'text/javascript': ['js', 'mjs', 'jsx', 'ts', 'tsx']
+});
 // Middleware
 app.use(cors());
 app.use(helmet({
-    contentSecurityPolicy: isDev ? false : undefined,
+    contentSecurityPolicy: false
 }));
 app.use(compression());
-app.use(morgan(isDev ? 'dev' : 'combined'));
+app.use(morgan('dev'));
 app.use(express.json());
-// Error handling middleware
+app.use(express.urlencoded({ extended: true }));
+// Serve static files
+const clientDistPath = join(__dirname, '../../client/dist');
+if (fs.existsSync(clientDistPath)) {
+    // Serve service worker at root
+    app.get('/sw.js', (req, res) => {
+        res.setHeader('Service-Worker-Allowed', '/');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.sendFile(join(clientDistPath, 'sw.js'));
+    });
+    // Serve manifest.json
+    app.get('/manifest.json', (req, res) => {
+        res.setHeader('Cache-Control', 'no-cache');
+        res.sendFile(join(clientDistPath, 'manifest.json'));
+    });
+    // Serve static assets with proper caching
+    app.use(sirv(clientDistPath, {
+        dev: isDev,
+        etag: true,
+        maxAge: isDev ? 0 : 31536000, // 1 year for production
+        immutable: !isDev,
+        extensions: ['html', 'js', 'css', 'svg', 'png', 'jpg', 'jpeg', 'gif'],
+        gzip: true,
+        brotli: true
+    }));
+}
+// Add error handling for static files
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
-});
-// API routes
-app.use('/api', (req, res, next) => {
-    // Your API routes here
-    if (req.path === '/server-info') {
-        res.json({ status: 'ok', mode: process.env.NODE_ENV });
-    }
-    else if (req.path === '/git/branches') {
-        res.json({ branches: ['main', 'develop'] });
+    if (err) {
+        console.error('Static file error:', err);
+        res.status(404).send('File not found');
     }
     else {
         next();
     }
 });
-// Serve static files from client dist if the directory exists
-if (fs.existsSync(clientDistPath)) {
-    app.use(sirv(clientDistPath, {
-        dev: isDev,
-        etag: true,
-        maxAge: isDev ? 0 : 31536000,
-        immutable: !isDev,
-    }));
-}
-else {
-    console.warn('Warning: Client dist directory not found. Static files will not be served.');
-}
-// SSR Route handler for all other routes
-app.get('*', async (req, res) => {
+// Handle SSR
+const ssrHandler = async (req, res) => {
     try {
-        if (!fs.existsSync(entryServerPath)) {
-            throw new Error('Server entry point not found. Please run build:client:ssr first.');
-        }
-        // Import the entry-server module using dynamic import with the file URL
-        const { renderPage } = await import(/* @vite-ignore */ `file://${entryServerPath}`);
-        const rendered = await renderPage(req.url);
-        // Get the main client entry
-        const mainFile = Object.entries(manifest).find(([key]) => key.includes('main'))?.['1']?.file || 'main.js';
-        res.send(`<!DOCTYPE html>
-      <html ${rendered.htmlAttrs || ''} lang="en">
+        // Initial state that will be hydrated on the client
+        const initialState = {
+            url: req.url,
+            env: process.env.NODE_ENV
+        };
+        const html = renderToString(React.createElement(StaticRouter, { location: req.url }, React.createElement(App)));
+        const template = `
+      <!DOCTYPE html>
+      <html lang="en">
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta name="theme-color" content="#000000" />
-          <meta name="description" content="Local Rabbit - Git Repository Analysis Tool" />
-          <link rel="icon" href="/favicon.ico" sizes="any" />
-          <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-          <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+          <meta name="description" content="Local Rabbit Application" />
+          <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+          <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
           <link rel="manifest" href="/manifest.json" />
           <title>Local Rabbit</title>
-          ${rendered.headTags || ''}
-          ${Object.values(manifest)
-            .filter((chunk) => chunk.css)
-            .map((chunk) => chunk.css.map((css) => `<link rel="stylesheet" href="/${css}" />`).join('\n')).join('\n')}
         </head>
-        <body ${rendered.bodyAttrs || ''}>
-          <div id="root">${rendered.appHtml}</div>
-          <script type="module" src="/${mainFile}"></script>
+        <body>
+          <div id="root">${html}</div>
           <script>
-            if ('serviceWorker' in navigator) {
-              window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                  .then(registration => {
-                    console.log('SW registered:', registration);
-                  })
-                  .catch(error => {
-                    console.log('SW registration failed:', error);
-                  });
-              });
-            }
+            window.__INITIAL_STATE__ = ${JSON.stringify(initialState)};
           </script>
+          <script type="module" src="${isDev ? '/src/main.tsx' : '/assets/main.js'}"></script>
         </body>
-      </html>`);
+      </html>
+    `;
+        res.setHeader('Content-Type', 'text/html');
+        res.setHeader('Cache-Control', 'no-store, must-revalidate');
+        res.send(template);
     }
     catch (error) {
-        console.error('Failed to render:', error);
-        res.status(500).send('<!DOCTYPE html><html><body><h1>Server Error</h1></body></html>');
+        console.error('SSR Error:', error);
+        // Fallback to client-side rendering in case of SSR error
+        const template = `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <meta name="description" content="Local Rabbit Application" />
+          <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+          <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+          <link rel="manifest" href="/manifest.json" />
+          <title>Local Rabbit</title>
+        </head>
+        <body>
+          <div id="root"></div>
+          <script type="module" src="${isDev ? '/src/main.tsx' : '/assets/main.js'}"></script>
+        </body>
+      </html>
+    `;
+        res.status(500).send(template);
     }
-});
+};
+// Handle all routes
+app.get('*', ssrHandler);
 app.listen(PORT, () => {
     console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on http://localhost:${PORT}`);
 });

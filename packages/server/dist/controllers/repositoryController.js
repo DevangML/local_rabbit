@@ -1,4 +1,3 @@
-"use strict";
 const path = require('path');
 const os = require('os');
 const GitService = require('../services/GitService');
@@ -119,3 +118,4 @@ exports.getRepositoryInfo = async (req, res) => {
         return res.status(500).json({ error: 'Failed to get repository info', details: error.message });
     }
 };
+export {};

@@ -1,4 +1,3 @@
-"use strict";
 const path = require('path');
 const os = require('os');
 const config = require('../config');
@@ -68,3 +67,4 @@ class ValidationUtils {
     }
 }
 module.exports = ValidationUtils;
+export {};

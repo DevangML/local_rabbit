@@ -1,4 +1,3 @@
-"use strict";
 const express = require('express');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -40,3 +39,4 @@ app.use((req, res) => {
 // Error handler
 app.use(errorHandler);
 module.exports = app;
+export {};

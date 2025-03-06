@@ -32,9 +32,28 @@ window.addEventListener('error', (event) => {
   }
 });
 
+// Get the initial state that was injected by the server
+declare global {
+  interface Window {
+    __INITIAL_STATE__?: {
+      url: string;
+      env: string;
+    };
+  }
+}
+
+const initialState = window.__INITIAL_STATE__;
+
 hydrateRoot(
   document.getElementById('root') as HTMLElement,
-  <BrowserRouter>
-    <App />
-  </BrowserRouter>
-); 
+  <React.StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>
+);
+
+// Remove the server-injected state after hydration
+if (window.__INITIAL_STATE__) {
+  delete window.__INITIAL_STATE__;
+} 

@@ -1,4 +1,3 @@
-"use strict";
 const path = require('path');
 const os = require('os');
 /**
@@ -55,3 +54,4 @@ const config = {
     },
 };
 module.exports = config;
+export {};

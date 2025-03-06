@@ -1,4 +1,3 @@
-"use strict";
 const express = require('express');
 const repositoryRoutes = require('./repositoryRoutes');
 const diffRoutes = require('./diffRoutes');
@@ -13,3 +12,4 @@ router.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 module.exports = router;
+export {};

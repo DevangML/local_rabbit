@@ -1,4 +1,3 @@
-"use strict";
 const fs = require('fs').promises;
 const path = require('path');
 const logger = require('./logger');
@@ -81,3 +80,4 @@ class CoverageTracker {
     }
 }
 module.exports = new CoverageTracker();
+export {};
