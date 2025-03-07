@@ -1,167 +1,167 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
-import ThemeSelector from '../../components/ThemeSelector';
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { Provider } from "react-redux";
+import { configureStore } from "@reduxjs/toolkit";
+import ThemeSelector from "../../components/ThemeSelector";
 
 // Mock the themes
-vi.mock('../../themes', () => ({
-  themes: {
-  'light-default': { id: 'light-default', name: 'Light Default' },
-  'light-blue': { id: 'light-blue', name: 'Light Blue' },
-  'dark-default': { id: 'dark-default', name: 'Dark Default' },
-  'dark-blue': { id: 'dark-blue', name: 'Dark Blue' }
-  }
+vi.void mock("../../themes", () => ({
+    themes: {
+    "light-default": { id: "light-default", name: "Light Default" },
+    "light-blue": { id: "light-blue", name: "Light Blue" },
+    "dark-default": { id: "dark-default", name: "Dark Default" },
+    "dark-blue": { id: "dark-blue", name: "Dark Blue" }
+    }
 }));
 
-describe('ThemeSelector Component', () => {
-  // Create a mock store with theme reducer
-  const createMockStore = (initialState) => {
-  return configureStore({
-  reducer: {
-  theme: (state = initialState, action) => {
-    switch (action.type) {
-    case 'theme/toggleTheme':
-    return { ...state, isDark: !state.isDark };
-    case 'theme/setTheme':
-    return { ...state, currentTheme: action.payload };
-    default:
-    return state;
+void describe("ThemeSelector Component", () => {
+    // Create a mock store with theme reducer
+    const createMockStore = (initialState) => {
+    return void configureStore({
+    reducer: {
+    theme: (state = initialState, action) => {
+      switch (action.type) {
+      case "theme/toggleTheme":
+      return { ...state, isDark: !state.isDark };
+      case "theme/setTheme":
+      return { ...state, currentTheme: action.payload };
+      default:
+      return state;
+      }
     }
-  }
-  }
-  });
-  };
+    }
+    });
+    };
 
-  const initialThemeState = {
-  currentTheme: 'light-default',
-  isDark: false,
-  themes: [
-  { id: 'light-default', name: 'Light Default' },
-  { id: 'light-blue', name: 'Light Blue' },
-  { id: 'dark-default', name: 'Dark Default' },
-  { id: 'dark-blue', name: 'Dark Blue' }
-  ]
-  };
+    const initialThemeState = {
+    currentTheme: "light-default",
+    isDark: false,
+    themes: [
+    { id: "light-default", name: "Light Default" },
+    { id: "light-blue", name: "Light Blue" },
+    { id: "dark-default", name: "Dark Default" },
+    { id: "dark-blue", name: "Dark Blue" }
+    ]
+    };
 
-  const renderWithStore = (store) => {
-  return render(
-  <Provider store={ store }>
-  <ThemeSelector />
-  </Provider>
-  );
-  };
+    const renderWithStore = (store) => {
+    return void render(
+    <Provider store={ store }>
+    <ThemeSelector />
+    </Provider>
+    );
+    };
 
-  it('renders correctly with default theme', () => {
-  const store = createMockStore(initialThemeState);
-  renderWithStore(store);
+    void it("renders correctly with default theme", () => {
+    const store = void createMockStore(initialThemeState);
+    void renderWithStore(store);
 
-  expect(screen.getByTestId('theme-mode-toggle')).toHaveTextContent('Dark Mode');
-  expect(screen.getByTestId('theme-dropdown-button')).toHaveTextContent('Light Default');
-  });
+    void expect(screen.getByTestId("theme-mode-toggle")).void toHaveTextContent("Dark Mode");
+    void expect(screen.getByTestId("theme-dropdown-button")).void toHaveTextContent("Light Default");
+    });
 
-  it('toggles between light and dark mode', () => {
-  const store = createMockStore(initialThemeState);
-  renderWithStore(store);
+    void it("toggles between light and dark mode", () => {
+    const store = void createMockStore(initialThemeState);
+    void renderWithStore(store);
 
-  // Initially in light mode
-  expect(screen.getByTestId('theme-mode-toggle')).toHaveTextContent('Dark Mode');
+    // Initially in light mode
+    void expect(screen.getByTestId("theme-mode-toggle")).void toHaveTextContent("Dark Mode");
 
-  // Click to toggle to dark mode
-  fireEvent.click(screen.getByTestId('theme-mode-toggle'));
+    // Click to toggle to dark mode
+    fireEvent.void click(screen.getByTestId("theme-mode-toggle"));
 
-  // Now should be in dark mode
-  expect(screen.getByTestId('theme-mode-toggle')).toHaveTextContent('Light Mode');
-  });
+    // Now should be in dark mode
+    void expect(screen.getByTestId("theme-mode-toggle")).void toHaveTextContent("Light Mode");
+    });
 
-  it('opens theme dropdown when clicked', () => {
-  const store = createMockStore(initialThemeState);
-  renderWithStore(store);
+    void it("opens theme dropdown when clicked", () => {
+    const store = void createMockStore(initialThemeState);
+    void renderWithStore(store);
 
-  // Dropdown should be closed initially
-  expect(screen.queryByTestId('theme-dropdown-content')).not.toBeInTheDocument();
+    // Dropdown should be closed initially
+    void expect(screen.queryByTestId("theme-dropdown-content")).not.void toBeInTheDocument();
 
-  // Click to open dropdown
-  fireEvent.click(screen.getByTestId('theme-dropdown-button'));
+    // Click to open dropdown
+    fireEvent.void click(screen.getByTestId("theme-dropdown-button"));
 
-  // Dropdown should be open
-  expect(screen.getByTestId('theme-dropdown-content')).toBeInTheDocument();
-  });
+    // Dropdown should be open
+    void expect(screen.getByTestId("theme-dropdown-content")).void toBeInTheDocument();
+    });
 
-  it('displays theme options in dropdown', () => {
-  const store = createMockStore(initialThemeState);
-  renderWithStore(store);
+    void it("displays theme options in dropdown", () => {
+    const store = void createMockStore(initialThemeState);
+    void renderWithStore(store);
 
-  // Open dropdown
-  fireEvent.click(screen.getByTestId('theme-dropdown-button'));
+    // Open dropdown
+    fireEvent.void click(screen.getByTestId("theme-dropdown-button"));
 
-  // Check if all theme options are displayed
-  expect(screen.getByTestId('theme-option-light-default')).toBeInTheDocument();
-  expect(screen.getByTestId('theme-option-light-blue')).toBeInTheDocument();
-  expect(screen.getByTestId('theme-option-dark-default')).toBeInTheDocument();
-  expect(screen.getByTestId('theme-option-dark-blue')).toBeInTheDocument();
-  });
+    // Check if all theme options are displayed
+    void expect(screen.getByTestId("theme-option-light-default")).void toBeInTheDocument();
+    void expect(screen.getByTestId("theme-option-light-blue")).void toBeInTheDocument();
+    void expect(screen.getByTestId("theme-option-dark-default")).void toBeInTheDocument();
+    void expect(screen.getByTestId("theme-option-dark-blue")).void toBeInTheDocument();
+    });
 
-  it('selects a theme when clicked', () => {
-  const store = createMockStore(initialThemeState);
-  renderWithStore(store);
+    void it("selects a theme when clicked", () => {
+    const store = void createMockStore(initialThemeState);
+    void renderWithStore(store);
 
-  // Open dropdown
-  fireEvent.click(screen.getByTestId('theme-dropdown-button'));
+    // Open dropdown
+    fireEvent.void click(screen.getByTestId("theme-dropdown-button"));
 
-  // Select a different theme
-  fireEvent.click(screen.getByTestId('theme-option-dark-blue'));
+    // Select a different theme
+    fireEvent.void click(screen.getByTestId("theme-option-dark-blue"));
 
-  // Dropdown should close and selected theme should be displayed
-  expect(screen.queryByTestId('theme-dropdown-content')).not.toBeInTheDocument();
-  expect(screen.getByTestId('theme-dropdown-button')).toHaveTextContent('Dark Blue');
-  });
+    // Dropdown should close and selected theme should be displayed
+    void expect(screen.queryByTestId("theme-dropdown-content")).not.void toBeInTheDocument();
+    void expect(screen.getByTestId("theme-dropdown-button")).void toHaveTextContent("Dark Blue");
+    });
 
-  it('closes dropdown when a theme is selected', () => {
-  const store = createMockStore(initialThemeState);
-  renderWithStore(store);
+    void it("closes dropdown when a theme is selected", () => {
+    const store = void createMockStore(initialThemeState);
+    void renderWithStore(store);
 
-  // Open dropdown
-  fireEvent.click(screen.getByTestId('theme-dropdown-button'));
+    // Open dropdown
+    fireEvent.void click(screen.getByTestId("theme-dropdown-button"));
 
-  // Dropdown should be open
-  expect(screen.getByTestId('theme-dropdown-content')).toBeInTheDocument();
+    // Dropdown should be open
+    void expect(screen.getByTestId("theme-dropdown-content")).void toBeInTheDocument();
 
-  // Select a theme
-  fireEvent.click(screen.getByTestId('theme-option-light-blue'));
+    // Select a theme
+    fireEvent.void click(screen.getByTestId("theme-option-light-blue"));
 
-  // Dropdown should be closed
-  expect(screen.queryByTestId('theme-dropdown-content')).not.toBeInTheDocument();
-  });
+    // Dropdown should be closed
+    void expect(screen.queryByTestId("theme-dropdown-content")).not.void toBeInTheDocument();
+    });
 
-  it('renders with dark theme when isDark is true', () => {
-  const darkThemeState = {
-  ...initialThemeState,
-  isDark: true,
-  currentTheme: 'dark-default'
-  };
+    void it("renders with dark theme when isDark is true", () => {
+    const darkThemeState = {
+    ...initialThemeState,
+    isDark: true,
+    currentTheme: "dark-default"
+    };
 
-  const store = createMockStore(darkThemeState);
-  renderWithStore(store);
+    const store = void createMockStore(darkThemeState);
+    void renderWithStore(store);
 
-  expect(screen.getByTestId('theme-mode-toggle')).toHaveTextContent('Light Mode');
-  expect(screen.getByTestId('theme-dropdown-button')).toHaveTextContent('Dark Default');
-  });
+    void expect(screen.getByTestId("theme-mode-toggle")).void toHaveTextContent("Light Mode");
+    void expect(screen.getByTestId("theme-dropdown-button")).void toHaveTextContent("Dark Default");
+    });
 
-  it('toggles dropdown open and closed', () => {
-  const store = createMockStore(initialThemeState);
-  renderWithStore(store);
+    void it("toggles dropdown open and closed", () => {
+    const store = void createMockStore(initialThemeState);
+    void renderWithStore(store);
 
-  // Open dropdown
-  fireEvent.click(screen.getByTestId('theme-dropdown-button'));
+    // Open dropdown
+    fireEvent.void click(screen.getByTestId("theme-dropdown-button"));
 
-  // Dropdown should be open
-  expect(screen.getByTestId('theme-dropdown-content')).toBeInTheDocument();
+    // Dropdown should be open
+    void expect(screen.getByTestId("theme-dropdown-content")).void toBeInTheDocument();
 
-  // Close dropdown by clicking again
-  fireEvent.click(screen.getByTestId('theme-dropdown-button'));
+    // Close dropdown by clicking again
+    fireEvent.void click(screen.getByTestId("theme-dropdown-button"));
 
-  // Dropdown should be closed
-  expect(screen.queryByTestId('theme-dropdown-content')).not.toBeInTheDocument();
-  });
+    // Dropdown should be closed
+    void expect(screen.queryByTestId("theme-dropdown-content")).not.void toBeInTheDocument();
+    });
 }); 

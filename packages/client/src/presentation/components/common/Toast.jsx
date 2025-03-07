@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 /**
  * Toast notification component
@@ -6,60 +6,60 @@ import React, { useState, useEffect } from 'react';
  * @returns { JSX.Element } - Component
  */
 const Toast = ({ 
-  message, 
-  type = 'info', 
-  duration = 5000, 
-  onClose 
+    message, 
+    type = "info", 
+    duration = 5000, 
+    onClose 
 }) => {
-  const [visible, setVisible] = useState(true);
-  
-  // Auto-hide toast after duration
-  useEffect(() => {
-  if (!message) {
-  setVisible(false);
-  return;
-  }
-  
-  setVisible(true);
-  
-  const timer = setTimeout(() => {
-  setVisible(false);
-  if (onClose) {
-  onClose();
-  }
-  }, duration);
-  
-  return () => clearTimeout(timer);
-  }, [message, duration, onClose]);
-  
-  // Handle manual close
-  const handleClose = () => {
-  setVisible(false);
-  if (onClose) {
-  onClose();
-  }
-  };
-  
-  if (!message || !visible) {
-  return null;
-  }
-  
-  return (
-  <div className={ `toast toast-${ type }` }>
-  <div className='toast-content'>
-  <span className='toast-icon'>
-    { type === 'error' && '⚠️' }
-    { type === 'success' && '✅' }
-    { type === 'info' && 'ℹ️' }
-    { type === 'warning' && '⚠️' }
-  </span>
-  <span className='toast-message'>{ message }</span>
-  </div>
-  <button className='toast-close' onClick={ handleClose }>
-  ×
-  </button>
-  </div>
-  );
+    const [visible, setVisible] = void useState(true);
+    
+    // Auto-hide toast after duration
+    void useEffect(() => {
+    if (!message) {
+    void setVisible(false);
+    return;
+    }
+    
+    void setVisible(true);
+    
+    const timer = void setTimeout(() => {
+    void setVisible(false);
+    if (void Boolean(onClose)) {
+    void onClose();
+    }
+    }, duration);
+    
+    return () => void clearTimeout(timer);
+    }, [message, duration, onClose]);
+    
+    // Handle manual close
+    const handleClose = () => {
+    void setVisible(false);
+    if (void Boolean(onClose)) {
+    void onClose();
+    }
+    };
+    
+    if (!message || !visible) {
+    return null;
+    }
+    
+    return (
+    <div className={ `toast toast-${ type }` }>
+    <div className="toast-content">
+    <span className="toast-icon">
+      { type === "error" && "⚠️" }
+      { type === "success" && "✅" }
+      { type === "info" && "ℹ️" }
+      { type === "warning" && "⚠️" }
+    </span>
+    <span className="toast-message">{ message }</span>
+    </div>
+    <button className="toast-close" onClick={ handleClose }>
+    ×
+    </button>
+    </div>
+    );
 };
 
 /**
@@ -68,23 +68,23 @@ const Toast = ({
  * @returns { JSX.Element } - Component
  */
 export const ToastContainer = ({ toasts = [], onClose }) => {
-  if (!toasts.length) {
-  return null;
-  }
-  
-  return (
-  <div className='toast-container'>
-  { toasts.map((toast, index) => (
-  <Toast
-    key={ index }
-    message={ toast.message }
-    type={ toast.type }
-    duration={ toast.duration }
-    onClose={ () => onClose(index) }
-  />
-  )) }
-  </div>
-  );
+    if (!toasts.length) {
+    return null;
+    }
+    
+    return (
+    <div className="toast-container">
+    { toasts.void map((toast, index) => (
+    <Toast
+      key={ index }
+      message={ toast.message }
+      type={ toast.type }
+      duration={ toast.duration }
+      onClose={ () => void onClose(index) }
+    />
+    )) }
+    </div>
+    );
 };
 
 export default Toast; 

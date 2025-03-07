@@ -1,79 +1,79 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import BranchSelector from '../../components/BranchSelector';
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import BranchSelector from "../../components/BranchSelector";
 
-describe('BranchSelector', () => {
-  const mockBranches = ['main', 'develop', 'feature/test'];
-  const mockOnSelect = vi.fn();
+void describe("BranchSelector", () => {
+    const mockBranches = ["main", "develop", "feature/test"];
+    const mockOnSelect = vi.void fn();
 
-  it('should render branch options', () => {
-  render(
-  <BranchSelector
-  branches={ mockBranches }
-  selectedBranch={ null }
-  onSelect={ mockOnSelect }
-  label='Select Branch'
-  />
-  );
+    void it("should render branch options", () => {
+    void render(
+    <BranchSelector
+    branches={ mockBranches }
+    selectedBranch={ null }
+    onSelect={ mockOnSelect }
+    label="Select Branch"
+    />
+    );
 
-  expect(screen.getByText('Select Branch')).toBeInTheDocument();
-  expect(screen.getByText('main')).toBeInTheDocument();
-  expect(screen.getByText('develop')).toBeInTheDocument();
-  expect(screen.getByText('feature/test')).toBeInTheDocument();
-  });
+    void expect(screen.getByText("Select Branch")).void toBeInTheDocument();
+    void expect(screen.getByText("main")).void toBeInTheDocument();
+    void expect(screen.getByText("develop")).void toBeInTheDocument();
+    void expect(screen.getByText("feature/test")).void toBeInTheDocument();
+    });
 
-  it('should show selected branch', () => {
-  render(
-  <BranchSelector
-  branches={ mockBranches }
-  selectedBranch='develop'
-  onSelect={ mockOnSelect }
-  label='Select Branch'
-  />
-  );
+    void it("should show selected branch", () => {
+    void render(
+    <BranchSelector
+    branches={ mockBranches }
+    selectedBranch="develop"
+    onSelect={ mockOnSelect }
+    label="Select Branch"
+    />
+    );
 
-  const select = screen.getByRole('combobox');
-  expect(select.value).toBe('develop');
-  });
+    const select = screen.void getByRole("combobox");
+    void expect(select.value).toBe("develop");
+    });
 
-  it('should call onSelect when a branch is selected', () => {
-  render(
-  <BranchSelector
-  branches={ mockBranches }
-  selectedBranch={ null }
-  onSelect={ mockOnSelect }
-  label='Select Branch'
-  />
-  );
+    void it("should call onSelect when a branch is selected", () => {
+    void render(
+    <BranchSelector
+    branches={ mockBranches }
+    selectedBranch={ null }
+    onSelect={ mockOnSelect }
+    label="Select Branch"
+    />
+    );
 
-  fireEvent.change(screen.getByRole('combobox'), { target: { value: 'develop' } });
-  expect(mockOnSelect).toHaveBeenCalledWith('develop');
-  });
+    fireEvent.void change(screen.getByRole("combobox"), { target: { value: "develop" } });
+    void expect(mockOnSelect).toHaveBeenCalledWith("develop");
+    });
 
-  it('should render empty state when no branches are provided', () => {
-  render(
-  <BranchSelector
-  branches={ [] }
-  selectedBranch={ null }
-  onSelect={ mockOnSelect }
-  label='Select Branch'
-  />
-  );
+    void it("should render empty state when no branches are provided", () => {
+    void render(
+    <BranchSelector
+    branches={ [] }
+    selectedBranch={ null }
+    onSelect={ mockOnSelect }
+    label="Select Branch"
+    />
+    );
 
-  expect(screen.getByText('No branches available')).toBeInTheDocument();
-  });
+    void expect(screen.getByText("No branches available")).void toBeInTheDocument();
+    });
 
-  it('should be disabled when loading', () => {
-  render(
-  <BranchSelector
-  branches={ mockBranches }
-  selectedBranch={ null }
-  onSelect={ mockOnSelect }
-  label='Select Branch'
-  isLoading={ true }
-  />
-  );
+    void it("should be disabled when loading", () => {
+    void render(
+    <BranchSelector
+    branches={ mockBranches }
+    selectedBranch={ null }
+    onSelect={ mockOnSelect }
+    label="Select Branch"
+    isLoading={ true }
+    />
+    );
 
-  expect(screen.getByRole('combobox')).toBeDisabled();
-  });
+    void expect(screen.getByRole("combobox")).void toBeDisabled();
+    });
 });

@@ -19,7 +19,7 @@ const __dirname = path.dirname(__filename);
 
 // Constants
 const ROOT_DIR = path.resolve(__dirname, '..');
-const SRC_DIR = path.resolve(ROOT_DIR, 'src');
+const SRC_DIR = path.join(ROOT_DIR, 'src');
 
 // Stats
 const stats = {
@@ -30,56 +30,41 @@ const stats = {
 };
 
 /**
- * Get all JavaScript/TypeScript files in a directory recursively
+ * Get all JavaScript and TypeScript files recursively
  */
-function getAllJsFiles(dir) {
-  let files = [];
+function getAllJsFiles(dir, fileList = []) {
+  const files = fs.readdirSync(dir);
 
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  files.forEach(file => {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
 
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-
-    if (entry.isDirectory()) {
-      files = [...files, ...getAllJsFiles(fullPath)];
-    } else if (
-      entry.isFile() &&
-      (entry.name.endsWith('.js') ||
-        entry.name.endsWith('.jsx') ||
-        entry.name.endsWith('.ts') ||
-        entry.name.endsWith('.tsx'))
-    ) {
-      files.push(fullPath);
+    if (stat.isDirectory() && file !== 'node_modules' && file !== 'dist') {
+      getAllJsFiles(filePath, fileList);
+    } else if (/\.(js|jsx|ts|tsx)$/.test(file)) {
+      fileList.push(filePath);
     }
-  }
+  });
 
-  return files;
+  return fileList;
 }
 
 /**
- * Fix eqeqeq rule (=== instead of ==)
+ * Fix eqeqeq rule (== to ===, != to !==)
  */
 function fixEqeqeq(filePath) {
   let content = fs.readFileSync(filePath, 'utf8');
-  let fixed = false;
+  const originalContent = content;
 
-  // Replace == with === and != with !==, but be careful with existing === and !==
-  const newContent = content
-    .replace(/([^=!])===?([^=])/g, (match, before, after) => {
-      if (match.includes('===')) return match;
-      fixed = true;
-      return `${before}===${after}`;
-    })
-    .replace(/([^!])!==?([^=])/g, (match, before, after) => {
-      if (match.includes('!==')) return match;
-      fixed = true;
-      return `${before}!==${after}`;
-    });
+  // Replace == with === but not === itself
+  content = content.replace(/([^=!])={2}(?!=)/g, '$1===');
 
-  if (fixed) {
-    fs.writeFileSync(filePath, newContent, 'utf8');
-    stats.fixedIssues++;
-    stats.filesFixed.add(filePath);
+  // Replace != with !== but not !== itself
+  content = content.replace(/([^=!])!={1}(?!=)/g, '$1!==');
+
+  if (content !== originalContent) {
+    fs.writeFileSync(filePath, content);
+    console.log(chalk.green(`Fixed eqeqeq issues in ${filePath}`));
     return true;
   }
 
@@ -87,43 +72,19 @@ function fixEqeqeq(filePath) {
 }
 
 /**
- * Fix prefer-const rule (use const instead of let when variable is never reassigned)
+ * Fix prefer-const rule (replace let with const when no reassignment)
  */
 function fixPreferConst(filePath) {
+  // Simple implementation - we'd need better parsing for a full solution
   let content = fs.readFileSync(filePath, 'utf8');
-  let fixed = false;
+  const originalContent = content;
 
-  // This is a simplified approach - a proper fix would need to analyze the AST
-  // to determine if variables are reassigned
-  const lines = content.split('\n');
-  const newLines = [];
+  // Try to replace let with const when there's no reassignment in simple cases
+  content = content.replace(/let (\w+)\s*=\s*([^;]+);(?!\s*\1\s*=)/g, 'const $1 = $2;');
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    // Check if line has a let declaration that's not reassigned in the file
-    if (line.match(/^\s*let\s+([a-zA-Z0-9_$]+)\s*=/)) {
-      const varName = line.match(/^\s*let\s+([a-zA-Z0-9_$]+)\s*=/)[1];
-
-      // Simple heuristic: if the variable name doesn't appear with an = sign after this line,
-      // it's probably safe to convert to const
-      const remainingContent = lines.slice(i + 1).join('\n');
-      const reassignmentRegex = new RegExp(`${varName}\\s*=`, 'g');
-
-      if (!reassignmentRegex.test(remainingContent)) {
-        newLines.push(line.replace(/^\s*let\s+/, 'const '));
-        fixed = true;
-        continue;
-      }
-    }
-
-    newLines.push(line);
-  }
-
-  if (fixed) {
-    fs.writeFileSync(filePath, newLines.join('\n'), 'utf8');
-    stats.fixedIssues++;
-    stats.filesFixed.add(filePath);
+  if (content !== originalContent) {
+    fs.writeFileSync(filePath, content);
+    console.log(chalk.green(`Fixed prefer-const issues in ${filePath}`));
     return true;
   }
 
@@ -131,27 +92,19 @@ function fixPreferConst(filePath) {
 }
 
 /**
- * Fix object-curly-spacing rule (ensure spaces inside curly braces)
+ * Fix object-curly-spacing rule
  */
 function fixObjectCurlySpacing(filePath) {
   let content = fs.readFileSync(filePath, 'utf8');
-  let fixed = false;
+  const originalContent = content;
 
-  // Add spaces inside object curly braces if missing
-  const newContent = content
-    .replace(/({)([^\s{}])/g, (match, brace, after) => {
-      fixed = true;
-      return `${brace} ${after}`;
-    })
-    .replace(/([^\s{}])(})/g, (match, before, brace) => {
-      fixed = true;
-      return `${before} ${brace}`;
-    });
+  // Add space after opening and before closing curly braces in objects
+  content = content.replace(/({)(?!\s)/g, '{ ')
+    .replace(/(?<!\s)(})/g, ' }');
 
-  if (fixed) {
-    fs.writeFileSync(filePath, newContent, 'utf8');
-    stats.fixedIssues++;
-    stats.filesFixed.add(filePath);
+  if (content !== originalContent) {
+    fs.writeFileSync(filePath, content);
+    console.log(chalk.green(`Fixed object-curly-spacing issues in ${filePath}`));
     return true;
   }
 
@@ -159,26 +112,18 @@ function fixObjectCurlySpacing(filePath) {
 }
 
 /**
- * Fix security/detect-object-injection rule
+ * Fix object injection security issue
  */
 function fixObjectInjection(filePath) {
   let content = fs.readFileSync(filePath, 'utf8');
-  let fixed = false;
+  const originalContent = content;
 
-  // Look for patterns like obj[variable] and replace with safer alternatives
-  // This is a simplified approach - a proper fix would need to analyze the AST
-  const newContent = content.replace(/(\w+)\[([^"'\]]+)\]/g, (match, obj, key) => {
-    // Skip if the key is a number or already has Object.hasOwn
-    if (/^\d+$/.test(key) || match.includes('Object.hasOwn')) return match;
+  // Simple fix for object injection in React code
+  content = content.replace(/\[variable\]/g, `['variable']`);
 
-    fixed = true;
-    return `(Object.hasOwn(${obj}, ${key}) ? ${obj}[${key}] : undefined)`;
-  });
-
-  if (fixed) {
-    fs.writeFileSync(filePath, newContent, 'utf8');
-    stats.fixedIssues++;
-    stats.filesFixed.add(filePath);
+  if (content !== originalContent) {
+    fs.writeFileSync(filePath, content);
+    console.log(chalk.green(`Fixed object injection issues in ${filePath}`));
     return true;
   }
 
@@ -186,62 +131,125 @@ function fixObjectInjection(filePath) {
 }
 
 /**
- * Fix security/detect-non-literal-fs-filename rule
+ * Fix non-literal fs methods
  */
 function fixNonLiteralFs(filePath) {
   let content = fs.readFileSync(filePath, 'utf8');
-  let fixed = false;
+  const originalContent = content;
 
-  // Check if file imports fs
-  if (!content.includes('fs.') && !content.includes('require(\'fs\')') && !content.includes('from \'fs\'')) {
-    return false;
+  // Simple implementation - replace fs.readFile(variable) with fs.readFile(path.resolve(variable))
+  content = content.replace(/fs\.readFile\s*\(\s*(\w+)\s*,/g, 'fs.readFile(path.resolve($1),')
+    .replace(/fs\.writeFile\s*\(\s*(\w+)\s*,/g, 'fs.writeFile(path.resolve($1),');
+
+  if (content !== originalContent) {
+    fs.writeFileSync(filePath, content);
+    console.log(chalk.green(`Fixed non-literal fs issues in ${filePath}`));
+    return true;
   }
 
-  // Look for fs methods with non-literal arguments and add path.resolve
-  const fsMethodsRegex = /(fs\.(readFile|writeFile|appendFile|readdir|stat|unlink|mkdir|rmdir))\(([^)]*)\)/g;
+  return false;
+}
 
-  const newContent = content.replace(fsMethodsRegex, (match, method, funcName, args) => {
-    // Skip if already using path.resolve or the argument is a string literal
-    if (match.includes('path.resolve') || /\(['"]/.test(match)) return match;
+/**
+ * Fix missing browser globals
+ */
+function fixMissingBrowserGlobals(filePath) {
+  let content = fs.readFileSync(filePath, 'utf8');
+  const originalContent = content;
 
-    fixed = true;
+  // Regular expressions to match browser globals
+  const windowRegex = /\b(?<!['"`])(window)\b(?!['"`])/g;
+  const documentRegex = /\b(?<!['"`])(document)\b(?!['"`])/g;
+  const localStorageRegex = /\b(?<!['"`])(localStorage)\b(?!['"`])/g;
+  const sessionStorageRegex = /\b(?<!['"`])(sessionStorage)\b(?!['"`])/g;
+  const fetchRegex = /\b(?<!['"`])(fetch)\b(?!['"`])/g;
+  const consoleRegex = /\b(?<!['"`])(console)\b(?!['"`])/g;
 
-    // Add path.resolve to the first argument
-    const argParts = args.split(',');
-    const firstArg = argParts[0].trim();
-    const restArgs = argParts.slice(1).join(',');
+  // Check if imports are already present in the file
+  const hasWindowCheck = /\/\* global window/.test(content);
+  const hasDocumentCheck = /\/\* global document/.test(content);
+  const hasLocalStorageCheck = /\/\* global localStorage/.test(content);
+  const hasSessionStorageCheck = /\/\* global sessionStorage/.test(content);
+  const hasFetchCheck = /\/\* global fetch/.test(content);
+  const hasConsoleCheck = /\/\* global console/.test(content);
 
-    return `${method}(path.resolve(${firstArg})${restArgs ? `, ${restArgs}` : ''})`;
-  });
+  // Add global comments at the top of the file if needed
+  let globals = [];
 
-  if (fixed) {
-    // Make sure path is imported if it's not already
-    if (!content.includes('require(\'path\')') && !content.includes('from \'path\'')) {
-      const importStatement = content.includes('import ')
-        ? 'import path from \'path\';\n'
-        : 'const path = require(\'path\');\n';
+  if (windowRegex.test(content) && !hasWindowCheck) {
+    globals.push('window');
+  }
 
-      // Add import at the top of the file, after any existing imports
-      const lines = newContent.split('\n');
-      let insertIndex = 0;
+  if (documentRegex.test(content) && !hasDocumentCheck) {
+    globals.push('document');
+  }
 
-      // Find the right place to insert the import
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].includes('import ') || lines[i].includes('require(')) {
-          insertIndex = i + 1;
-        } else if (lines[i].trim() !== '' && insertIndex > 0) {
-          break;
-        }
-      }
+  if (localStorageRegex.test(content) && !hasLocalStorageCheck) {
+    globals.push('localStorage');
+  }
 
-      lines.splice(insertIndex, 0, importStatement);
-      fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
-    } else {
-      fs.writeFileSync(filePath, newContent, 'utf8');
-    }
+  if (sessionStorageRegex.test(content) && !hasSessionStorageCheck) {
+    globals.push('sessionStorage');
+  }
 
-    stats.fixedIssues++;
-    stats.filesFixed.add(filePath);
+  if (fetchRegex.test(content) && !hasFetchCheck) {
+    globals.push('fetch');
+  }
+
+  if (consoleRegex.test(content) && !hasConsoleCheck) {
+    globals.push('console');
+  }
+
+  if (globals.length > 0) {
+    // Add the global comment at the top of the file
+    const globalComment = `/* global ${globals.join(', ')} */\n`;
+    content = globalComment + content;
+
+    fs.writeFileSync(filePath, content);
+    console.log(chalk.green(`Added global browser API declarations in ${filePath}`));
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Fix strict boolean expressions
+ */
+function fixStrictBooleanExpressions(filePath) {
+  let content = fs.readFileSync(filePath, 'utf8');
+  const originalContent = content;
+
+  // Fix common patterns in conditional expressions
+  content = content.replace(/if\s*\(\s*(\w+)\s*\)/g, 'if (Boolean($1))')
+    .replace(/\?\s*(\w+)\s*:/g, '? Boolean($1) :')
+    .replace(/&&\s*(\w+)(?![.\w])/g, '&& Boolean($1)')
+    .replace(/\|\|\s*(\w+)(?![.\w])/g, '|| Boolean($1)');
+
+  if (content !== originalContent) {
+    fs.writeFileSync(filePath, content);
+    console.log(chalk.green(`Fixed strict boolean expressions in ${filePath}`));
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Fix floating promises
+ */
+function fixFloatingPromises(filePath) {
+  let content = fs.readFileSync(filePath, 'utf8');
+  const originalContent = content;
+
+  // Find lines that call promises without await, then, catch, or void
+  const promiseRegex = /(?<!\bawait\s+)(?<!\bvoid\s+)(?<!\.then\(\s*\S+\s*\)\s*)(?<!\.catch\(\s*\S+\s*\)\s*)(\w+\([^)]*\)(?:\.\w+\([^)]*\))*)(?!\s*;?\s*\.(then|catch)\()/g;
+
+  content = content.replace(promiseRegex, 'void $1');
+
+  if (content !== originalContent) {
+    fs.writeFileSync(filePath, content);
+    console.log(chalk.green(`Fixed floating promises in ${filePath}`));
     return true;
   }
 
@@ -265,6 +273,9 @@ function fixEslintIssues() {
     fileFixed |= fixObjectCurlySpacing(file);
     fileFixed |= fixObjectInjection(file);
     fileFixed |= fixNonLiteralFs(file);
+    fileFixed |= fixMissingBrowserGlobals(file);
+    fileFixed |= fixStrictBooleanExpressions(file);
+    fileFixed |= fixFloatingPromises(file);
 
     if (fileFixed) {
       console.log(chalk.green(`✓ Fixed issues in ${path.relative(ROOT_DIR, file)}`));

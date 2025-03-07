@@ -1,11 +1,11 @@
-import React from 'react';
+import React from "react";
 
-const ImpactAnalyzer = () => {
-  return (
-  <div className='impact-analyzer'>
-  { /* Impact analyzer implementation */ }
-  </div>
-  );
+const ImpactAnalyzer = () ): void => {
+    return (
+    <div className="impact-analyzer">
+    { /* Impact analyzer implementation */ }
+    </div>
+    );
 };
 
 export default ImpactAnalyzer; 

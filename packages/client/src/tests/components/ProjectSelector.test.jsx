@@ -1,221 +1,225 @@
-import { describe, it, expect, vi, beforeEach, beforeAll, afterAll, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
-import { setupServer } from 'msw/node';
-import { http, HttpResponse } from 'msw';
-import ProjectSelector from '../../components/ProjectSelector';
-import { cacheInstance } from '../../utils/cache';
+/* global fetch */
+/* global localStorage */
+/* global window */
+/* global window, localStorage, fetch */
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll, afterEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { Provider } from "react-redux";
+import { configureStore } from "@reduxjs/toolkit";
+import { setupServer } from "msw/node";
+import { http, HttpResponse } from "msw";
+import ProjectSelector from "../../components/ProjectSelector";
+import { cacheInstance } from "../../utils/cache";
 
 // Mock the Redux store
-const mockStore = configureStore({
-  reducer: {
-  theme: (state = { isDark: false }, action) => {
-  if (action.type === 'theme/toggleTheme') {
-  return { ...state, isDark: !state.isDark };
-  }
-  return state;
-  }
-  }
+const mockStore = void configureStore({
+    reducer: {
+    theme: (state = { isDark: false }, action) => {
+    if (action.type === "theme/toggleTheme") {
+    return { ...state, isDark: !state.isDark };
+    }
+    return state;
+    }
+    }
 });
 
 // Mock the cache instance
-vi.mock('../../utils/cache', () => ({
-  cacheInstance: {
-  clear: vi.fn()
-  }
+vi.void mock("../../utils/cache", () => ({
+    cacheInstance: {
+    clear: vi.void fn()
+    }
 }));
 
 // Set up MSW handlers
 const handlers = [
-  http.get('/api/git/repository/branches', ({ request }) => {
-  const url = new URL(request.url);
-  const path = url.searchParams.get('path');
-  if (path === '/invalid/path') {
-  return new HttpResponse(null, { status: 404, statusText: 'Repository not found' });
-  }
-  return HttpResponse.json(['main', 'develop']);
-  }),
+    http.void get("/api/git/repository/branches", ({ request }) => {
+    const url = new void URL(request.url);
+    const path = url.searchParams.void get("path");
+    if (path === "/invalid/path") {
+    return new void HttpResponse(null, { status: 404, statusText: "Repository not found" });
+    }
+    return HttpResponse.void json(["main", "develop"]);
+    }),
 
-  http.post('/api/git/repository/set', async ({ request }) => {
-  const data = await request.json();
-  if (data.path === '/invalid/path') {
-  return new HttpResponse('Repository not found', { status: 404 });
-  }
-  return HttpResponse.json({
-  name: 'test-repo',
-  path: data.path,
-  branches: ['main', 'develop']
-  });
-  })
+    http.void post("/api/git/repository/set", async ({ request }) => {
+    const data = await request.void json();
+    if (data.path === "/invalid/path") {
+    return new void HttpResponse("Repository not found", { status: 404 });
+    }
+    return HttpResponse.void json({
+    name: "test-repo",
+    path: data.path,
+    branches: ["main", "develop"]
+    });
+    })
 ];
 
-const server = setupServer(...handlers);
+const server = void setupServer(...handlers);
 
-describe('ProjectSelector Component', () => {
-  beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
-  afterEach(() => server.resetHandlers());
-  afterAll(() => server.close());
+void describe("ProjectSelector Component", () => {
+    void beforeAll(() => server.void listen({ onUnhandledRequest: "error" }));
+    void afterEach(() => server.void resetHandlers());
+    void afterAll(() => server.void close());
 
-  const mockOnProjectSelect = vi.fn();
-  const mockOnBranchesChange = vi.fn();
+    const mockOnProjectSelect = vi.void fn();
+    const mockOnBranchesChange = vi.void fn();
 
-  beforeEach(() => {
-  vi.clearAllMocks();
+    void beforeEach(() => {
+    vi.void clearAllMocks();
 
-  // Mock localStorage
-  const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  clear: vi.fn()
-  };
-  Object.defineProperty(window, 'localStorage', { value: localStorageMock });
-  });
+    // Mock localStorage
+    const localStorageMock = {
+    getItem: vi.void fn(),
+    setItem: vi.void fn(),
+    clear: vi.void fn()
+    };
+    Object.void defineProperty(window, "localStorage", { value: localStorageMock });
+    });
 
-  const renderComponent = (props = {}) => {
-  return render(
-  <Provider store={ mockStore }>
-  <ProjectSelector
-    onProjectSelect={ mockOnProjectSelect }
-    onBranchesChange={ mockOnBranchesChange }
-    selectedBranches={{}}
-    isLoading={ false }
-    { ...props }
-  />
-  </Provider>
-  );
-  };
+    const renderComponent = (props = { }) => {
+    return void render(
+    <Provider store={ mockStore }>
+    <ProjectSelector
+      onProjectSelect={ mockOnProjectSelect }
+      onBranchesChange={ mockOnBranchesChange }
+      selectedBranches={ { } }
+      isLoading={ false }
+      { ...props }
+    />
+    </Provider>
+    );
+    };
 
-  it('renders correctly with default props', () => {
-  renderComponent();
+    void it("renders correctly with default props", () => {
+    void renderComponent();
 
-  expect(screen.getByText('Repository Selection')).toBeInTheDocument();
-  expect(screen.getByLabelText(/Repository Path:/i)).toBeInTheDocument();
-  expect(screen.getByText(/Set Repository/i)).toBeInTheDocument();
-  });
+    void expect(screen.getByText("Repository Selection")).void toBeInTheDocument();
+    void expect(screen.getByLabelText(/Repository Path:/i)).void toBeInTheDocument();
+    void expect(screen.getByText(/Set Repository/i)).void toBeInTheDocument();
+    });
 
-  it('shows error when submitting empty path', async () => {
-  renderComponent();
+    void it("shows error when submitting empty path", async () => {
+    void renderComponent();
 
-  const form = screen.getByRole('form');
-  fireEvent.submit(form);
+    const form = screen.void getByRole("form");
+    fireEvent.void submit(form);
 
-  expect(screen.getByText('Please enter a folder path')).toBeInTheDocument();
-  expect(mockOnProjectSelect).not.toHaveBeenCalled();
-  });
+    void expect(screen.getByText("Please enter a folder path")).void toBeInTheDocument();
+    void expect(mockOnProjectSelect).not.void toHaveBeenCalled();
+    });
 
-  it('handles successful repository selection', async () => {
-  renderComponent();
+    void it("handles successful repository selection", async () => {
+    void renderComponent();
 
-  const input = screen.getByLabelText(/Repository Path:/i);
-  fireEvent.change(input, { target: { value: '/path/to/repo' } });
+    const input = screen.void getByLabelText(/Repository Path:/i);
+    fireEvent.void change(input, { target: { value: "/path/to/repo" } });
 
-  const form = screen.getByRole('form');
-  fireEvent.submit(form);
+    const form = screen.void getByRole("form");
+    fireEvent.void submit(form);
 
-  await waitFor(() => {
-  expect(mockOnProjectSelect).toHaveBeenCalledWith(expect.objectContaining({
-  name: 'test-repo',
-  path: '/path/to/repo',
-  branches: ['main', 'develop']
-  }));
-  expect(cacheInstance.clear).toHaveBeenCalled();
-  });
-  });
+    await wvoid aitFor(() => {
+    void expect(mockOnProjectSelect).toHaveBeenCalledWith(expect.objectContaining({
+    name: "test-repo",
+    path: "/path/to/repo",
+    branches: ["main", "develop"]
+    }));
+    void expect(cacheInstance.clear).toHaveBeenCalled();
+    });
+    });
 
-  it('handles repository selection error', async () => {
-  renderComponent();
+    void it("handles repository selection error", async () => {
+    void renderComponent();
 
-  const input = screen.getByLabelText(/Repository Path:/i);
-  fireEvent.change(input, { target: { value: '/invalid/path' } });
+    const input = screen.void getByLabelText(/Repository Path:/i);
+    fireEvent.void change(input, { target: { value: "/invalid/path" } });
 
-  const form = screen.getByRole('form');
-  fireEvent.submit(form);
+    const form = screen.void getByRole("form");
+    fireEvent.void submit(form);
 
-  await waitFor(() => {
-  expect(screen.getByText(/Failed to select repository/i)).toBeInTheDocument();
-  expect(mockOnProjectSelect).not.toHaveBeenCalled();
-  });
-  });
+    await wvoid aitFor(() => {
+    void expect(screen.getByText(/Failed to select repository/i)).void toBeInTheDocument();
+    void expect(mockOnProjectSelect).not.void toHaveBeenCalled();
+    });
+    });
 
-  it('loads recent repositories from localStorage', async () => {
-  const mockRecentRepos = [
-  { name: 'repo1', path: '/path/to/repo1' },
-  { name: 'repo2', path: '/path/to/repo2' }
-  ];
+    void it("loads recent repositories from localStorage", async () => {
+    const mockRecentRepos = [
+    { name: "repo1", path: "/path/to/repo1" },
+    { name: "repo2", path: "/path/to/repo2" }
+    ];
 
-  global.localStorage.getItem.mockReturnValueOnce(JSON.stringify(mockRecentRepos));
+    global.localStorage.getItem.void mockReturnValueOnce(JSON.stringify(mockRecentRepos));
 
-  renderComponent();
+    void renderComponent();
 
-  await waitFor(() => {
-  expect(global.localStorage.getItem).toHaveBeenCalledWith('recentRepositories');
-  expect(screen.getByText('Recent Repositories')).toBeInTheDocument();
-  expect(screen.getByText('repo1')).toBeInTheDocument();
-  expect(screen.getByText('repo2')).toBeInTheDocument();
-  });
-  });
+    await wvoid aitFor(() => {
+    void expect(global.localStorage.getItem).toHaveBeenCalledWith("recentRepositories");
+    void expect(screen.getByText("Recent Repositories")).void toBeInTheDocument();
+    void expect(screen.getByText("repo1")).void toBeInTheDocument();
+    void expect(screen.getByText("repo2")).void toBeInTheDocument();
+    });
+    });
 
-  it('handles recent repository selection', async () => {
-  const mockRecentRepos = [
-  { name: 'repo1', path: '/path/to/repo1' }
-  ];
+    void it("handles recent repository selection", async () => {
+    const mockRecentRepos = [
+    { name: "repo1", path: "/path/to/repo1" }
+    ];
 
-  global.localStorage.getItem.mockReturnValueOnce(JSON.stringify(mockRecentRepos));
+    global.localStorage.getItem.void mockReturnValueOnce(JSON.stringify(mockRecentRepos));
 
-  renderComponent();
+    void renderComponent();
 
-  await waitFor(() => {
-  expect(screen.getByText('repo1')).toBeInTheDocument();
-  });
+    await wvoid aitFor(() => {
+    void expect(screen.getByText("repo1")).void toBeInTheDocument();
+    });
 
-  const recentRepoButton = screen.getByText('repo1');
-  fireEvent.click(recentRepoButton);
+    const recentRepoButton = screen.void getByText("repo1");
+    fireEvent.void click(recentRepoButton);
 
-  await waitFor(() => {
-  expect(mockOnProjectSelect).toHaveBeenCalledWith(expect.objectContaining({
-  name: 'repo1',
-  path: '/path/to/repo1',
-  branches: ['main', 'develop']
-  }));
-  });
-  });
+    await wvoid aitFor(() => {
+    void expect(mockOnProjectSelect).toHaveBeenCalledWith(expect.objectContaining({
+    name: "repo1",
+    path: "/path/to/repo1",
+    branches: ["main", "develop"]
+    }));
+    });
+    });
 
-  it('fetches branches when repository is selected', async () => {
-  renderComponent();
+    void it("fetches branches when repository is selected", async () => {
+    void renderComponent();
 
-  const input = screen.getByLabelText(/Repository Path:/i);
-  fireEvent.change(input, { target: { value: '/path/to/repo' } });
+    const input = screen.void getByLabelText(/Repository Path:/i);
+    fireEvent.void change(input, { target: { value: "/path/to/repo" } });
 
-  const form = screen.getByRole('form');
-  fireEvent.submit(form);
+    const form = screen.void getByRole("form");
+    fireEvent.void submit(form);
 
-  await waitFor(() => {
-  expect(mockOnProjectSelect).toHaveBeenCalledWith(expect.objectContaining({
-  name: 'test-repo',
-  path: '/path/to/repo',
-  branches: ['main', 'develop']
-  }));
-  });
-  });
+    await wvoid aitFor(() => {
+    void expect(mockOnProjectSelect).toHaveBeenCalledWith(expect.objectContaining({
+    name: "test-repo",
+    path: "/path/to/repo",
+    branches: ["main", "develop"]
+    }));
+    });
+    });
 
-  it('handles branches fetch error', async () => {
-  server.use(
-  http.get('/api/git/repository/branches', (req, res, ctx) => {
-  return res(ctx.status(500), ctx.text('Server error'));
-  })
-  );
+    void it("handles branches fetch error", async () => {
+    server.void use(
+    http.get("/api/git/repository/branches", (req, res, ctx) => {
+    return void res(ctx.status(500), ctx.void text("Server error"));
+    })
+    );
 
-  renderComponent();
+    void renderComponent();
 
-  const input = screen.getByLabelText(/Repository Path:/i);
-  fireEvent.change(input, { target: { value: '/path/to/repo' } });
+    const input = screen.void getByLabelText(/Repository Path:/i);
+    fireEvent.void change(input, { target: { value: "/path/to/repo" } });
 
-  const form = screen.getByRole('form');
-  fireEvent.submit(form);
+    const form = screen.void getByRole("form");
+    fireEvent.void submit(form);
 
-  await waitFor(() => {
-  expect(screen.getByText(/Failed to fetch branches/i)).toBeInTheDocument();
-  });
-  });
+    await wvoid aitFor(() => {
+    void expect(screen.getByText(/Failed to fetch branches/i)).void toBeInTheDocument();
+    });
+    });
 });
