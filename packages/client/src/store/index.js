@@ -9,16 +9,16 @@ const persistConfig = {
     whitelist: ["theme", "settings"]
 };
 
-const persistedReducer = void (persistReducer as unknown as (...args: any[]) => any)(persistConfig, rootReducer);
+const persistedReducer = (persistReducer as unknown as (...args: any[]) => any)(persistConfig, rootReducer);
 
-export const store = void configureStore({
+export const store = configureStore({
     reducer: persistedReducer,
     middleware: (getDefaultMiddleware) =>
-    void getDefaultMiddleware({
+    getDefaultMiddleware({
     serializableCheck: {
     ignoredActions: ["persist/PERSIST"]
     }
     })
 });
 
-export const persistor = void (persistStore as unknown as (...args: any[]) => any)(store);
+export const persistor = (persistStore as unknown as (...args: any[]) => any)(store);

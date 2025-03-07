@@ -313,6 +313,19 @@ function fixError(error) {
     return false;
   }
 
+  // Special handling for 'void' keyword pattern - appears in many files as a misuse
+  if (errorLine.includes(' void ')) {
+    // This is a common pattern where 'void' is used incorrectly
+    fileLines[line - 1] = errorLine.replace(/\bvoid\s+/, '');
+
+    if (fs.writeFileSync(filePath, fileLines.join('\n'), 'utf8')) {
+      console.log(chalk.green(`Fixed 'void' keyword issue in ${path.basename(filePath)}`));
+      stats.fixedErrors++;
+      stats.filesFixed.add(filePath);
+      return true;
+    }
+  }
+
   let fixed = false;
   const errorType = categorizeError(error);
 
@@ -1003,7 +1016,7 @@ function fixExpressionExpected(error, fileLines) {
  * Fix identifier expected errors
  */
 function fixIdentifierExpected(error, fileLines) {
-  const { line } = error;
+  const { line, message, filePath } = error;
   const errorLine = fileLines[line - 1];
 
   // Empty declaration
@@ -1016,6 +1029,12 @@ function fixIdentifierExpected(error, fileLines) {
   const reservedWords = ['void', 'interface', 'type', 'class', 'enum', 'const', 'let', 'var', 'function'];
   for (const word of reservedWords) {
     if (errorLine.includes(word)) {
+      // Special handling for void keyword which is commonly misused
+      if (word === 'void' && errorLine.includes(' void ')) {
+        fileLines[line - 1] = errorLine.replace(/\bvoid\s+/, '');
+        return true;
+      }
+
       // Replace reserved word with a safe alternative by adding underscore
       fileLines[line - 1] = errorLine.replace(new RegExp(`\\b${word}\\b(?!\\s*:|\\s*<|\\s*\\(|\\s*\\{)`), `_${word}`);
       return true;
@@ -1112,6 +1131,91 @@ function fixJsxError(error, fileLines) {
 }
 
 /**
+ * Process a single file to fix its errors
+ */
+function processFile(filePath, fileErrors) {
+  const relPath = path.relative(ROOT_DIR, filePath);
+  console.log(chalk.cyan(`\nProcessing ${relPath}`));
+  console.log(chalk.gray(`Found ${fileErrors.length} errors`));
+
+  // Skip if file doesn't exist
+  if (!fs.existsSync(filePath)) {
+    console.log(chalk.yellow(`  File does not exist, skipping: ${relPath}`));
+    return;
+  }
+
+  // Check if file is readable
+  try {
+    fs.accessSync(filePath, fs.constants.R_OK | fs.constants.W_OK);
+  } catch (err) {
+    console.log(chalk.yellow(`  Cannot access file, skipping: ${relPath}`));
+    return;
+  }
+
+  let fixCount = 0;
+  let fileContent;
+
+  try {
+    fileContent = fs.readFileSync(filePath, 'utf8');
+  } catch (err) {
+    console.log(chalk.yellow(`  Error reading file, skipping: ${relPath}`));
+    return;
+  }
+
+  let fileLines = fileContent.split('\n');
+  const originalLines = [...fileLines]; // Make a copy for comparison
+
+  // Special handling for files with the 'void' keyword pattern which is a common issue
+  let voidFixed = false;
+  for (let i = 0; i < fileLines.length; i++) {
+    if (fileLines[i].includes(' void ')) {
+      fileLines[i] = fileLines[i].replace(/\bvoid\s+/g, '');
+      voidFixed = true;
+      fixCount++;
+    }
+  }
+
+  if (voidFixed) {
+    console.log(chalk.green(`  Fixed 'void' keyword issues in ${relPath}`));
+  }
+
+  // Sort errors by line number in descending order to prevent offset issues
+  fileErrors.sort((a, b) => b.line - a.line);
+
+  for (const error of fileErrors) {
+    try {
+      const fixed = fixError(error);
+
+      if (fixed) {
+        fixCount++;
+        stats.fixedErrors++;
+      } else {
+        console.log(chalk.gray(`  Could not fix: ${error.message || error.ruleId}`));
+        stats.unfixableErrors++;
+      }
+    } catch (err) {
+      console.log(chalk.yellow(`  Error fixing: ${error.message || error.ruleId}`));
+      console.log(chalk.gray(`    ${err.message}`));
+      stats.unfixableErrors++;
+    }
+  }
+
+  // Only write if changes were made
+  if (JSON.stringify(fileLines) !== JSON.stringify(originalLines)) {
+    try {
+      fs.writeFileSync(filePath, fileLines.join('\n'));
+      stats.filesFixed.add(filePath);
+      console.log(chalk.green(`  ✓ Applied ${fixCount} fixes to ${relPath}`));
+    } catch (err) {
+      console.log(chalk.red(`  Error writing file ${relPath}: ${err.message}`));
+    }
+  } else if (fixCount > 0) {
+    // If we claim to have fixed something but the file is unchanged, this is an error in our code
+    console.log(chalk.yellow(`  ⚠ Fixed ${fixCount} errors but file was not changed, possible bug in script`));
+  }
+}
+
+/**
  * Main function
  */
 async function main() {
@@ -1136,71 +1240,7 @@ async function main() {
 
     // Process each file
     for (const [filePath, fileErrors] of Object.entries(errorsByFile)) {
-      const relPath = path.relative(ROOT_DIR, filePath);
-      console.log(chalk.cyan(`\nProcessing ${relPath}`));
-      console.log(chalk.gray(`Found ${fileErrors.length} errors`));
-
-      // Skip if file doesn't exist
-      if (!fs.existsSync(filePath)) {
-        console.log(chalk.yellow(`  File does not exist, skipping: ${relPath}`));
-        continue;
-      }
-
-      // Check if file is readable
-      try {
-        fs.accessSync(filePath, fs.constants.R_OK | fs.constants.W_OK);
-      } catch (err) {
-        console.log(chalk.yellow(`  Cannot access file, skipping: ${relPath}`));
-        continue;
-      }
-
-      let fixCount = 0;
-      let fileContent;
-
-      try {
-        fileContent = fs.readFileSync(filePath, 'utf8');
-      } catch (err) {
-        console.log(chalk.yellow(`  Error reading file, skipping: ${relPath}`));
-        continue;
-      }
-
-      let fileLines = fileContent.split('\n');
-      const originalLines = [...fileLines]; // Make a copy for comparison
-
-      // Sort errors by line number in descending order to prevent offset issues
-      fileErrors.sort((a, b) => b.line - a.line);
-
-      for (const error of fileErrors) {
-        try {
-          const fixed = fixError(error);
-
-          if (fixed) {
-            fixCount++;
-            stats.fixedErrors++;
-          } else {
-            console.log(chalk.gray(`  Could not fix: ${error.message || error.ruleId}`));
-            stats.unfixableErrors++;
-          }
-        } catch (err) {
-          console.log(chalk.yellow(`  Error fixing: ${error.message || error.ruleId}`));
-          console.log(chalk.gray(`    ${err.message}`));
-          stats.unfixableErrors++;
-        }
-      }
-
-      // Only write if changes were made
-      if (JSON.stringify(fileLines) !== JSON.stringify(originalLines)) {
-        try {
-          fs.writeFileSync(filePath, fileLines.join('\n'));
-          stats.filesFixed.add(filePath);
-          console.log(chalk.green(`  ✓ Applied ${fixCount} fixes to ${relPath}`));
-        } catch (err) {
-          console.log(chalk.red(`  Error writing file ${relPath}: ${err.message}`));
-        }
-      } else if (fixCount > 0) {
-        // If we claim to have fixed something but the file is unchanged, this is an error in our code
-        console.log(chalk.yellow(`  ⚠ Fixed ${fixCount} errors but file was not changed, possible bug in script`));
-      }
+      processFile(filePath, fileErrors);
     }
 
     // Format the fixed files
@@ -1238,7 +1278,7 @@ async function main() {
     // Run ESLint check
     console.log(chalk.blue('\n🔍 Checking for remaining ESLint errors...'));
     try {
-      execSync('npx eslint src --ext .ts,.tsx,.js,.jsx --format compact', { stdio: 'pipe', cwd: ROOT_DIR });
+      execSync('npx eslint src --ext .ts,.tsx,.js,.jsx --format stylish', { stdio: 'pipe', cwd: ROOT_DIR });
       console.log(chalk.green('✓ No ESLint errors found!'));
     } catch (error) {
       const errorOutput = error.stdout?.toString() || error.message;

@@ -1,6 +1,6 @@
 import { createTheme } from "@mui/material/styles";
 
-export const lightTheme = void createTheme({
+export const lightTheme = createTheme({
     palette: {
     mode: "light",
     primary: {
@@ -14,16 +14,16 @@ export const lightTheme = void createTheme({
     fontFamily: [
     "-apple-system",
     "BlinkMacSystemFont",
-    ""Segoe UI"",
+    "Segoe UI",
     "Roboto",
-    ""Helvetica Neue"",
+    "Helvetica Neue",
     "Arial",
     "sans-serif",
     ].join(","),
     },
 });
 
-export const darkTheme = void createTheme({
+export const darkTheme = createTheme({
     palette: {
     mode: "dark",
     primary: {
@@ -41,9 +41,9 @@ export const darkTheme = void createTheme({
     fontFamily: [
     "-apple-system",
     "BlinkMacSystemFont",
-    ""Segoe UI"",
+    "Segoe UI",
     "Roboto",
-    ""Helvetica Neue"",
+    "Helvetica Neue",
     "Arial",
     "sans-serif",
     ].join(","),
