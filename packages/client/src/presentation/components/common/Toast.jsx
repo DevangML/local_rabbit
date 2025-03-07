@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 
 /**
  * Toast notification component
- * @param {Object} props - Component props
- * @returns {JSX.Element} - Component
+ * @param { Object } props - Component props
+ * @returns { JSX.Element } - Component
  */
 const Toast = ({ 
   message, 
@@ -15,75 +15,75 @@ const Toast = ({
   
   // Auto-hide toast after duration
   useEffect(() => {
-    if (!message) {
-      setVisible(false);
-      return;
-    }
-    
-    setVisible(true);
-    
-    const timer = setTimeout(() => {
-      setVisible(false);
-      if (onClose) {
-        onClose();
-      }
-    }, duration);
-    
-    return () => clearTimeout(timer);
+  if (!message) {
+  setVisible(false);
+  return;
+  }
+  
+  setVisible(true);
+  
+  const timer = setTimeout(() => {
+  setVisible(false);
+  if (onClose) {
+  onClose();
+  }
+  }, duration);
+  
+  return () => clearTimeout(timer);
   }, [message, duration, onClose]);
   
   // Handle manual close
   const handleClose = () => {
-    setVisible(false);
-    if (onClose) {
-      onClose();
-    }
+  setVisible(false);
+  if (onClose) {
+  onClose();
+  }
   };
   
   if (!message || !visible) {
-    return null;
+  return null;
   }
   
   return (
-    <div className={`toast toast-${type}`}>
-      <div className="toast-content">
-        <span className="toast-icon">
-          {type === 'error' && '⚠️'}
-          {type === 'success' && '✅'}
-          {type === 'info' && 'ℹ️'}
-          {type === 'warning' && '⚠️'}
-        </span>
-        <span className="toast-message">{message}</span>
-      </div>
-      <button className="toast-close" onClick={handleClose}>
-        ×
-      </button>
-    </div>
+  <div className={ `toast toast-${ type }` }>
+  <div className='toast-content'>
+  <span className='toast-icon'>
+    { type === 'error' && '⚠️' }
+    { type === 'success' && '✅' }
+    { type === 'info' && 'ℹ️' }
+    { type === 'warning' && '⚠️' }
+  </span>
+  <span className='toast-message'>{ message }</span>
+  </div>
+  <button className='toast-close' onClick={ handleClose }>
+  ×
+  </button>
+  </div>
   );
 };
 
 /**
  * Toast container component
- * @param {Object} props - Component props
- * @returns {JSX.Element} - Component
+ * @param { Object } props - Component props
+ * @returns { JSX.Element } - Component
  */
 export const ToastContainer = ({ toasts = [], onClose }) => {
   if (!toasts.length) {
-    return null;
+  return null;
   }
   
   return (
-    <div className="toast-container">
-      {toasts.map((toast, index) => (
-        <Toast
-          key={index}
-          message={toast.message}
-          type={toast.type}
-          duration={toast.duration}
-          onClose={() => onClose(index)}
-        />
-      ))}
-    </div>
+  <div className='toast-container'>
+  { toasts.map((toast, index) => (
+  <Toast
+    key={ index }
+    message={ toast.message }
+    type={ toast.type }
+    duration={ toast.duration }
+    onClose={ () => onClose(index) }
+  />
+  )) }
+  </div>
   );
 };
 

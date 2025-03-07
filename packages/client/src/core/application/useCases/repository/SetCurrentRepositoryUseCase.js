@@ -3,18 +3,18 @@
  */
 export class SetCurrentRepositoryUseCase {
   /**
-   * @param {Object} repositoryRepository - Repository repository implementation
+   * @param { Object } repositoryRepository - Repository repository implementation
    */
   constructor(repositoryRepository) {
-    this.repositoryRepository = repositoryRepository;
+  this.repositoryRepository = repositoryRepository;
   }
 
   /**
    * Execute the use case
-   * @param {string} path - Repository path
-   * @returns {Promise<Object>} - Repository
+   * @param { string } path - Repository path
+   * @returns { Promise<Object> } - Repository
    */
   async execute(path) {
-    return this.repositoryRepository.setCurrent(path);
+  return this.repositoryRepository.setCurrent(path);
   }
 } 

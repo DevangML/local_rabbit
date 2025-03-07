@@ -28,77 +28,77 @@ import { AnalyzeDiffWithAIUseCase } from '../../core/application/useCases/ai/Ana
  */
 class Container {
   constructor() {
-    this.dependencies = {};
-    this.registerDependencies();
+  this.dependencies = {};
+  this.registerDependencies();
   }
 
   /**
    * Register all application dependencies
    */
   registerDependencies() {
-    // Repositories
-    this.register('repositoryRepository', new ApiRepositoryRepository());
-    this.register('diffRepository', new ApiDiffRepository());
+  // Repositories
+  this.register('repositoryRepository', new ApiRepositoryRepository());
+  this.register('diffRepository', new ApiDiffRepository());
 
-    // Services
-    this.register('aiService', geminiService);
+  // Services
+  this.register('aiService', geminiService);
 
-    // Use Cases - Repository
-    this.register(
-      'getRepositoriesUseCase',
-      new GetRepositoriesUseCase(this.resolve('repositoryRepository'))
-    );
-    this.register(
-      'setCurrentRepositoryUseCase',
-      new SetCurrentRepositoryUseCase(this.resolve('repositoryRepository'))
-    );
-    this.register(
-      'getBranchesUseCase',
-      new GetBranchesUseCase(this.resolve('repositoryRepository'))
-    );
+  // Use Cases - Repository
+  this.register(
+  'getRepositoriesUseCase',
+  new GetRepositoriesUseCase(this.resolve('repositoryRepository'))
+  );
+  this.register(
+  'setCurrentRepositoryUseCase',
+  new SetCurrentRepositoryUseCase(this.resolve('repositoryRepository'))
+  );
+  this.register(
+  'getBranchesUseCase',
+  new GetBranchesUseCase(this.resolve('repositoryRepository'))
+  );
 
-    // Use Cases - Diff
-    this.register(
-      'getDiffUseCase',
-      new GetDiffUseCase(this.resolve('diffRepository'))
-    );
-    this.register(
-      'analyzeDiffUseCase',
-      new AnalyzeDiffUseCase(this.resolve('diffRepository'))
-    );
+  // Use Cases - Diff
+  this.register(
+  'getDiffUseCase',
+  new GetDiffUseCase(this.resolve('diffRepository'))
+  );
+  this.register(
+  'analyzeDiffUseCase',
+  new AnalyzeDiffUseCase(this.resolve('diffRepository'))
+  );
 
-    // Use Cases - AI
-    this.register(
-      'analyzeDiffWithAIUseCase',
-      new AnalyzeDiffWithAIUseCase(
-        this.resolve('aiService'),
-        this.resolve('diffRepository')
-      )
-    );
+  // Use Cases - AI
+  this.register(
+  'analyzeDiffWithAIUseCase',
+  new AnalyzeDiffWithAIUseCase(
+  this.resolve('aiService'),
+  this.resolve('diffRepository')
+  )
+  );
   }
 
   /**
    * Register a dependency
-   * @param {string} name - Dependency name
-   * @param {any} instance - Dependency instance
+   * @param { string } name - Dependency name
+   * @param { any } instance - Dependency instance
    */
   register(name, instance) {
-    this.dependencies[name] = instance;
+  this.(Object.hasOwn(dependencies, name) ? (Object.hasOwn(dependencies, name) ? dependencies[name] : undefined) : undefined) = instance;
   }
 
   /**
    * Resolve a dependency
-   * @param {string} name - Dependency name
-   * @returns {any} - Dependency instance
+   * @param { string } name - Dependency name
+   * @returns { any } - Dependency instance
    */
   resolve(name) {
-    const dependency = this.dependencies[name];
-    
-    if (!dependency) {
-      throw new Error(`Dependency ${name} not found`);
-    }
-    
-    return dependency;
+  const dependency = this.(Object.hasOwn(dependencies, name) ? (Object.hasOwn(dependencies, name) ? dependencies[name] : undefined) : undefined);
+  
+  if (!dependency) {
+  throw new Error(`Dependency ${ name } not found`);
+  }
+  
+  return dependency;
   }
 }
 

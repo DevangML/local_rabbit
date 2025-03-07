@@ -5,26 +5,26 @@ import { Routes, Route } from 'react-router-dom';
 // Create a simplified SSR App without MUI components to avoid import issues
 function SSRApp() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Routes>
-        <Route path="/" element={<div>Welcome to Local Rabbit</div>} />
-        <Route path="/home" element={<div>Home Page</div>} />
-      </Routes>
-    </div>
+  <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+  <Routes>
+  <Route path='/' element={ <div>Welcome to Local Rabbit</div> } />
+  <Route path='/home' element={ <div>Home Page</div> } />
+  </Routes>
+  </div>
   );
 }
 
 // Export a named renderPage function for server.ts to use
-export function renderPage(url) {
+export function renderPage(url: string) {
   return (
-    <StaticRouter location={url}>
-      <SSRApp />
-    </StaticRouter>
+  <StaticRouter location={ url }>
+  <SSRApp />
+  </StaticRouter>
   );
 }
 
 // Keep the default export for backward compatibility
-export default function render(props) {
+export default function render(props: any) {
   const { url } = props;
   return renderPage(url);
 } 

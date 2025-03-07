@@ -1,58 +1,58 @@
-import { useEffect, useRef } from 'react';
-import * as Comlink from 'comlink';
+import { useState, useEffect, useRef } from 'react';
 
-interface WorkerInstance {
-  fibonacci: (n: number) => Promise<number>;
-  processArrayData: <T>(data: T[], options: {
-    filterFn?: (item: T) => boolean;
-    mapFn?: <R>(item: T) => R;
-    sortFn?: (a: T, b: T) => number;
-    groupFn?: (item: T) => string | number;
-  }) => Promise<T[] | Record<string, T[]>>;
-  processImage: (imageData: ImageData, operations: {
-    invert?: boolean;
-    grayscale?: boolean;
-    blur?: boolean;
-    brightness?: number;
-  }) => Promise<ImageData>;
-}
-
-type WorkerApi = Comlink.Remote<WorkerInstance>;
-
-export const useWorker = () => {
+export function useWorker<T = unknown, R = unknown>(
+  workerFactory: () => Worker,
+  onMessage?: (data: R) => void
+) {
   const workerRef = useRef<Worker | null>(null);
-  const workerApiRef = useRef<WorkerApi | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [result, setResult] = useState<R | null>(null);
 
   useEffect(() => {
-    if (!workerRef.current) {
-      workerRef.current = new Worker(
-        new URL('../workers/calculator.worker.ts', import.meta.url),
-        { type: 'module' }
-      );
-      workerApiRef.current = Comlink.wrap<WorkerInstance>(workerRef.current);
-    }
+  // Create worker instance
+  if (!workerRef.current) {
+    workerRef.current = workerFactory();
+  }
 
-    return () => {
-      if (workerRef.current) {
-        workerRef.current.terminate();
-        workerRef.current = null;
-        workerApiRef.current = null;
-      }
-    };
-  }, []);
-
-  const getWorker = () => {
-    if (!workerApiRef.current) {
-      throw new Error('Worker not initialized');
-    }
-    return workerApiRef.current;
+  // Set up message handler
+  const handleMessage = (e: MessageEvent) => {
+    setLoading(false);
+    setResult(e.data);
+    if (onMessage) { onMessage(e.data); }
   };
 
-  return {
-    fibonacci: (n: number) => getWorker().fibonacci(n),
-    processArrayData: <T>(data: T[], options = {}) => 
-      getWorker().processArrayData(data, options),
-    processImage: (imageData: ImageData, operations = {}) =>
-      getWorker().processImage(imageData, operations)
+  workerRef.current.addEventListener('message', handleMessage);
+  
+  // Set up error handler
+  const handleError = (e: ErrorEvent) => {
+    setLoading(false);
+    setError(new Error(e.message));
   };
-} 
+  
+  workerRef.current.addEventListener('error', handleError);
+
+  // Cleanup
+  return () => {
+    if (workerRef.current) {
+    workerRef.current.removeEventListener('message', handleMessage);
+    workerRef.current.removeEventListener('error', handleError);
+    workerRef.current.terminate();
+    workerRef.current = null;
+    }
+  };
+  }, [workerFactory, onMessage]);
+
+  // Function to send data to the worker
+  const postMessage = (data: T) => {
+  if (workerRef.current) {
+    setLoading(true);
+    setError(null);
+    workerRef.current.postMessage(data);
+  } else {
+    setError(new Error('Worker is not initialized'));
+  }
+  };
+
+  return { postMessage, loading, error, result };
+}

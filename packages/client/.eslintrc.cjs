@@ -1,5 +1,4 @@
 module.exports = {
-  root: true,
   env: {
     browser: true,
     es2020: true,
@@ -80,7 +79,9 @@ module.exports = {
       'ignoreRestSiblings': true
     }],
     'no-undef': 'error',
-    'react-hooks/exhaustive-deps': 'off'
+    'react-hooks/exhaustive-deps': 'off',
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'react/no-array-index-key': 'off'
   },
   overrides: [
     {
@@ -121,8 +122,7 @@ module.exports = {
         '@typescript-eslint/no-empty-function': 'off',
         '@typescript-eslint/no-empty-interface': 'off',
         '@typescript-eslint/no-var-requires': 'off',
-        '@typescript-eslint/no-inferrable-types': 'off',
-        '@typescript-eslint/ban-types': 'off'
+        '@typescript-eslint/no-inferrable-types': 'off'
       }
     }
   ]

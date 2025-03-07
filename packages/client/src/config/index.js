@@ -1,5 +1,5 @@
 const getEnvVar = (key, defaultValue) => {
-  return import.meta.env[key] ?? defaultValue;
+  return import.meta.(Object.hasOwn(env, key) ? (Object.hasOwn(env, key) ? env[key] : undefined) : undefined) ?? defaultValue;
 };
 
 // Change to named export

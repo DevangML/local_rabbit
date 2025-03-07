@@ -3,17 +3,17 @@
  */
 export class GetRepositoriesUseCase {
   /**
-   * @param {Object} repositoryRepository - Repository repository implementation
+   * @param { Object } repositoryRepository - Repository repository implementation
    */
   constructor(repositoryRepository) {
-    this.repositoryRepository = repositoryRepository;
+  this.repositoryRepository = repositoryRepository;
   }
 
   /**
    * Execute the use case
-   * @returns {Promise<Array>} - List of repositories
+   * @returns { Promise<Array> } - List of repositories
    */
   async execute() {
-    return this.repositoryRepository.getAll();
+  return this.repositoryRepository.getAll();
   }
 } 

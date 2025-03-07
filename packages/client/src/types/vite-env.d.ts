@@ -1,5 +1,5 @@
-/// <reference types="vite/client" />
-/// <reference types="vite-plugin-pwa/client" />
+/// <reference types='vite/client' />
+/// <reference types='vite-plugin-pwa/client' />
 
 interface ServiceWorkerRegistrationOptions {
   scope?: string;
@@ -52,12 +52,12 @@ declare module 'vite-plugin-webfont-dl' {
 declare module 'vite-plugin-optimizer' {
   import { Plugin } from 'vite';
   interface OptimizerOptions {
-    exclude?: string[];
-    entries?: string[];
-    esbuild?: {
-      minify?: boolean;
-      target?: string;
-    };
+  exclude?: string[];
+  entries?: string[];
+  esbuild?: {
+  minify?: boolean;
+  target?: string;
+  };
   }
   export default function optimizer(options?: OptimizerOptions): Plugin;
 }
@@ -65,13 +65,13 @@ declare module 'vite-plugin-optimizer' {
 declare module 'vite-plugin-robots' {
   import { Plugin } from 'vite';
   interface RobotsOptions {
-    sitemap?: string[];
-    policies?: Array<{
-      userAgent: string;
-      allow?: string[];
-      disallow?: string[];
-      crawlDelay?: number;
-    }>;
+  sitemap?: string[];
+  policies?: Array<{
+  userAgent: string;
+  allow?: string[];
+  disallow?: string[];
+  crawlDelay?: number;
+  }>;
   }
   export default function robots(options?: RobotsOptions): Plugin;
 }
@@ -79,13 +79,13 @@ declare module 'vite-plugin-robots' {
 declare module 'vite-plugin-vconsole' {
   import { Plugin } from 'vite';
   interface VConsoleOptions {
-    entry: string;
-    localEnabled?: boolean;
-    enabled?: boolean;
-    config?: {
-      maxLogNumber?: number;
-      theme?: 'light' | 'dark';
-    };
+  entry: string;
+  localEnabled?: boolean;
+  enabled?: boolean;
+  config?: {
+  maxLogNumber?: number;
+  theme?: 'light' | 'dark';
+  };
   }
   export default function VConsole(options: VConsoleOptions): Plugin;
 } 

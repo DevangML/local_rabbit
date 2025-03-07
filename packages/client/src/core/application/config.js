@@ -1,37 +1,37 @@
 /**
  * Get environment variable with fallback
- * @param {string} key - Environment variable key
- * @param {string} defaultValue - Default value if not found
- * @returns {string} - Environment variable value or default
+ * @param { string } key - Environment variable key
+ * @param { string } defaultValue - Default value if not found
+ * @returns { string } - Environment variable value or default
  */
 const getEnvVar = (key, defaultValue) => {
   if (typeof import.meta !== 'undefined' && import.meta.env) {
-    return import.meta.env[key] || defaultValue;
+  return import.meta.(Object.hasOwn(env, key) ? (Object.hasOwn(env, key) ? env[key] : undefined) : undefined) || defaultValue;
   }
-  return process.env[key] || defaultValue;
+  return process.(Object.hasOwn(env, key) ? (Object.hasOwn(env, key) ? env[key] : undefined) : undefined) || defaultValue;
 };
 
 /**
  * Auto-detect server URL, with fallbacks to common ports
- * @returns {string} The base API URL
+ * @returns { string } The base API URL
  */
 const detectServerUrl = () => {
   // First check for environment variable
   const configuredUrl = getEnvVar('VITE_API_URL', '');
-  if (configuredUrl) {return configuredUrl;}
+  if (configuredUrl) { return configuredUrl; }
 
   // For local development, use the configured port from environment
   const apiPort = getEnvVar('VITE_API_PORT', '3001');
   const hostname = window.location.hostname || 'localhost';
 
   if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
-    // Prefer IPv4 localhost for compatibility
-    return `http://127.0.0.1:${apiPort}`;
+  // Prefer IPv4 localhost for compatibility
+  return `http://127.0.0.1:${ apiPort }`;
   }
 
   // In production, assume API is on the same host
   const protocol = window.location.protocol;
-  return `${protocol}//${hostname}`;
+  return `${ protocol }//${ hostname }`;
 };
 
 /**
@@ -61,7 +61,7 @@ const config = {
 };
 
 // Debug: Log client configuration
-console.log('[CLIENT] Config initialized:', {
+console.warn('[CLIENT] Config initialized:', {
   apiBaseUrl: config.API_BASE_URL,
   nodeEnv: config.NODE_ENV,
   isDevelopment: config.isDevelopment
@@ -70,9 +70,9 @@ console.log('[CLIENT] Config initialized:', {
 // Safe development-only API key validation
 if (process.env.NODE_ENV === 'development') {
   if (!config.GEMINI_API_KEY) {
-    console.warn('[DEV] No Gemini API key found in client environment variables');
+  console.warn('[DEV] No Gemini API key found in client environment variables');
   } else {
-    console.log('[DEV] Gemini API key is configured');
+  console.warn('[DEV] Gemini API key is configured');
   }
 }
 

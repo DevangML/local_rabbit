@@ -1,0 +1,10 @@
+{
+  "name": "@local-rabbit/client-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "typescript": "^5.2.2",
+    "chalk": "^5.3.0"
+  }
+}

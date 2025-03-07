@@ -18,44 +18,44 @@ export const repositoryKeys = {
 
 /**
  * Hook for fetching repositories
- * @returns {Object} - Query result with repositories data
+ * @returns { Object } - Query result with repositories data
  */
 export const useRepositories = () => {
   return useQuery({
-    queryKey: repositoryKeys.lists(),
-    queryFn: () => getRepositoriesUseCase.execute(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+  queryKey: repositoryKeys.lists(),
+  queryFn: () => getRepositoriesUseCase.execute(),
+  staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
 /**
  * Hook for getting the current repository
- * @returns {Object} - Query result with current repository data
+ * @returns { Object } - Query result with current repository data
  */
 export const useCurrentRepository = () => {
   return useQuery({
-    queryKey: repositoryKeys.current(),
-    queryFn: () => repositoryService.getCurrentRepository(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+  queryKey: repositoryKeys.current(),
+  queryFn: () => repositoryService.getCurrentRepository(),
+  staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
 /**
  * Hook for setting the current repository
- * @returns {Object} - Mutation result
+ * @returns { Object } - Mutation result
  */
 export const useSetCurrentRepository = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (path) => setCurrentRepositoryUseCase.execute(path),
-    onSuccess: (data) => {
-      // Update the current repository in the cache
-      queryClient.setQueryData(repositoryKeys.current(), data);
-      
-      // Invalidate branches and diffs queries to force refetch
-      queryClient.invalidateQueries({ queryKey: ['branches'] });
-      queryClient.invalidateQueries({ queryKey: ['diffs'] });
-    },
+  mutationFn: (path) => setCurrentRepositoryUseCase.execute(path),
+  onSuccess: (data) => {
+  // Update the current repository in the cache
+  queryClient.setQueryData(repositoryKeys.current(), data);
+  
+  // Invalidate branches and diffs queries to force refetch
+  queryClient.invalidateQueries({ queryKey: ['branches'] });
+  queryClient.invalidateQueries({ queryKey: ['diffs'] });
+  },
   });
 }; 

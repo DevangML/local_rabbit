@@ -25,41 +25,41 @@ const config = {
 // Ensure directories exist
 [config.coverageDir, config.testReportDir].forEach(dir => {
   if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  fs.mkdirSync(dir, { recursive: true });
   }
 });
 
 // Run tests
-console.log('Running all tests with coverage reporting...');
-console.log(`Coverage reports will be saved to: ${config.coverageDir}`);
-console.log(`Test reports will be saved to: ${config.testReportDir}`);
+console.warn('Running all tests with coverage reporting...');
+console.warn(`Coverage reports will be saved to: ${ config.coverageDir }`);
+console.warn(`Test reports will be saved to: ${ config.testReportDir }`);
 
 try {
   // Execute the test command
   execSync(config.testCommand, {
-    stdio: 'inherit',
-    timeout: config.testTimeout,
-    env: {
-      ...process.env,
-      VITEST_COVERAGE_DIR: config.coverageDir,
-      VITEST_REPORT_DIR: config.testReportDir,
-    },
+  stdio: 'inherit',
+  timeout: config.testTimeout,
+  env: {
+  ...process.env,
+  VITEST_COVERAGE_DIR: config.coverageDir,
+  VITEST_REPORT_DIR: config.testReportDir,
+  },
   });
 
-  console.log('\n✅ All tests completed successfully!');
+  console.warn('\n✅ All tests completed successfully!');
 
   // Generate summary
   const coverageFiles = fs.readdirSync(config.coverageDir);
   if (coverageFiles.includes('coverage-summary.json')) {
-    const summary = JSON.parse(
-      fs.readFileSync(path.join(config.coverageDir, 'coverage-summary.json'), 'utf8')
-    );
+  const summary = JSON.parse(
+  fs.readFileSync(path.join(config.coverageDir, 'coverage-summary.json'), 'utf8')
+  );
 
-    console.log('\nCoverage Summary:');
-    console.log(`Statements: ${summary.total.statements.pct}%`);
-    console.log(`Branches: ${summary.total.branches.pct}%`);
-    console.log(`Functions: ${summary.total.functions.pct}%`);
-    console.log(`Lines: ${summary.total.lines.pct}%`);
+  console.warn('\nCoverage Summary:');
+  console.warn(`Statements: ${ summary.total.statements.pct }%`);
+  console.warn(`Branches: ${ summary.total.branches.pct }%`);
+  console.warn(`Functions: ${ summary.total.functions.pct }%`);
+  console.warn(`Lines: ${ summary.total.lines.pct }%`);
   }
 
 } catch (error) {

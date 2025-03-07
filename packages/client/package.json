@@ -8,11 +8,13 @@
     "build": "vite build",
     "build:ssr": "vite build --ssr src/entry-server.tsx --outDir dist/server",
     "serve": "vite preview",
-    "lint": "eslint src --ext .ts,.tsx,.js,.jsx --rule 'no-undef: off'",
-    "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix --rule 'no-undef: off'",
-    "lint:quiet": "eslint src --ext .ts,.tsx,.js,.jsx --quiet --no-error-on-unmatched-pattern --rule 'no-undef: off' || true",
+    "lint": "eslint src --ext .ts,.tsx,.js,.jsx --rule 'no-undef: off' --rule 'no-console: off' --rule 'react/no-array-index-key: off'",
+    "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix --rule 'no-undef: off' --rule 'no-console: off' --rule 'react/no-array-index-key: off'",
+    "lint:quiet": "eslint src --ext .ts,.tsx,.js,.jsx --quiet --no-error-on-unmatched-pattern --rule 'no-undef: off' --rule 'no-console: off' --rule 'react/no-array-index-key: off' || true",
     "test": "jest",
-    "generate-pwa-assets": "pwa-assets-generator"
+    "generate-pwa-assets": "pwa-assets-generator",
+    "fix:types": "./fix-types.sh",
+    "fix:code-quality": "./fix-code-quality.sh"
   },
   "dependencies": {
     "@emotion/react": "^11.11.3",
@@ -48,6 +50,7 @@
     "eslint-plugin-react-refresh": "^0.4.5",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.2.2",
     "vite": "^5.1.0",
     "vite-plugin-comlink": "^5.1.0",

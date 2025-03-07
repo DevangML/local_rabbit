@@ -2,9 +2,9 @@ import React from 'react';
 
 const QualityAnalyzer = () => {
   return (
-    <div className="quality-analyzer">
-      {/* Quality analyzer implementation */}
-    </div>
+  <div className='quality-analyzer'>
+  { /* Quality analyzer implementation */ }
+  </div>
   );
 };
 

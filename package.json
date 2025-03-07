@@ -19,7 +19,11 @@
     "lint": "eslint --config eslint.config.js . --ext .js,.ts,.tsx --fix",
     "lint:check": "eslint --config eslint.config.js . --ext .js,.ts,.tsx",
     "lint:fix": "yarn workspaces run lint:fix",
-    "lint:quiet": "yarn workspaces run lint:quiet"
+    "lint:quiet": "yarn workspaces run lint:quiet",
+    "fix:types": "cd packages/client && yarn fix:types",
+    "fix:code-quality": "./fix-all-code-quality.sh",
+    "fix:code-quality:client": "cd packages/client && yarn fix:code-quality",
+    "fix:code-quality:server": "cd packages/server && yarn fix:code-quality"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.26.8",

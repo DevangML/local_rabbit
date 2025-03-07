@@ -1,5 +1,5 @@
 const getEnvVar = (key, defaultValue) => {
-  const value = import.meta.env[key];
+  const value = import.meta.(Object.hasOwn(env, key) ? (Object.hasOwn(env, key) ? env[key] : undefined) : undefined);
   return value !== undefined ? value : defaultValue;
 };
 

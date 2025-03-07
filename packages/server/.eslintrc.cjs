@@ -1,5 +1,4 @@
 module.exports = {
-  root: true,
   env: {
     node: true,
     es2021: true,
@@ -34,7 +33,10 @@ module.exports = {
     },
   },
   rules: {
-    '@typescript-eslint/explicit-function-return-type': 'warn',
+    '@typescript-eslint/explicit-function-return-type': ['error', {
+      allowExpressions: true,
+      allowTypedFunctionExpressions: true,
+    }],
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/no-unused-vars': ['error', {
       argsIgnorePattern: '^_',

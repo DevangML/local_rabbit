@@ -6,8 +6,8 @@ const AppContext = createContext();
 
 /**
  * App context provider
- * @param {Object} props - Component props
- * @returns {JSX.Element} - Provider component
+ * @param { Object } props - Component props
+ * @returns { JSX.Element } - Provider component
  */
 export const AppProvider = ({ children }) => {
   // Use the branch selection hook for managing branch state
@@ -15,25 +15,25 @@ export const AppProvider = ({ children }) => {
   
   // Context value
   const value = {
-    ...branchSelection
+  ...branchSelection
   };
   
   return (
-    <AppContext.Provider value={value}>
-      {children}
-    </AppContext.Provider>
+  <AppContext.Provider value={ value }>
+  { children }
+  </AppContext.Provider>
   );
 };
 
 /**
  * Hook for using app context
- * @returns {Object} - App context
+ * @returns { Object } - App context
  */
 export const useAppContext = () => {
   const context = useContext(AppContext);
   
   if (!context) {
-    throw new Error('useAppContext must be used within an AppProvider');
+  throw new Error('useAppContext must be used within an AppProvider');
   }
   
   return context;

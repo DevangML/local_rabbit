@@ -3,20 +3,20 @@
  */
 export class GetDiffUseCase {
   /**
-   * @param {Object} diffRepository - Diff repository implementation
+   * @param { Object } diffRepository - Diff repository implementation
    */
   constructor(diffRepository) {
-    this.diffRepository = diffRepository;
+  this.diffRepository = diffRepository;
   }
 
   /**
    * Execute the use case
-   * @param {string} repositoryId - Repository ID
-   * @param {string} fromBranch - Source branch
-   * @param {string} toBranch - Target branch
-   * @returns {Promise<Object>} - Diff
+   * @param { string } repositoryId - Repository ID
+   * @param { string } fromBranch - Source branch
+   * @param { string } toBranch - Target branch
+   * @returns { Promise<Object> } - Diff
    */
   async execute(repositoryId, fromBranch, toBranch) {
-    return this.diffRepository.getDiff(repositoryId, fromBranch, toBranch);
+  return this.diffRepository.getDiff(repositoryId, fromBranch, toBranch);
   }
 } 
