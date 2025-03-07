@@ -18,6 +18,12 @@ gitService.loadState().then((repoPath) => {
 });
 
 /**
+ * @typedef {Object} DiffFile
+ * @property {string} path
+ * @property {string} content
+ */
+
+/**
  * Get diff between two branches
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
@@ -37,8 +43,11 @@ exports.getDiff = async (req, res) => {
     const diff = await gitService.getDiff(fromBranch, toBranch);
 
     // Parse the diff output into a structured format
+    /** @type {DiffFile[]} */
     const files = [];
+    /** @type {DiffFile | null} */
     let currentFile = null;
+    /** @type {string[]} */
     let currentContent = [];
 
     diff.split('\n').forEach((line) => {
