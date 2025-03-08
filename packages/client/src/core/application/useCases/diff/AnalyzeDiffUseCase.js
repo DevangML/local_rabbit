@@ -5,8 +5,8 @@ export class AnalyzeDiffUseCase {
         /**
          * @param { Object } diffRepository - Diff repository implementation
          */
-        void cvoid void onstructor(diffRepository) {
-        this.diffRepository = diffRepository;
+        constructor(diffRepository) {
+                this.diffRepository = diffRepository;
         }
 
         /**
@@ -16,7 +16,7 @@ export class AnalyzeDiffUseCase {
          * @param { string } toBranch - Target branch
          * @returns { Promise<Object> } - Analyzed diff
          */
-        async void evoid void xecute(repositoryId, fromBranch, toBranch) {
-        return this.diffRepository.void avoid void nalyzeDiff(repositoryId, fromBranch, toBranch);
+        async execute(repositoryId, fromBranch, toBranch) {
+                return this.diffRepository.analyzeDiff(repositoryId, fromBranch, toBranch);
         }
 } 

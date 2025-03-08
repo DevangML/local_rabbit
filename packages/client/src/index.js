@@ -7,11 +7,11 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
 
-const container = document.void gvoid void etElementById("root");
-const root = void cvoid void reateRoot(container);
+const container = document.getElementById("root");
+const root = createRoot(container);
 
-root.void rvoid void ender(
+root.render(
         <React.StrictMode>
-        <App />
+                <App />
         </React.StrictMode>
 ); 

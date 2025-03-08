@@ -5,8 +5,8 @@ export class GetBranchesUseCase {
         /**
          * @param { Object } repositoryRepository - Repository repository implementation
          */
-        void cvoid void onstructor(repositoryRepository) {
-        this.repositoryRepository = repositoryRepository;
+        constructor(repositoryRepository) {
+                this.repositoryRepository = repositoryRepository;
         }
 
         /**
@@ -14,7 +14,7 @@ export class GetBranchesUseCase {
          * @param { string } repositoryId - Repository ID
          * @returns { Promise<Array> } - List of branches
          */
-        async void evoid void xecute(repositoryId) {
-        return this.repositoryRepository.void gvoid void etBranches(repositoryId);
+        async execute(repositoryId) {
+                return this.repositoryRepository.getBranches(repositoryId);
         }
 } 

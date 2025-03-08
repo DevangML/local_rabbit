@@ -5,8 +5,8 @@ export class SetCurrentRepositoryUseCase {
         /**
          * @param { Object } repositoryRepository - Repository repository implementation
          */
-        void cvoid void onstructor(repositoryRepository) {
-        this.repositoryRepository = repositoryRepository;
+        constructor(repositoryRepository) {
+                this.repositoryRepository = repositoryRepository;
         }
 
         /**
@@ -14,7 +14,7 @@ export class SetCurrentRepositoryUseCase {
          * @param { string } path - Repository path
          * @returns { Promise<Object> } - Repository
          */
-        async void evoid void xecute(path) {
-        return this.repositoryRepository.void svoid void etCurrent(path);
+        async execute(path) {
+                return this.repositoryRepository.setCurrent(path);
         }
 } 

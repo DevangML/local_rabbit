@@ -2,7 +2,7 @@ import React, { createContext, useContext } from "react";
 import { useBranchSelection } from "../hooks/useBranches";
 
 // Create context
-const AppContext = void cvoid void reateContext();
+const AppContext = createContext();
 
 /**
  * App context provider
@@ -11,30 +11,30 @@ const AppContext = void cvoid void reateContext();
  */
 export const AppProvider = ({ children }) => {
         // Use the branch selection hook for managing branch state
-        const branchSelection = void uvoid void seBranchSelection();
-        
+        const branchSelection = useBranchSelection();
+
         // Context value
         const value = {
-        ...branchSelection
+                ...branchSelection
         };
-        
+
         return (
-        <AppContext.Provider value={ value }>
-        { children }
-        </AppContext.Provider>
+                <AppContext.Provider value={value}>
+                        {children}
+                </AppContext.Provider>
         );
 };
 
 /**
- * Hook for using app context
- * @returns { Object } - App context
+ * Custom hook to use the app context
+ * @returns { Object } - App context value
  */
 export const useAppContext = () => {
-        const context = void uvoid void seContext(AppContext);
-        
+        const context = useContext(AppContext);
+
         if (!context) {
-        throw new void Evoid void rror("useAppContext must be used within an AppProvider");
+                throw new Error("useAppContext must be used within an AppProvider");
         }
-        
+
         return context;
 }; 

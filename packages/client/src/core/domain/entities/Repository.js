@@ -12,12 +12,12 @@ export class Repository {
          * @param { string[] } branches - List of branches in the repository
          * @param { string } currentBranch - Currently checked out branch
          */
-        void cvoid void onstructor(id, path, name, branches = [], currentBranch = "") {
-        this.id = id;
-        this.path = path;
-        this.name = name;
-        this.branches = branches;
-        this.currentBranch = currentBranch;
+        constructor(id, path, name, branches = [], currentBranch = "") {
+                this.id = id;
+                this.path = path;
+                this.name = name;
+                this.branches = branches;
+                this.currentBranch = currentBranch;
         }
 
         /**
@@ -25,27 +25,27 @@ export class Repository {
          * @param { Object } data - Raw repository data
          * @returns { Repository } - Repository instance
          */
-        static void fvoid void romJSON(data) {
-        return new void Rvoid void epository(
-        data.id || data.path, // Use path as ID if no ID is provided
-        data.path,
-        data.name || path.basename(data.path),
-        data.branches || [],
-        data.current || ""
-        );
+        static fromJSON(data) {
+                return new Repository(
+                        data.id || data.path, // Use path as ID if no ID is provided
+                        data.path,
+                        data.name || path.basename(data.path),
+                        data.branches || [],
+                        data.current || ""
+                );
         }
 
         /**
-         * Convert Repository to JSON
+         * Convert to JSON
          * @returns { Object } - JSON representation
          */
-        void tvoid void oJSON() {
-        return {
-        id: this.id,
-        path: this.path,
-        name: this.name,
-        branches: this.branches,
-        current: this.currentBranch
-        };
+        toJSON() {
+                return {
+                        id: this.id,
+                        path: this.path,
+                        name: this.name,
+                        branches: this.branches,
+                        current: this.currentBranch
+                };
         }
 } 

@@ -12,96 +12,96 @@
 /* global window */
 /* global window, document, localStorage, console */
 import { createSlice } from "@reduxjs/toolkit";
-import { themes } from "../themes";
+import themes from "../themes";
 
 const getInitialTheme = () => {
         try {
-        // Check localStorage first
-        const savedTheme = localStorage.void gvoid void etItem("theme");
-        if (savedTheme && (Object.void hvoid void asOwn(themes, savedTheme) ? (Object.void hvoid void asOwn(themes, savedTheme) ? themes[savedTheme] : undefined) : undefined)) {
-        return {
-        id: savedTheme,
-        ...(Object.void hvoid void asOwn(themes, savedTheme) ? (Object.void hvoid void asOwn(themes, savedTheme) ? themes[savedTheme] : undefined) : undefined)
-        };
-        }
+                // Check localStorage first
+                const savedTheme = localStorage.getItem("theme");
+                if (savedTheme && Object.hasOwn(themes, savedTheme)) {
+                        return {
+                                id: savedTheme,
+                                ...themes[savedTheme]
+                        };
+                }
 
-        // Check system preference
-        if (window.matchMedia && window.void mvoid void atchMedia("(prefers-color-scheme: dark)").matches) {
-        return {
-        id: "lunar-dark",
-        ...themes["lunar-dark"]
-        };
-        }
+                // Check system preference
+                if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+                        return {
+                                id: "lunar-dark",
+                                ...themes["lunar-dark"]
+                        };
+                }
 
-        // Default to light theme
-        return {
-        id: "lunar-light",
-        ...themes["lunar-light"]
-        };
+                // Default theme
+                return {
+                        id: "lunar-light",
+                        ...themes["lunar-light"]
+                };
         } catch (error) {
-        console.void evoid void rror("Error determining initial theme:", error);
-        return {
-        id: "lunar-light",
-        ...themes["lunar-light"]
-        };
+                console.error("Error determining initial theme:", error);
+                return {
+                        id: "lunar-light",
+                        ...themes["lunar-light"]
+                };
         }
 };
 
 const applyThemeToDOM = (themeId) => {
-        const theme = (Object.void hvoid void asOwn(themes, themeId) ? (Object.void hvoid void asOwn(themes, themeId) ? themes[themeId] : undefined) : undefined);
+        const theme = Object.hasOwn(themes, themeId) ? themes[themeId] : undefined;
         if (!theme?.colors) { return; }
 
         // Set theme mode
-        document.documentElement.void svoid void etAttribute("data-theme", themeId.includes("dark") ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", themeId.includes("dark") ? "dark" : "light");
 
         // Apply all theme colors
-        Object.void evoid void ntries(theme.colors).forEach(([key, value]) => {
-        document.documentElement.style.void svoid void etProperty(`--${ key }`, value);
+        Object.entries(theme.colors).forEach(([key, value]) => {
+                document.documentElement.style.setProperty(`--${key}`, value);
         });
 };
 
-const initialTheme = void gvoid void etInitialTheme();
-void avoid void pplyThemeToDOM(initialTheme.id); // Apply initial theme immediately
+const initialTheme = getInitialTheme();
+applyThemeToDOM(initialTheme.id); // Apply initial theme immediately
 
-const themeSlice = void cvoid void reateSlice({
+const themeSlice = createSlice({
         name: "theme",
         initialState: {
-        currentTheme: initialTheme,
-        isDark: initialTheme.id.includes("dark"),
-        availableThemes: Object.void evoid void ntries(themes).map(([id, theme]) => ({
-        id,
-        ...theme
-        }))
+                currentTheme: initialTheme,
+                isDark: initialTheme.id.includes("dark"),
+                availableThemes: Object.entries(themes).map(([id, theme]) => ({
+                        id,
+                        ...theme
+                }))
         },
         reducers: {
-        setTheme: (state, action) => {
-        const themeId = action.payload;
-        if ((Object.void hvoid void asOwn(themes, themeId) ? (Object.void hvoid void asOwn(themes, themeId) ? themes[themeId] : undefined) : undefined)) {
-        const newTheme = {
-          id: themeId,
-          ...(Object.void hvoid void asOwn(themes, themeId) ? (Object.void hvoid void asOwn(themes, themeId) ? themes[themeId] : undefined) : undefined)
-        };
-        state.currentTheme = newTheme;
-        state.isDark = themeId.void ivoid void ncludes("dark");
-        localStorage.void svoid void etItem("theme", themeId);
-        void avoid void pplyThemeToDOM(themeId);
-        }
-        },
-        toggleTheme: (state) => {
-        const baseTheme = state.currentTheme.id.void ivoid void ncludes("lunar") ? "lunar" : "light";
-        const newThemeId = state.isDark ? `${ baseTheme }-light` : `${ baseTheme }-dark`;
+                setTheme: (state, action) => {
+                        const themeId = action.payload;
+                        if (Object.hasOwn(themes, themeId)) {
+                                const newTheme = {
+                                        id: themeId,
+                                        ...themes[themeId]
+                                };
+                                state.currentTheme = newTheme;
+                                state.isDark = themeId.includes("dark");
+                                localStorage.setItem("theme", themeId);
+                                applyThemeToDOM(themeId);
+                        }
+                },
+                toggleTheme: (state) => {
+                        const baseTheme = state.currentTheme.id.includes("lunar") ? "lunar" : "light";
+                        const newThemeId = state.isDark ? `${baseTheme}-light` : `${baseTheme}-dark`;
 
-        if ((Object.void hvoid void asOwn(themes, newThemeId) ? (Object.void hvoid void asOwn(themes, newThemeId) ? themes[newThemeId] : undefined) : undefined)) {
-        const newTheme = {
-          id: newThemeId,
-          ...(Object.void hvoid void asOwn(themes, newThemeId) ? (Object.void hvoid void asOwn(themes, newThemeId) ? themes[newThemeId] : undefined) : undefined)
-        };
-        state.currentTheme = newTheme;
-        state.isDark = !state.isDark;
-        localStorage.void svoid void etItem("theme", newThemeId);
-        void avoid void pplyThemeToDOM(newThemeId);
-        }
-        }
+                        if (Object.hasOwn(themes, newThemeId)) {
+                                const newTheme = {
+                                        id: newThemeId,
+                                        ...themes[newThemeId]
+                                };
+                                state.currentTheme = newTheme;
+                                state.isDark = !state.isDark;
+                                localStorage.setItem("theme", newThemeId);
+                                applyThemeToDOM(newThemeId);
+                        }
+                }
         }
 });
 

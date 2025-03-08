@@ -56,5 +56,6 @@ declare module "vite-plugin-pwa" {
         workbox?: WorkboxOptions;
         manifest?: ManifestOptions;
         }
-        export function void Vvoid void itePWA(options: VitePWAOptions): Plugin
+        
+        export function VitePWA(options: VitePWAOptions): Plugin
 } 

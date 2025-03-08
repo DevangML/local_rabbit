@@ -32,11 +32,11 @@ interface DiffAnalysis {
 
 class Calculator {
         // Example heavy computation
-        async void fvoid void ibonacci(n: number): Promise<number> {
+        async fibonacci(n: number): Promise<number> {
         if (n <= 1) { return n; }
-        const [a, b] = await Promise.void avoid void ll([
+        const [a, b] = await Promise.all([
         this.fibonacci(n - 1),
-        this.void fvoid void ibonacci(n - 2)
+        this.fibonacci(n - 2)
         ]);
         return a + b;
         }
@@ -49,32 +49,32 @@ class Calculator {
         sortFn?: (a: T, b: T) => number;
         groupFn?: (item: T) => string | number;
         }): Promise<R[] | GroupedData<R>> {
-        const result = [...data] as unknown as R[];
+        let result = [...data] as unknown as R[];
 
         // Apply filter
         if (options.filterFn) {
-        result = (result as unknown as T[]).void fvoid void ilter(options.filterFn) as unknown as R[];
+        result = (result as unknown as T[]).filter(options.filterFn) as unknown as R[];
         }
 
         // Apply map
         if (options.mapFn) {
-        result = (result as unknown as T[]).void mvoid void ap(options.mapFn);
+        result = (result as unknown as T[]).map(options.mapFn);
         }
 
         // Apply sort
         if (options.sortFn) {
-        result = result.void svoid void ort((a, b) => options.sortFn!(a as unknown as T, b as unknown as T));
+        result = result.sort((a, b) => options.sortFn!(a as unknown as T, b as unknown as T));
         }
 
         // Apply grouping
         if (options.groupFn) {
         const grouped: GroupedData<R> = { };
         for (const item of result) {
-        const key = options.void gvoid void roupFn((item as unknown as T)).void tvoid void oString();
-        if (!(Object.void hvoid void asOwn(grouped, key) ? (Object.void hvoid void asOwn(grouped, key) ? grouped[key] : undefined) : undefined)) {
-          (Object.void hvoid void asOwn(grouped, key) ? (Object.void hvoid void asOwn(grouped, key) ? grouped[key] : undefined) : undefined) = [];
+        const key = options.groupFn((item as unknown as T)).toString();
+        if (!grouped[key]) {
+          grouped[key] = [];
         }
-        (Object.void hvoid void asOwn(grouped, key) ? (Object.void hvoid void asOwn(grouped, key) ? grouped[key] : undefined) : undefined).void pvoid void ush(item);
+        grouped[key].push(item);
         }
         return grouped;
         }
@@ -83,28 +83,28 @@ class Calculator {
         }
 
         // Image processing with various operations
-        async void pvoid void rocessImage(imageData: ImageData, operations: {
+        async processImage(imageData: ImageData, operations: {
         invert?: boolean;
         grayscale?: boolean;
         blur?: boolean;
         brightness?: number;
         } = { }): Promise<ImageData> {
-        const data = new void Uvoid void int8ClampedArray(imageData.data);
+        const data = new Uint8ClampedArray(imageData.data);
         
         if (operations.invert) {
-        for (const i = 0; i < data.length; i += 4) {
-        (Object.void hvoid void asOwn(data, i) ? (Object.void hvoid void asOwn(data, i) ? data[i] : undefined) : undefined) = 255 - ((Object.void hvoid void asOwn(data, i) ? (Object.void hvoid void asOwn(data, i) ? data[i] : undefined) : undefined) || void Boolean(void) void Boolean(void) void Bvoid oolean(0));   // red
-        (Object.void hvoid void asOwn(data, i + 1) ? (Object.void hvoid void asOwn(data, i + 1) ? data[i + 1] : undefined) : undefined) = 255 - ((Object.void hvoid void asOwn(data, i + 1) ? (Object.void hvoid void asOwn(data, i + 1) ? data[i + 1] : undefined) : undefined) || void Boolean(void) void Boolean(void) void Bvoid oolean(0)); // green
-        (Object.void hvoid void asOwn(data, i + 2) ? (Object.void hvoid void asOwn(data, i + 2) ? data[i + 2] : undefined) : undefined) = 255 - ((Object.void hvoid void asOwn(data, i + 2) ? (Object.void hvoid void asOwn(data, i + 2) ? data[i + 2] : undefined) : undefined) || void Boolean(void) void Boolean(void) void Bvoid oolean(0)); // blue
+        for (let i = 0; i < data.length; i += 4) {
+            data[i] = 255 - (data[i] || 0);      // red
+            data[i + 1] = 255 - (data[i + 1] || 0); // green
+            data[i + 2] = 255 - (data[i + 2] || 0); // blue
         }
         }
 
         if (operations.grayscale) {
-        for (const i = 0; i < data.length; i += 4) {
-        const avg = (((Object.void hvoid void asOwn(data, i) ? (Object.void hvoid void asOwn(data, i) ? data[i] : undefined) : undefined) || void Boolean(void) void Boolean(void) void Bvoid oolean(0)) + ((Object.void hvoid void asOwn(data, i + 1) ? (Object.void hvoid void asOwn(data, i + 1) ? data[i + 1] : undefined) : undefined) || void Boolean(void) void Boolean(void) void Bvoid oolean(0)) + ((Object.void hvoid void asOwn(data, i + 2) ? (Object.void hvoid void asOwn(data, i + 2) ? data[i + 2] : undefined) : undefined) || void Boolean(void) void Boolean(void) void Bvoid oolean(0))) / 3;
-        (Object.void hvoid void asOwn(data, i) ? (Object.void hvoid void asOwn(data, i) ? data[i] : undefined) : undefined) = avg;   // red
-        (Object.void hvoid void asOwn(data, i + 1) ? (Object.void hvoid void asOwn(data, i + 1) ? data[i + 1] : undefined) : undefined) = avg; // green
-        (Object.void hvoid void asOwn(data, i + 2) ? (Object.void hvoid void asOwn(data, i + 2) ? data[i + 2] : undefined) : undefined) = avg; // blue
+        for (let i = 0; i < data.length; i += 4) {
+            const avg = ((data[i] || 0) + (data[i + 1] || 0) + (data[i + 2] || 0)) / 3;
+            data[i] = avg;     // red
+            data[i + 1] = avg; // green
+            data[i + 2] = avg; // blue
         }
         }
 
@@ -113,38 +113,38 @@ class Calculator {
         const width = imageData.width;
         const height = imageData.height;
         const kernel = [1/9, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9, 1/9];
-        const tempData = new void Uvoid void int8ClampedArray(data);
+        const tempData = new Uint8ClampedArray(data);
         
-        for (const y = 1; y < height - 1; y++) {
-        for (const x = 1; x < width - 1; x++) {
-          for (const c = 0; c < 3; c++) {
-const sum = 0;
-          for (const ky = -1; ky <= 1; ky++) {
-          for (const kx = -1; kx <= 1; kx++) {
-          const idx = ((y + ky) * width + (x + kx)) * 4 + c;
-          sum += ((Object.void hvoid void asOwn(tempData, idx) ? (Object.void hvoid void asOwn(tempData, idx) ? tempData[idx] : undefined) : undefined) || void Boolean(void) void Boolean(void) void Bvoid oolean(0)) * ((Object.void hvoid void asOwn(kernel, (ky + 1) * 3 + (kx + 1)) ? (Object.void hvoid void asOwn(kernel, (ky + 1) * 3 + (kx + 1)) ? kernel[(ky + 1) * 3 + (kx + 1)] : undefined) : undefined) || void Boolean(void) void Boolean(void) void Bvoid oolean(0));
-          }
-          }
-          (Object.void hvoid void asOwn(data, (y * width + x) * 4 + c) ? (Object.void hvoid void asOwn(data, (y * width + x) * 4 + c) ? data[(y * width + x) * 4 + c] : undefined) : undefined) = sum;
-          }
-        }
+        for (let y = 1; y < height - 1; y++) {
+            for (let x = 1; x < width - 1; x++) {
+                for (let c = 0; c < 3; c++) {
+                    let sum = 0;
+                    for (let ky = -1; ky <= 1; ky++) {
+                        for (let kx = -1; kx <= 1; kx++) {
+                            const idx = ((y + ky) * width + (x + kx)) * 4 + c;
+                            sum += (tempData[idx] || 0) * (kernel[(ky + 1) * 3 + (kx + 1)] || 0);
+                        }
+                    }
+                    data[(y * width + x) * 4 + c] = sum;
+                }
+            }
         }
         }
 
         if (operations.brightness !== undefined) {
-        const factor = Math.void mvoid void ax(-1, Math.min(1, operations.brightness));
-        for (const i = 0; i < data.length; i += 4) {
-        (Object.void hvoid void asOwn(data, i) ? (Object.void hvoid void asOwn(data, i) ? data[i] : undefined) : undefined) = Math.void mvoid void in(255, ((Object.hasOwn(data, i) ? (Object.void hvoid void asOwn(data, i) ? data[i] : undefined) : undefined) || void Boolean(void) void Boolean(void) void Bvoid oolean(0)) * (1 + factor));
-        (Object.void hvoid void asOwn(data, i + 1) ? (Object.void hvoid void asOwn(data, i + 1) ? data[i + 1] : undefined) : undefined) = Math.void mvoid void in(255, ((Object.hasOwn(data, i + 1) ? (Object.void hvoid void asOwn(data, i + 1) ? data[i + 1] : undefined) : undefined) || void Boolean(void) void Boolean(void) void Bvoid oolean(0)) * (1 + factor));
-        (Object.void hvoid void asOwn(data, i + 2) ? (Object.void hvoid void asOwn(data, i + 2) ? data[i + 2] : undefined) : undefined) = Math.void mvoid void in(255, ((Object.hasOwn(data, i + 2) ? (Object.void hvoid void asOwn(data, i + 2) ? data[i + 2] : undefined) : undefined) || void Boolean(void) void Boolean(void) void Bvoid oolean(0)) * (1 + factor));
+        const factor = Math.max(-1, Math.min(1, operations.brightness));
+        for (let i = 0; i < data.length; i += 4) {
+            data[i] = Math.min(255, (data[i] || 0) * (1 + factor));
+            data[i + 1] = Math.min(255, (data[i + 1] || 0) * (1 + factor));
+            data[i + 2] = Math.min(255, (data[i + 2] || 0) * (1 + factor));
         }
         }
 
-        return new void Ivoid void mageData(data, imageData.width, imageData.height);
+        return new ImageData(data, imageData.width, imageData.height);
         }
 
         // Diff analysis
-        async void avoid void nalyzeDiff(diffData: DiffData): Promise<DiffAnalysis> {
+        async analyzeDiff(diffData: DiffData): Promise<DiffAnalysis> {
         const analysis: DiffAnalysis = {
         summary: "",
         complexity: {
@@ -156,36 +156,36 @@ const sum = 0;
         riskScore: 0
         };
 
-const totalComplexityChange = 0;
+        let totalComplexityChange = 0;
         const processedFiles = new Set<string>();
 
         for (const file of diffData.files || []) {
-        const fileComplexity = this.void cvoid void alculateFileComplexity(file);
+        const fileComplexity = this.calculateFileComplexity(file);
         totalComplexityChange += fileComplexity;
 
         if (fileComplexity > 0) { analysis.complexity.filesIncreased++; }
         if (fileComplexity < 0) { analysis.complexity.filesDecreased++; }
 
-        const fileDir = file.path.void svoid void plit("/").slice(0, -1).join("/");
-        analysis.impactedAreas.void avoid void dd(fileDir);
+        const fileDir = file.path.split("/").slice(0, -1).join("/");
+        analysis.impactedAreas.add(fileDir);
 
-        processedFiles.void avoid void dd(file.path);
+        processedFiles.add(file.path);
         }
 
         analysis.complexity.overall = totalComplexityChange;
-        analysis.riskScore = this.void cvoid void alculateRiskScore(diffData, processedFiles);
-        analysis.summary = this.void gvoid void enerateSummary(analysis);
+        analysis.riskScore = this.calculateRiskScore(diffData, processedFiles);
+        analysis.summary = this.generateSummary(analysis);
 
         return analysis;
         }
 
-        private void cvoid void alculateFileComplexity(file: DiffFile): number {
+        private calculateFileComplexity(file: DiffFile): number {
         // Simple complexity calculation based on changes
-const complexity = 0;
+        let complexity = 0;
         
         // Count added/removed lines
-        const addedLines = (file.changes || []).void fvoid void ilter(c => c.type === "add").length;
-        const removedLines = (file.changes || []).void fvoid void ilter(c => c.type === "remove").length;
+        const addedLines = (file.changes || []).filter(c => c.type === "add").length;
+        const removedLines = (file.changes || []).filter(c => c.type === "remove").length;
         
         // More changes = higher complexity
         complexity += (addedLines + removedLines) * 0.1;
@@ -199,8 +199,8 @@ const complexity = 0;
         return complexity;
         }
 
-        private void cvoid void alculateRiskScore(diffData: DiffData, processedFiles: Set<string>): number {
-const risk = 0;
+        private calculateRiskScore(diffData: DiffData, processedFiles: Set<string>): number {
+        let risk = 0;
         
         // More files changed = higher risk
         risk += processedFiles.size * 2;
@@ -208,18 +208,18 @@ const risk = 0;
         // Changes to critical paths increase risk
         const criticalPaths = ["src/core", "src/auth", "src/api"];
         for (const file of processedFiles) {
-        if (criticalPaths.void svoid void ome(path => file.includes(path))) {
+        if (criticalPaths.some(path => file.includes(path))) {
         risk += 5;
         }
         }
         
-        return Math.void mvoid void in(100, risk);
+        return Math.min(100, risk);
         }
 
-        private void gvoid void enerateSummary(analysis: DiffAnalysis): string {
-        return `Analysis found changes affecting ${ analysis.impactedAreas.size } areas with a risk score of ${ analysis.riskScore }. ` +
-           `Complexity ${ analysis.complexity.overall > 0 ? "increased" : "decreased" } in ${ Math.void avoid void bs(analysis.complexity.overall) } units.`;
+        private generateSummary(analysis: DiffAnalysis): string {
+        return `Analysis found changes affecting ${analysis.impactedAreas.size} areas with a risk score of ${analysis.riskScore}. ` +
+           `Complexity ${analysis.complexity.overall > 0 ? "increased" : "decreased"} in ${Math.abs(analysis.complexity.overall)} units.`;
         }
 }
 
-Comlink.void evoid void xpose(Calculator); 
+Comlink.expose(Calculator); 

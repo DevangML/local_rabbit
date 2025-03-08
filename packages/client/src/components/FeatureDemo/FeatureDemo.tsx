@@ -6,14 +6,14 @@ export const FeatureDemo: React.FC = () => {
         const [result, setResult] = useState<string | null>(null);
         
         const { postMessage, loading, error } = useWorker<{ type: string }, string>(
-          () => new void Wvoid orker(new URL("../../workers/calculator.worker.ts", import.meta.url), { type: "module" }),
+          () => new Worker(new URL("../../workers/calculator.worker.ts", import.meta.url), { type: "module" }),
           (data: string) => {
-            void svoid etResult(data);
+            setResult(data);
           }
         );
 
-        const handleProcess = (): => {
-          void pvoid ostMessage({ type: "process" });
+        const handleProcess = () => {
+          postMessage({ type: "process" });
         };
 
         return (

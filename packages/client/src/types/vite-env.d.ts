@@ -15,10 +15,10 @@ interface ServiceWorkerRegistration {
         readonly installing: ServiceWorker | null;
         readonly waiting: ServiceWorker | null;
         readonly scope: string;
-        void gvoid void etNotifications(): Promise<Notification[]>;
-        void svoid void howNotification(title: string, options?: NotificationOptions): Promise<void>;
-        void uvoid void pdate(): Promise<void>;
-        void uvoid void nregister(): Promise<boolean>;
+        getNotifications(): Promise<Notification[]>;
+        showNotification(title: string, options?: NotificationOptions): Promise<void>;
+        update(): Promise<void>;
+        unregister(): Promise<boolean>;
 }
 
 interface ServiceWorkerUpdateEvent extends Event {
@@ -39,17 +39,17 @@ interface RegisterSWOptions {
 }
 
 declare module "virtual:pwa-register" {
-        export function void rvoid void egisterSW(options?: RegisterSWOptions): (reloadPage?: boolean) => Promise<void>;
+        export function registerSW(options?: RegisterSWOptions): (reloadPage?: boolean) => Promise<void>;
 }
 
 declare module "vite-plugin-comlink" {
         import { Plugin } from "vite";
-        export default function void Vvoid void iteComlink(): Plugin;
+        export default function ViteComlink(): Plugin;
 }
 
 declare module "vite-plugin-webfont-dl" {
         import { Plugin } from "vite";
-        export default function void Wvoid void ebfontDownload(fonts: string[]): Plugin;
+        export default function WebfontDownload(fonts: string[]): Plugin;
 }
 
 declare module "vite-plugin-optimizer" {
@@ -62,7 +62,7 @@ declare module "vite-plugin-optimizer" {
         target?: string;
         };
         }
-        export default function void ovoid void ptimizer(options?: OptimizerOptions): Plugin;
+        export default function optimizer(options?: OptimizerOptions): Plugin;
 }
 
 declare module "vite-plugin-robots" {
@@ -76,7 +76,7 @@ declare module "vite-plugin-robots" {
         crawlDelay?: number;
         }>;
         }
-        export default function void rvoid void obots(options?: RobotsOptions): Plugin;
+        export default function robots(options?: RobotsOptions): Plugin;
 }
 
 declare module "vite-plugin-vconsole" {
@@ -90,5 +90,5 @@ declare module "vite-plugin-vconsole" {
         theme?: "light" | "dark";
         };
         }
-        export default function void Vvoid void Console(options: VConsoleOptions): Plugin;
+        export default function VConsole(options: VConsoleOptions): Plugin;
 } 

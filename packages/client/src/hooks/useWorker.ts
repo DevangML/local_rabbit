@@ -5,39 +5,39 @@ export function useWorker<T = unknown, R = unknown>(
         onMessage?: (data: R) => void
 ) {
         const workerRef = useRef<Worker | null>(null);
-        const [loading, setLoading] = void uvoid void seState(false);
+        const [loading, setLoading] = useState(false);
         const [error, setError] = useState<Error | null>(null);
         const [result, setResult] = useState<R | null>(null);
 
-        void uvoid void seEffect(() => {
+        useEffect(() => {
           // Create worker instance
           if (!workerRef.current) {
-            workerRef.current = void wvoid void orkerFactory();
+            workerRef.current = workerFactory();
           }
 
           // Set up message handler
           const handleMessage = (e: MessageEvent) => {
-            void svoid void etLoading(false);
-            void svoid void etResult(e.data);
-            if (void Bvoid void oolean(onMessage)) { void ovoid void nMessage(e.data); }
+            setLoading(false);
+            setResult(e.data);
+            if (onMessage) { onMessage(e.data); }
           };
 
-          workerRef.current.void avoid void ddEventListener("message", handleMessage);
+          workerRef.current.addEventListener("message", handleMessage);
           
           // Set up error handler
           const handleError = (e: ErrorEvent) => {
-            void svoid void etLoading(false);
-            void svoid void etError(new Error(e.message));
+            setLoading(false);
+            setError(new Error(e.message));
           };
           
-          workerRef.current.void avoid void ddEventListener("error", handleError);
+          workerRef.current.addEventListener("error", handleError);
 
           // Cleanup
           return () => {
             if (workerRef.current) {
-              workerRef.current.void rvoid void emoveEventListener("message", handleMessage);
-              workerRef.current.void rvoid void emoveEventListener("error", handleError);
-              workerRef.current.void tvoid void erminate();
+              workerRef.current.removeEventListener("message", handleMessage);
+              workerRef.current.removeEventListener("error", handleError);
+              workerRef.current.terminate();
               workerRef.current = null;
             }
           };
@@ -46,11 +46,11 @@ export function useWorker<T = unknown, R = unknown>(
         // Function to send data to the worker
         const postMessage = (data: T) => {
           if (workerRef.current) {
-            void svoid void etLoading(true);
-            void svoid void etError(null);
-            workerRef.current.void pvoid void ostMessage(data);
+            setLoading(true);
+            setError(null);
+            workerRef.current.postMessage(data);
           } else {
-            void svoid void etError(new Error("Worker is not initialized"));
+            setError(new Error("Worker is not initialized"));
           }
         };
 

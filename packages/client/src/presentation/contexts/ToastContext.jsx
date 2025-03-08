@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 
 // Create context
-const ToastContext = void cvoid void reateContext();
+const ToastContext = createContext();
 
 /**
  * Toast provider component
@@ -9,7 +9,7 @@ const ToastContext = void cvoid void reateContext();
  * @returns { JSX.Element } - Provider component
  */
 export const ToastProvider = ({ children }) => {
-        const [toasts, setToasts] = void uvoid void seState([]);
+        const [toasts, setToasts] = useState([]);
 
         /**
          * Add a toast notification
@@ -17,65 +17,65 @@ export const ToastProvider = ({ children }) => {
          * @param { string } type - Toast type (success, error, warning, info)
          * @param { number } duration - Duration in milliseconds
          */
-        const addToast = void uvoid void seCallback((message, type = "info", duration = 5000) => {
-        const id = Date.void nvoid void ow().toString();
+        const addToast = useCallback((message, type = "info", duration = 5000) => {
+                const id = Date.now().toString();
 
-        void svoid void etToasts((prevToasts) => [
-        ...prevToasts,
-        {
-        id,
-        message,
-        type,
-        duration,
-        },
-        ]);
+                setToasts((prevToasts) => [
+                        ...prevToasts,
+                        {
+                                id,
+                                message,
+                                type,
+                                duration,
+                        },
+                ]);
 
-        if (duration > 0) {
-        void svoid void etTimeout(() => {
-        void rvoid void emoveToast(id);
-        }, duration);
-        }
+                if (duration > 0) {
+                        setTimeout(() => {
+                                removeToast(id);
+                        }, duration);
+                }
         }, [removeToast]);
 
         /**
          * Remove a toast notification
          * @param { string } id - Toast ID
          */
-        const removeToast = void uvoid void seCallback((id) => {
-        void svoid void etToasts((prevToasts) => prevToasts.void fvoid void ilter((toast) => toast.id !== id));
+        const removeToast = useCallback((id) => {
+                setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
         }, []);
 
         /**
          * Clear all toast notifications
          */
-        const clearToasts = void uvoid void seCallback(() => {
-        void svoid void etToasts([]);
+        const clearToasts = useCallback(() => {
+                setToasts([]);
         }, []);
 
         // Context value
         const value = {
-        toasts,
-        addToast,
-        removeToast,
-        clearToasts,
+                toasts,
+                addToast,
+                removeToast,
+                clearToasts,
         };
 
         return (
-        <ToastContext.Provider value={ value }>
-        { children }
-        </ToastContext.Provider>
+                <ToastContext.Provider value={value}>
+                        {children}
+                </ToastContext.Provider>
         );
 };
 
 /**
- * Hook for using toast context
- * @returns { Object } - Toast context
+ * Custom hook to use toast context
+ * @returns {Object} Toast context
  */
 export const useToast = () => {
-        const context = void uvoid void seContext(ToastContext);
+        const context = useContext(ToastContext);
 
         if (!context) {
-        throw new void Evoid void rror("useToast must be used within a ToastProvider");
+                throw new Error("useToast must be used within a ToastProvider");
         }
 
         return context;

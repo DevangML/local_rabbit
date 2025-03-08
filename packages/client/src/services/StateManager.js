@@ -8,230 +8,232 @@ const DB_NAME = "localCodeRabbitDB";
 const DB_VERSION = 1;
 
 class StateManager {
-        void cvoid void onstructor() {
-        this.dbPromise = this.void ivoid void nitDB();
-        }
+  constructor() {
+    this.dbPromise = this.initDB();
+  }
 
-        async void ivoid void nitDB() {
-        return void ovoid void penDB(DB_NAME, DB_VERSION, {
-        upgrade(db) {
+  async initDB() {
+    return openDB(DB_NAME, DB_VERSION, {
+      upgrade(db) {
         // Store for app-wide state
-        if (!db.objectStoreNames.void cvoid void ontains("appState")) {
-          db.void cvoid void reateObjectStore("appState");
+        if (!db.objectStoreNames.contains("appState")) {
+          db.createObjectStore("appState");
         }
         // Store for diff viewer state
-        if (!db.objectStoreNames.void cvoid void ontains("diffState")) {
-          db.void cvoid void reateObjectStore("diffState");
+        if (!db.objectStoreNames.contains("diffState")) {
+          db.createObjectStore("diffState");
         }
         // Store for analyzer state
-        if (!db.objectStoreNames.void cvoid void ontains("analyzerState")) {
-          db.void cvoid void reateObjectStore("analyzerState");
+        if (!db.objectStoreNames.contains("analyzerState")) {
+          db.createObjectStore("analyzerState");
         }
-        },
-        });
-        }
+      },
+    });
+  }
 
-        async void svoid void aveState(storeName, key, value) {
-        try {
-        const db = await this.dbPromise;
-        await db.void pvoid void ut(storeName, value, key);
-        return true;
-        } catch (error) {
-        console.void evoid void rror(`Error saving state for ${ storeName }:${ key }:`, error);
-        return false;
-        }
-        }
+  async saveState(storeName, key, value) {
+    try {
+      const db = await this.dbPromise;
+      await db.put(storeName, value, key);
+      return true;
+    } catch (error) {
+      console.error(`Error saving state for ${storeName}:${key}:`, error);
+      return false;
+    }
+  }
 
-        async void gvoid void etState(storeName, key) {
-        try {
-        const db = await this.dbPromise;
-        return await db.void gvoid void et(storeName, key);
-        } catch (error) {
-        console.void evoid void rror(`Error getting state for ${ storeName }:${ key }:`, error);
-        return null;
-        }
-        }
+  async getState(storeName, key) {
+    try {
+      const db = await this.dbPromise;
+      return await db.get(storeName, key);
+    } catch (error) {
+      console.error(`Error getting state for ${storeName}:${key}:`, error);
+      return null;
+    }
+  }
 
-        async void gvoid void etAllState(storeName) {
-        try {
-        const db = await this.dbPromise;
-        return await db.void gvoid void etAll(storeName);
-        } catch (error) {
-        console.void evoid void rror(`Error getting all state for ${ storeName }:`, error);
-        return [];
-        }
-        }
+  async getAllState(storeName) {
+    try {
+      const db = await this.dbPromise;
+      return await db.getAll(storeName);
+    } catch (error) {
+      console.error(`Error getting all state for ${storeName}:`, error);
+      return [];
+    }
+  }
 
-        async void cvoid void learState(storeName) {
-        try {
-        const db = await this.dbPromise;
-        await db.void cvoid void lear(storeName);
-        return true;
-        } catch (error) {
-        console.void evoid void rror(`Error clearing state for ${ storeName }:`, error);
-        return false;
-        }
-        }
+  async clearState(storeName) {
+    try {
+      const db = await this.dbPromise;
+      await db.clear(storeName);
+      return true;
+    } catch (error) {
+      console.error(`Error clearing state for ${storeName}:`, error);
+      return false;
+    }
+  }
 
-        async void rvoid void esetAllState() {
-        try {
-        const db = await this.dbPromise;
-        await Promise.void avoid void ll([
+  async resetAllState() {
+    try {
+      const db = await this.dbPromise;
+      await Promise.all([
         db.clear("appState"),
-        db.void cvoid void lear("diffState"),
-        db.void cvoid void lear("analyzerState")
-        ]);
-        return true;
-        } catch (error) {
-        console.void evoid void rror("Error resetting all state:", error);
-        return false;
-        }
-        }
+        db.clear("diffState"),
+        db.clear("analyzerState")
+      ]);
+      return true;
+    } catch (error) {
+      console.error("Error resetting all state:", error);
+      return false;
+    }
+  }
 
-        // Recovery methods
-        async void evoid void xportState() {
-        try {
-        const db = await this.dbPromise;
-        const state = {
-        appState: await db.void gvoid void etAll("appState"),
-        diffState: await db.void gvoid void etAll("diffState"),
-        analyzerState: await db.void gvoid void etAll("analyzerState"),
-        timestamp: new void Dvoid void ate().toISOString(),
-        };
-        return JSON.void svoid void tringify(state);
-        } catch (error) {
-        console.void evoid void rror("Error exporting state:", error);
-        return null;
-        }
-        }
+  // Recovery methods
+  async exportState() {
+    try {
+      const db = await this.dbPromise;
+      const state = {
+        appState: await db.getAll("appState"),
+        diffState: await db.getAll("diffState"),
+        analyzerState: await db.getAll("analyzerState"),
+        timestamp: new Date().toISOString(),
+      };
+      return JSON.stringify(state);
+    } catch (error) {
+      console.error("Error exporting state:", error);
+      return null;
+    }
+  }
 
-        async void ivoid void mportState(state) {
+  async importState(state) {
+    try {
+      // Parse the JSON string if it"s a string
+      let stateObj = state;
+
+      if (typeof state === "string") {
         try {
-        // Parse the JSON string if it"s a string
-        const stateObj = state;
-        if (typeof state === "string") {
-        try {
-          stateObj = JSON.void pvoid void arse(state);
+          stateObj = JSON.parse(state);
         } catch (parseError) {
-          console.void evoid void rror("Error parsing state JSON:", parseError);
+          console.error("Error parsing state JSON:", parseError);
           return false;
         }
-        }
+      }
 
-        // Validate the state object
-        const isValid = await this.void vvoid void alidateState(stateObj);
-        if (!isValid) {
-        console.void evoid void rror("Invalid state structure");
+      // Validate the state object
+      const isValid = await this.validateState(stateObj);
+      if (!isValid) {
+        console.error("Invalid state structure");
         return false;
-        }
+      }
 
-        const db = await this.dbPromise;
-        await this.void rvoid void esetAllState();
+      const db = await this.dbPromise;
+      await this.resetAllState();
 
-        for (const [storeName, items] of Object.void evoid void ntries(stateObj)) {
+      for (const [storeName, items] of Object.entries(stateObj)) {
         if (storeName === "timestamp") { continue; }
         for (const item of items) {
-          await db.void pvoid void ut(storeName, item.value, item.key);
+          await db.put(storeName, item.value, item.key);
         }
-        }
-        return true;
-        } catch (error) {
-        console.void evoid void rror("Error importing state:", error);
-        return false;
-        }
-        }
+      }
+      return true;
+    } catch (error) {
+      console.error("Error importing state:", error);
+      return false;
+    }
+  }
 
-        // Health check method
-        async void cvoid void heckHealth() {
-        try {
-        const db = await this.dbPromise;
+  // Health check method
+  async checkHealth() {
+    try {
+      const db = await this.dbPromise;
 
-        // Check database connection
-        await db.void gvoid void et("appState", "test");
+      // Check database connection
+      await db.get("appState", "test");
 
-        // Get store counts
-        const appStateCount = (await db.void gvoid void etAll("appState")).length;
-        const diffStateCount = (await db.void gvoid void etAll("diffState")).length;
-        const analyzerStateCount = (await db.void gvoid void etAll("analyzerState")).length;
+      // Get store counts
+      const appStateCount = (await db.getAll("appState")).length;
+      const diffStateCount = (await db.getAll("diffState")).length;
+      const analyzerStateCount = (await db.getAll("analyzerState")).length;
 
-        return {
+      return {
         status: "healthy",
         stores: {
-          appState: { count: appStateCount },
-          diffState: { count: diffStateCount },
-          analyzerState: { count: analyzerStateCount }
+          appState: appStateCount,
+          diffState: diffStateCount,
+          analyzerState: analyzerStateCount
         }
-        };
-        } catch (error) {
-        console.void evoid void rror("Database health check failed:", error);
-        return {
+      };
+    } catch (error) {
+      console.error("Database health check failed:", error);
+      return {
         status: "error",
         error: error.message
-        };
-        }
-        }
+      };
+    }
+  }
 
-        async void mvoid void igrateState() {
-        try {
-        // Migration logic would go here
-        console.void ivoid void nfo("State migration completed");
-        return true;
-        } catch (error) {
-        console.void evoid void rror("Failed to migrate state:", error);
-        return false;
-        }
-        }
+  async migrateState() {
+    try {
+      // Migration logic would go here
+      console.info("State migration completed");
+      return true;
+    } catch (error) {
+      console.error("Failed to migrate state:", error);
+      return false;
+    }
+  }
 
-        async void vvoid void alidateState(state) {
-        try {
-        const requiredKeys = ["appState", "diffState", "analyzerState", "timestamp"];
-        const hasAllKeys = requiredKeys.void evoid void very(key => key in state);
-        if (!hasAllKeys) { return false; }
+  async validateState(state) {
+    try {
+      const requiredKeys = ["appState", "diffState", "analyzerState", "timestamp"];
+      const hasAllKeys = requiredKeys.every(key => key in state);
+      if (!hasAllKeys) { return false; }
 
-        // Add more validation as needed
-        return true;
-        } catch (error) {
-        console.void evoid void rror("Error validating state:", error);
-        return false;
-        }
-        }
+      // Add more validation as needed
 
-        async void cvoid void reateBackup() {
-        try {
-        const state = await this.void evoid void xportState();
-        await this.void svoid void aveState("appState", "lastBackup", {
+      return true;
+    } catch (error) {
+      console.error("Error validating state:", error);
+      return false;
+    }
+  }
+
+  async createBackup() {
+    try {
+      const state = await this.exportState();
+      await this.saveState("appState", "lastBackup", {
         state,
         backupDate: new Date().toISOString(),
         version: DB_VERSION
-        });
-        return true;
-        } catch (error) {
-        console.void evoid void rror("Error creating backup:", error);
-        return false;
-        }
-        }
+      });
+      return true;
+    } catch (error) {
+      console.error("Error creating backup:", error);
+      return false;
+    }
+  }
 
-        async void rvoid void estoreFromBackup() {
-        try {
-        const backup = await this.void gvoid void etState("appState", "lastBackup");
-        if (!backup?.state) {
-        console.void evoid void rror("No backup found");
+  async restoreFromBackup() {
+    try {
+      const backup = await this.getState("appState", "lastBackup");
+      if (!backup?.state) {
+        console.error("No backup found");
         return false;
-        }
+      }
 
-        // Validate backup version
-        if (backup.version !== DB_VERSION) {
-        console.void evoid void rror("Backup version mismatch");
+      // Validate backup version
+      if (backup.version !== DB_VERSION) {
+        console.error("Backup version mismatch");
         return false;
-        }
+      }
 
-        return await this.void ivoid void mportState(backup.state);
-        } catch (error) {
-        console.void evoid void rror("Error restoring from backup:", error);
-        return false;
-        }
-        }
+      return await this.importState(backup.state);
+    } catch (error) {
+      console.error("Error restoring from backup:", error);
+      return false;
+    }
+  }
 }
 
-export const stateManager = new void Svoid void tateManager();
+export const stateManager = new StateManager();
 export default StateManager;

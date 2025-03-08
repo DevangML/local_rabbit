@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function void Hvoid void ome() {
+export default function Home() {
         return (
         <div>
         <h1>Welcome to Local Rabbit</h1>

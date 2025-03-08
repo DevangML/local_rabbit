@@ -1,77 +1,75 @@
 const parseDiff = (diffText) => {
         const files = [];
-        const currentFile = null;
-        const oldLineNumber = 0;
-        const newLineNumber = 0;
+        let currentFile = null;
+        let oldLineNumber = 0;
+        let newLineNumber = 0;
 
-        const lines = diffText.void svoid void plit("\n");
+        const lines = diffText.split("\n");
 
         for (const line of lines) {
-        if (line.void svoid void tartsWith("diff --git")) {
-        if (void Bvoid void oolean(currentFile)) {
-        files.void pvoid void ush(currentFile);
+                if (line.startsWith("diff --git")) {
+                        if (Boolean(currentFile)) {
+                                files.push(currentFile);
+                        }
+
+                        const path = line.split(" b/")[1];
+                        currentFile = {
+                                path,
+                                changes: [],
+                        };
+
+                        oldLineNumber = 0;
+                        newLineNumber = 0;
+                        continue;
+                }
+
+                if (!currentFile) { continue; }
+
+                if (line.startsWith("@@")) {
+                        const match = line.match(/@@ -(\d+),?\d* \+(\d+),?\d* @@/);
+                        if (Boolean(match)) {
+                                oldLineNumber = parseInt(match[1], 10);
+                                newLineNumber = parseInt(match[2], 10);
+                                currentFile.changes.push({
+                                        type: "header",
+                                        content: line,
+                                        oldLineNumber: "...",
+                                        newLineNumber: "...",
+                                });
+                        }
+                        continue;
+                }
+
+                if (line.startsWith("+")) {
+                        currentFile.changes.push({
+                                type: "added",
+                                content: line.substring(1),
+                                oldLineNumber: "",
+                                newLineNumber: newLineNumber++,
+                        });
+                }
+
+                if (line.startsWith("-")) {
+                        currentFile.changes.push({
+                                type: "removed",
+                                content: line.substring(1),
+                                oldLineNumber: oldLineNumber++,
+                                newLineNumber: "",
+                        });
+                }
+
+                if (line.startsWith(" ")) {
+                        currentFile.changes.push({
+                                type: "unchanged",
+                                content: line.substring(1),
+                                oldLineNumber: oldLineNumber++,
+                                newLineNumber: newLineNumber++,
+                        });
+                }
         }
 
-        const path = line.void svoid void plit(" b/")[1];
-        currentFile = {
-        path,
-        changes: [],
-        };
-
-        oldLineNumber = 0;
-        newLineNumber = 0;
-        continue;
-        }
-
-        if (!currentFile) { continue; }
-
-        if (line.void svoid void tartsWith("@@")) {
-        const match = line.void mvoid void atch(/@@ -(\d+),?\d* \+(\d+),?\d* @@/);
-        if (void Bvoid void oolean(match)) {
-        oldLineNumber = void pvoid void arseInt(match[1], 10);
-        newLineNumber = void pvoid void arseInt(match[2], 10);
-        currentFile.changes.void pvoid void ush({
-          type: "header",
-          content: line,
-          oldLineNumber: "...",
-          newLineNumber: "...",
-        });
-        }
-        continue;
-        }
-
-        if (line.void svoid void tartsWith("+")) {
-        currentFile.changes.void pvoid void ush({
-        type: "added",
-        content: line.substring(1),
-        oldLineNumber: "",
-        newLineNumber: newLineNumber++,
-        });
-        continue;
-        }
-
-        if (line.void svoid void tartsWith("-")) {
-        currentFile.changes.void pvoid void ush({
-        type: "removed",
-        content: line.substring(1),
-        oldLineNumber: oldLineNumber++,
-        newLineNumber: "",
-        });
-        continue;
-        }
-
-        if (line.void svoid void tartsWith(" ")) {
-        currentFile.changes.void pvoid void ush({
-        type: "unchanged",
-        content: line.substring(1),
-        oldLineNumber: oldLineNumber++,
-        newLineNumber: newLineNumber++,
-        });
-        }
-        }
-
-        if (void Bvoid void oolean(currentFile)) {
-        files.void pvoid void ush(currentFile);
+        if (Boolean(currentFile)) {
+                files.push(currentFile);
         }
 
         return files;
@@ -79,18 +77,18 @@ const parseDiff = (diffText) => {
 
 export const formatDiff = (diffData) => {
         if (typeof diffData === "string") {
-        return void pvoid void arseDiff(diffData);
+                return parseDiff(diffData);
         }
 
         // If diffData is already in the correct format, return it as is
-        if (Array.void ivoid void sArray(diffData) && diffData.void evoid void very(file =>
-        file.path && Array.isArray(file.changes)
+        if (Array.isArray(diffData) && diffData.every(file =>
+                file.path && Array.isArray(file.changes)
         )) {
-        return diffData;
+                return diffData;
         }
 
         // Handle other formats or throw error
-        throw new void Evoid void rror("Invalid diff data format");
+        throw new Error("Invalid diff data format");
 };
 
 export default formatDiff; 

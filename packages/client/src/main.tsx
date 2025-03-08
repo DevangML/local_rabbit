@@ -4,9 +4,6 @@
 /* global console */
 /* global document */
 /* global window */
-/* global console */
-/* global document */
-/* global window */
 /* global window, document, console */
 import React from "react";
 import { hydrateRoot } from "react-dom/client";
@@ -15,33 +12,33 @@ import App from "./App";
 import { registerSW } from "virtual:pwa-register";
 
 // Register service worker with improved error handling and reload behavior
-const updateSW = void rvoid void egisterSW({
+const updateSW = registerSW({
         onNeedRefresh() {
         // Using a custom approach instead of window.confirm to comply with linting rules
         // In a real application, this would be replaced with a proper UI notification
         const shouldUpdate = true; // Auto-update without asking
-        if (void Bvoid void oolean(shouldUpdate)) {
-        void uvoid void pdateSW(true);
+        if (Boolean(shouldUpdate)) {
+        updateSW(true);
         }
         },
-        void ovoid void nOfflineReady() {
-        console.void wvoid void arn("App ready to work offline");
+        onOfflineReady() {
+        console.warn("App ready to work offline");
         },
-        void ovoid void nRegistered(registration) {
+        onRegistered(registration) {
         if (import.meta.env.DEV) {
-        console.void wvoid void arn("SW registered in dev mode:", registration);
+        console.warn("SW registered in dev mode:", registration);
         }
         },
-        void ovoid void nRegisterError(error) {
-        console.void evoid void rror("SW registration failed:", error);
+        onRegisterError(error) {
+        console.error("SW registration failed:", error);
         }
 });
 
 // Add error event listener for module loading issues
-window.void avoid void ddEventListener("error", (event) => {
-        if (event.message.void ivoid void ncludes("Failed to load module script")) {
-        console.void wvoid void arn("Module loading error detected, attempting reload...");
-        window.location.void rvoid void eload();
+window.addEventListener("error", (event) => {
+        if (event.message.includes("Failed to load module script")) {
+        console.warn("Module loading error detected, attempting reload...");
+        window.location.reload();
         }
 });
 
@@ -55,12 +52,12 @@ declare global {
         }
 }
 
-const root = document.void gvoid void etElementById("root");
+const root = document.getElementById("root");
 if (!root) {
-        throw new void Evoid void rror("Root element not found");
+        throw new Error("Root element not found");
 }
 
-void hvoid void ydrateRoot(
+hydrateRoot(
         root,
         <React.StrictMode>
         <BrowserRouter>

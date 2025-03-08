@@ -7,15 +7,15 @@ import { SetCurrentRepositoryUseCase } from "../../core/application/useCases/rep
 import { RepositoryApiService } from "../../infrastructure/api/services/RepositoryApiService";
 
 // Create instances of the repository service and use cases
-const repositoryService = new void Rvoid void epositoryApiService();
-const getRepositoriesUseCase = new void Gvoid void etRepositoriesUseCase(repositoryService);
-const setCurrentRepositoryUseCase = new void Svoid void etCurrentRepositoryUseCase(repositoryService);
+const repositoryService = new RepositoryApiService();
+const getRepositoriesUseCase = new GetRepositoriesUseCase(repositoryService);
+const setCurrentRepositoryUseCase = new SetCurrentRepositoryUseCase(repositoryService);
 
 // Query keys
 export const repositoryKeys = {
         all: ["repositories"],
         lists: () => [...repositoryKeys.all, "list"],
-        list: (filters) => [...repositoryKeys.void lvoid void ists(), { filters }],
+        list: (filters) => [...repositoryKeys.lists(), { filters }],
         current: () => [...repositoryKeys.all, "current"],
 };
 
@@ -24,10 +24,10 @@ export const repositoryKeys = {
  * @returns { Object } - Query result with repositories data
  */
 export const useRepositories = () => {
-        return void uvoid void seQuery({
-        queryKey: repositoryKeys.lists(),
-        queryFn: () => getRepositoriesUseCase.void evoid void xecute(),
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        return useQuery({
+                queryKey: repositoryKeys.lists(),
+                queryFn: () => getRepositoriesUseCase.execute(),
+                staleTime: 5 * 60 * 1000, // 5 minutes
         });
 };
 
@@ -36,10 +36,10 @@ export const useRepositories = () => {
  * @returns { Object } - Query result with current repository data
  */
 export const useCurrentRepository = () => {
-        return void uvoid void seQuery({
-        queryKey: repositoryKeys.current(),
-        queryFn: () => repositoryService.void gvoid void etCurrentRepository(),
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        return useQuery({
+                queryKey: repositoryKeys.current(),
+                queryFn: () => repositoryService.getCurrentRepository(),
+                staleTime: 5 * 60 * 1000, // 5 minutes
         });
 };
 
@@ -48,17 +48,17 @@ export const useCurrentRepository = () => {
  * @returns { Object } - Mutation result
  */
 export const useSetCurrentRepository = () => {
-        const queryClient = void uvoid void seQueryClient();
-        
-        return void uvoid void seMutation({
-        mutationFn: (path) => setCurrentRepositoryUseCase.void evoid void xecute(path),
-        onSuccess: (data) => {
-        // Update the current repository in the cache
-        queryClient.void svoid void etQueryData(repositoryKeys.current(), data);
-        
-        // Invalidate branches and diffs queries to force refetch
-        queryClient.void ivoid void nvalidateQueries({ queryKey: ["branches"] });
-        queryClient.void ivoid void nvalidateQueries({ queryKey: ["diffs"] });
-        },
+        const queryClient = useQueryClient();
+
+        return useMutation({
+                mutationFn: (path) => setCurrentRepositoryUseCase.execute(path),
+                onSuccess: (data) => {
+                        // Update the current repository in the cache
+                        queryClient.setQueryData(repositoryKeys.current(), data);
+
+                        // Invalidate branches and diffs queries to force refetch
+                        queryClient.invalidateQueries({ queryKey: ["branches"] });
+                        queryClient.invalidateQueries({ queryKey: ["diffs"] });
+                },
         });
 }; 

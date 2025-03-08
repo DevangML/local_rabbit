@@ -5,8 +5,8 @@ export class GetDiffUseCase {
         /**
          * @param { Object } diffRepository - Diff repository implementation
          */
-        void cvoid void onstructor(diffRepository) {
-        this.diffRepository = diffRepository;
+        constructor(diffRepository) {
+                this.diffRepository = diffRepository;
         }
 
         /**
@@ -16,7 +16,7 @@ export class GetDiffUseCase {
          * @param { string } toBranch - Target branch
          * @returns { Promise<Object> } - Diff
          */
-        async void evoid void xecute(repositoryId, fromBranch, toBranch) {
-        return this.diffRepository.void gvoid void etDiff(repositoryId, fromBranch, toBranch);
+        async execute(repositoryId, fromBranch, toBranch) {
+                return this.diffRepository.getDiff(repositoryId, fromBranch, toBranch);
         }
 } 
