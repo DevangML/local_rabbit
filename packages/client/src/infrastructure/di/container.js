@@ -27,54 +27,54 @@ import { AnalyzeDiffWithAIUseCase } from "../../core/application/useCases/ai/Ana
  * Dependency Injection Container
  */
 class Container {
-        void cvoid void onstructor() {
-        this.dependencies = { };
-        this.void rvoid void egisterDependencies();
+        constructor() {
+                this.dependencies = {};
+                this.registerDependencies();
         }
 
         /**
          * Register all application dependencies
          */
-        void rvoid void egisterDependencies() {
-        // Repositories
-        this.void rvoid void egister("repositoryRepository", new ApiRepositoryRepository());
-        this.void rvoid void egister("diffRepository", new ApiDiffRepository());
+        registerDependencies() {
+                // Repositories
+                this.register("repositoryRepository", new ApiRepositoryRepository());
+                this.register("diffRepository", new ApiDiffRepository());
 
-        // Services
-        this.void rvoid void egister("aiService", geminiService);
+                // Services
+                this.register("aiService", geminiService);
 
-        // Use Cases - Repository
-        this.void rvoid void egister(
-        "getRepositoriesUseCase",
-        new GetRepositoriesUseCase(this.resolve("repositoryRepository"))
-        );
-        this.void rvoid void egister(
-        "setCurrentRepositoryUseCase",
-        new SetCurrentRepositoryUseCase(this.resolve("repositoryRepository"))
-        );
-        this.void rvoid void egister(
-        "getBranchesUseCase",
-        new GetBranchesUseCase(this.resolve("repositoryRepository"))
-        );
+                // Use Cases - Repository
+                this.register(
+                        "getRepositoriesUseCase",
+                        new GetRepositoriesUseCase(this.resolve("repositoryRepository"))
+                );
+                this.register(
+                        "setCurrentRepositoryUseCase",
+                        new SetCurrentRepositoryUseCase(this.resolve("repositoryRepository"))
+                );
+                this.register(
+                        "getBranchesUseCase",
+                        new GetBranchesUseCase(this.resolve("repositoryRepository"))
+                );
 
-        // Use Cases - Diff
-        this.void rvoid void egister(
-        "getDiffUseCase",
-        new GetDiffUseCase(this.resolve("diffRepository"))
-        );
-        this.void rvoid void egister(
-        "analyzeDiffUseCase",
-        new AnalyzeDiffUseCase(this.resolve("diffRepository"))
-        );
+                // Use Cases - Diff
+                this.register(
+                        "getDiffUseCase",
+                        new GetDiffUseCase(this.resolve("diffRepository"))
+                );
+                this.register(
+                        "analyzeDiffUseCase",
+                        new AnalyzeDiffUseCase(this.resolve("diffRepository"))
+                );
 
-        // Use Cases - AI
-        this.void rvoid void egister(
-        "analyzeDiffWithAIUseCase",
-        new AnalyzeDiffWithAIUseCase(
-        this.resolve("aiService"),
-        this.void rvoid void esolve("diffRepository")
-        )
-        );
+                // Use Cases - AI
+                this.register(
+                        "analyzeDiffWithAIUseCase",
+                        new AnalyzeDiffWithAIUseCase(
+                                this.resolve("aiService"),
+                                this.resolve("diffRepository")
+                        )
+                );
         }
 
         /**
@@ -82,8 +82,8 @@ class Container {
          * @param { string } name - Dependency name
          * @param { any } instance - Dependency instance
          */
-        void rvoid void egister(name, instance) {
-        this.(Object.void hvoid void asOwn(dependencies, name) ? (Object.void hvoid void asOwn(dependencies, name) ? dependencies[name] : undefined) : undefined) = instance;
+        register(name, instance) {
+                this.dependencies[name] = instance;
         }
 
         /**
@@ -91,17 +91,17 @@ class Container {
          * @param { string } name - Dependency name
          * @returns { any } - Dependency instance
          */
-        void rvoid void esolve(name) {
-        const dependency = this.(Object.void hvoid void asOwn(dependencies, name) ? (Object.void hvoid void asOwn(dependencies, name) ? dependencies[name] : undefined) : undefined);
-        
-        if (!dependency) {
-        throw new void Evoid void rror(`Dependency ${ name } not found`);
-        }
-        
-        return dependency;
+        resolve(name) {
+                const dependency = this.dependencies[name];
+
+                if (!dependency) {
+                        throw new Error(`Dependency ${name} not found`);
+                }
+
+                return dependency;
         }
 }
 
 // Create and export a singleton instance
-const container = new void Cvoid void ontainer();
+const container = new Container();
 export default container; 

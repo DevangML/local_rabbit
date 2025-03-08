@@ -12,9 +12,22 @@ import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server.js';
 
-// Import the server-side rendering function from the client
-// @ts-ignore - This file will be generated at build time
-import { renderPage } from '../../client/dist/server/entry-server.js';
+// Conditionally import the server-side rendering function
+// This way we can run the server in development without the client build
+const isDev = process.env.NODE_ENV === 'development';
+let renderPage: (url: string) => React.ReactElement | null = () => null;
+
+// In production, import the entry-server module
+// In development, use a dummy renderer
+if (!isDev) {
+  try {
+    // @ts-ignore - This file will be generated at build time
+    const entryServer = await import('../../client/dist/server/entry-server.js');
+    renderPage = entryServer.renderPage;
+  } catch (error) {
+    console.warn('Could not import entry-server.js. SSR will be disabled.', error);
+  }
+}
 
 // Load environment variables
 dotenv.config({
@@ -24,7 +37,6 @@ dotenv.config({
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
-const isDev = process.env.NODE_ENV === 'development';
 
 // Configure MIME types
 express.static.mime.define({
@@ -89,6 +101,42 @@ const ssrHandler: RequestHandler = async (req, res) => {
       env: process.env.NODE_ENV
     };
 
+    // In development, use a simpler template without SSR
+    if (isDev) {
+      const template = `
+        <!DOCTYPE html>
+        <html lang="en">
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <meta name="description" content="Local Rabbit Application (Dev Mode)" />
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+            <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+            <link rel="manifest" href="/manifest.json" />
+            <title>Local Rabbit (Dev)</title>
+          </head>
+          <body>
+            <div id="root">
+              <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column;">
+                <h1>Development Mode</h1>
+                <p>This is a development server. SSR is disabled in dev mode.</p>
+                <p>Build the client with 'npm run build:ssr' for full SSR.</p>
+              </div>
+            </div>
+            <script>
+              window.__INITIAL_STATE__ = ${JSON.stringify(initialState)};
+            </script>
+            <script type="module" src="/src/main.tsx"></script>
+          </body>
+        </html>
+      `;
+      
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Cache-Control', 'no-store, must-revalidate');
+      return res.send(template);
+    }
+
+    // Production mode with SSR enabled
     const html = renderToString(
       renderPage(req.url)
     );
