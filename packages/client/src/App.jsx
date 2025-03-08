@@ -5,19 +5,216 @@
 /* global console */
 /* global fetch */
 /* global fetch, console */
-import React, { useState, Suspense /* useEffect */ } from "react";
-import { ThemeProvider } from "@mui/material/styles";
+import React, { useState, Suspense, createContext, useContext, useEffect, Component } from "react";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 // import { Provider } from "react-redux";
-import { BrowserRouter as Router } from "react-router-dom";
+// import { BrowserRouter as Router } from "react-router-dom";
 // import { store } from "./store";
 // import AppRoutes from "./routes";
 // import config from "./config";
-import { lightTheme, darkTheme } from "./theme";
-import { ThemeProvider as MuiThemeProvider, CircularProgress, Box } from "@mui/material";
+import { lightTheme as customLightTheme, darkTheme as customDarkTheme } from "./theme";
+import { CircularProgress, Box } from "@mui/material";
 import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./components/Layout/MainLayout";
-import { useTheme } from "./contexts/ThemeContext";
+// We'll implement our own theme context directly in this file
+// import { useTheme } from "./contexts/ThemeContext";
+
+// Error boundary to catch rendering errors
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("Error caught by boundary:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          padding: '20px',
+          color: '#333',
+          backgroundColor: '#f8f9fa',
+          fontFamily: 'Arial, sans-serif',
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          textAlign: 'center'
+        }}>
+          <h2>Something went wrong</h2>
+          <p>Please refresh the page to try again.</p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              padding: '8px 16px',
+              background: '#0366d6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              marginTop: '20px'
+            }}
+          >
+            Refresh Page
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Fallback theme values if imports fail
+const defaultLightTheme = {
+  bgPrimary: "#ffffff",
+  bgSecondary: "#f8f9fa",
+  textPrimary: "#1a1a1a",
+  textSecondary: "#6c757d",
+  border: "#dee2e6",
+  accent: "#0366d6",
+  accentHover: "#0358c3",
+  surface: "#ffffff",
+  surfaceHover: "#f8f9fa"
+};
+
+const defaultDarkTheme = {
+  bgPrimary: "#0d1117",
+  bgSecondary: "#161b22",
+  textPrimary: "#c9d1d9",
+  textSecondary: "#8b949e",
+  border: "#30363d",
+  accent: "#58a6ff",
+  accentHover: "#4d8ee3",
+  surface: "#21262d",
+  surfaceHover: "#30363d"
+};
+
+// Use imported themes or fallbacks if they don't exist
+const lightTheme = customLightTheme || defaultLightTheme;
+const darkTheme = customDarkTheme || defaultDarkTheme;
+
+// Material UI theme creation
+const createMuiTheme = (isLight) => {
+  try {
+    const baseTheme = isLight ? lightTheme : darkTheme;
+
+    // Add debugging to check theme structure
+    console.log("Theme being used:", isLight ? "light" : "dark", baseTheme);
+
+    return createTheme({
+      palette: {
+        mode: isLight ? 'light' : 'dark',
+        primary: {
+          main: baseTheme?.accent || (isLight ? '#1976d2' : '#90caf9'),
+        },
+        secondary: {
+          main: baseTheme?.accentHover || (isLight ? '#dc004e' : '#f48fb1'),
+        },
+        background: {
+          default: baseTheme?.bgPrimary || (isLight ? '#ffffff' : '#121212'),
+          paper: baseTheme?.bgSecondary || (isLight ? '#f5f5f5' : '#1e1e1e'),
+        },
+        text: {
+          primary: baseTheme?.textPrimary || (isLight ? '#000000' : '#ffffff'),
+          secondary: baseTheme?.textSecondary || (isLight ? '#00000099' : '#ffffff99'),
+        },
+      },
+      components: {
+        MuiCssBaseline: {
+          styleOverrides: {
+            body: {
+              backgroundColor: baseTheme?.bgPrimary || (isLight ? '#ffffff' : '#121212'),
+              color: baseTheme?.textPrimary || (isLight ? '#000000' : '#ffffff'),
+            },
+          },
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error creating MUI theme:", error);
+    // Return a minimal fallback theme
+    return createTheme({
+      palette: {
+        mode: isLight ? 'light' : 'dark'
+      }
+    });
+  }
+};
+
+// Create Material UI themes
+let lightMuiTheme, darkMuiTheme;
+
+try {
+  lightMuiTheme = createMuiTheme(true);
+  darkMuiTheme = createMuiTheme(false);
+} catch (error) {
+  console.error("Error initializing themes:", error);
+  // Create minimal fallback themes
+  lightMuiTheme = createTheme({ palette: { mode: 'light' } });
+  darkMuiTheme = createTheme({ palette: { mode: 'dark' } });
+}
+
+// Create a theme context directly in this file to avoid any possible conflicts
+const AppThemeContext = createContext();
+
+const AppThemeProvider = ({ children }) => {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Check localStorage or system preference for theme
+    const savedTheme = localStorage?.getItem("theme");
+    return savedTheme
+      ? savedTheme === "dark"
+      : window?.matchMedia?.("(prefers-color-scheme: dark)")?.matches || false;
+  });
+
+  useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+    }
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute("data-theme", isDarkMode ? "dark" : "light");
+      document.documentElement.style.colorScheme = isDarkMode ? "dark" : "light";
+    }
+  }, [isDarkMode]);
+
+  const toggleTheme = () => {
+    setIsDarkMode((prev) => !prev);
+  };
+
+  // Pass both the state values and the Material UI theme
+  const value = {
+    isDarkMode,
+    toggleTheme,
+    theme: isDarkMode ? darkMuiTheme : lightMuiTheme
+  };
+
+  return (
+    <AppThemeContext.Provider value={value}>
+      <ThemeProvider theme={isDarkMode ? darkMuiTheme : lightMuiTheme}>
+        <CssBaseline />
+        {children}
+      </ThemeProvider>
+    </AppThemeContext.Provider>
+  );
+};
+
+// Custom hook to use our theme context
+const useAppTheme = () => {
+  const context = useContext(AppThemeContext);
+  if (!context) {
+    throw new Error("useAppTheme must be used within an AppThemeProvider");
+  }
+  return context;
+};
 
 // Lazy load route components
 const Products = React.lazy(() => import("./components/Products/Products"));
@@ -44,7 +241,7 @@ const LoadingFallback = () => (
 );
 
 const AppContent = () => {
-  const { isDarkMode, toggleTheme } = useTheme();
+  const { isDarkMode, toggleTheme } = useAppTheme();
   const [repoPath, setRepoPath] = useState("");
   const [fromBranch, setFromBranch] = useState("");
   const [toBranch, setToBranch] = useState("");
@@ -122,80 +319,77 @@ const AppContent = () => {
   };
 
   return (
-    <MuiThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
-      <CssBaseline />
-      <MainLayout
-        onRepoPathChange={handleRepoPathChange}
-        onToggleTheme={toggleTheme}
-        isDarkMode={isDarkMode}
-        {...commonProps}
-      >
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            <Route path="/" element={<Navigate to="/products" replace />} />
-            <Route
-              path="/products"
-              element={
-                <Products
-                  {...commonProps}
-                  repoPath={repoPath}
-                />
-              }
-            />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/docs" element={<Documentation />} />
-            <Route
-              path="/diff"
-              element={
-                <DiffViewer
-                  {...commonProps}
-                  repoPath={repoPath}
-                />
-              }
-            />
-            <Route
-              path="/analyze"
-              element={
-                <AIAnalyzer
-                  {...commonProps}
-                  repoPath={repoPath}
-                />
-              }
-            />
-            <Route
-              path="/impact"
-              element={
-                <ImpactView
-                  {...commonProps}
-                  repoPath={repoPath}
-                />
-              }
-            />
-            <Route
-              path="/quality"
-              element={
-                <QualityCheck
-                  {...commonProps}
-                  repoPath={repoPath}
-                />
-              }
-            />
-            <Route path="*" element={<Navigate to="/products" replace />} />
-          </Routes>
-        </Suspense>
-      </MainLayout>
-    </MuiThemeProvider>
+    <MainLayout
+      onRepoPathChange={handleRepoPathChange}
+      onToggleTheme={toggleTheme}
+      isDarkMode={isDarkMode}
+      {...commonProps}
+    >
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/products" replace />} />
+          <Route
+            path="/products"
+            element={
+              <Products
+                {...commonProps}
+                repoPath={repoPath}
+              />
+            }
+          />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/docs" element={<Documentation />} />
+          <Route
+            path="/diff"
+            element={
+              <DiffViewer
+                {...commonProps}
+                repoPath={repoPath}
+              />
+            }
+          />
+          <Route
+            path="/analyze"
+            element={
+              <AIAnalyzer
+                {...commonProps}
+                repoPath={repoPath}
+              />
+            }
+          />
+          <Route
+            path="/impact"
+            element={
+              <ImpactView
+                {...commonProps}
+                repoPath={repoPath}
+              />
+            }
+          />
+          <Route
+            path="/quality"
+            element={
+              <QualityCheck
+                {...commonProps}
+                repoPath={repoPath}
+              />
+            }
+          />
+          <Route path="*" element={<Navigate to="/products" replace />} />
+        </Routes>
+      </Suspense>
+    </MainLayout>
   );
 };
 
 const App = () => {
   return (
-    <Router>
-      <ThemeProvider>
+    <ErrorBoundary>
+      <AppThemeProvider>
         <AppContent />
-      </ThemeProvider>
-    </Router>
+      </AppThemeProvider>
+    </ErrorBoundary>
   );
 };
 

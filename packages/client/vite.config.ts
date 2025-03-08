@@ -82,7 +82,8 @@ export default defineConfig({
       strategies: 'generateSW',
       injectRegister: 'auto',
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globPatterns: ['**/*.{js,css,ico,png,svg}'],
+        globIgnores: ['**/index.html'],
         cleanupOutdatedCaches: true,
         sourcemap: true,
         navigateFallback: 'index.html',
@@ -100,6 +101,13 @@ export default defineConfig({
               cacheableResponse: {
                 statuses: [0, 200]
               }
+            }
+          },
+          {
+            urlPattern: /\/index\.html$/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'html-cache'
             }
           }
         ]
