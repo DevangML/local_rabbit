@@ -1,138 +1,112 @@
-import React from "react";
+import React from 'react';
 import {
-    Box,
-    Paper,
-    Typography,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    CircularProgress,
-    SelectChangeEvent,
-} from "@mui/material";
-import { CompareArrows as CompareArrowsIcon } from "@mui/icons-material";
+  Box,
+  Paper,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  CircularProgress,
+  SelectChangeEvent,
+} from '@mui/material';
+import { CompareArrows as CompareArrowsIcon } from '@mui/icons-material';
+import './BranchSelector.css';
 
 interface BranchSelectorProps {
-    branches?: string[];
-    fromBranch: string;
-    toBranch: string;
-    onFromBranchChange: (branch: string) => void;
-    onToBranchChange: (branch: string) => void;
-    isLoadingBranches: boolean;
+  branches?: string[];
+  fromBranch: string;
+  toBranch: string;
+  onFromBranchChange: (branch: string) => void;
+  onToBranchChange: (branch: string) => void;
+  isLoadingBranches: boolean;
 }
 
 const BranchSelector: React.FC<BranchSelectorProps> = ({
-    branches = [],
-    fromBranch,
-    toBranch,
-    onFromBranchChange,
-    onToBranchChange,
-    isLoadingBranches,
+  branches = [],
+  fromBranch,
+  toBranch,
+  onFromBranchChange,
+  onToBranchChange,
+  isLoadingBranches,
 }) => {
-    const handleFromBranchChange = (event: SelectChangeEvent<string>) => {
-      void onFromBranchChange(event.target.value);
-    };
-
-    const handleToBranchChange = (event: SelectChangeEvent<string>) => {
-      void onToBranchChange(event.target.value);
-    };
-
-    return (
-      <Paper
-        elevation={ 0 }
-        sx={ {
-          p: 2,
-          mb: 3,
-          border: "1px solid",
-          borderColor: "divider",
-        } }
-      >
-        <Typography variant="subtitle2" sx={ { mb: 2, color: "text.secondary" } }>
-          Branch Selection
-        </Typography>
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 2,
+        borderRadius: 2,
+        border: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <FormControl fullWidth size="small" sx={{ flex: 1 }}>
+          <InputLabel id="from-branch-label">From Branch</InputLabel>
+          <Select
+            labelId="from-branch-label"
+            id="from-branch-select"
+            value={fromBranch}
+            label="From Branch"
+            onChange={(e: SelectChangeEvent) => onFromBranchChange(e.target.value)}
+            disabled={branches.length === 0 || isLoadingBranches}
+          >
+            {branches.map((branch) => (
+              <MenuItem key={`from-${branch}`} value={branch}>
+                {branch}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
         <Box
-          sx={ {
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            flexWrap: { xs: "wrap", md: "nowrap" },
-          } }
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            mx: 2,
+            color: 'text.secondary',
+          }}
         >
-          <FormControl
-            size="small"
-            fullWidth
-            disabled={ isLoadingBranches || branches.length === 0 }
-          >
-            <InputLabel>Source Branch</InputLabel>
-            <Select
-              value={ fromBranch }
-              label="Source Branch"
-              onChange={ handleFromBranchChange }
-            >
-              { branches.map((branch) => (
-                <MenuItem
-                  key={ branch }
-                  value={ branch }
-                  disabled={ branch === toBranch }
-                >
-                  { branch }
-                </MenuItem>
-              )) }
-            </Select>
-          </FormControl>
-
-          <Box
-            sx={ {
-              display: "flex",
-              alignItems: "center",
-              color: "text.secondary",
-            } }
-          >
-            <CompareArrowsIcon />
-          </Box>
-
-          <FormControl
-            size="small"
-            fullWidth
-            disabled={ isLoadingBranches || branches.length === 0 }
-          >
-            <InputLabel>Target Branch</InputLabel>
-            <Select
-              value={ toBranch }
-              label="Target Branch"
-              onChange={ handleToBranchChange }
-            >
-              { branches.map((branch) => (
-                <MenuItem
-                  key={ branch }
-                  value={ branch }
-                  disabled={ branch === fromBranch }
-                >
-                  { branch }
-                </MenuItem>
-              )) }
-            </Select>
-          </FormControl>
-
-          { isLoadingBranches && (
-            <Box sx={ { display: "flex", alignItems: "center" } }>
-              <CircularProgress size={ 20 } />
-            </Box>
-          ) }
+          <CompareArrowsIcon />
         </Box>
 
-        { branches.length === 0 && !isLoadingBranches && (
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={ { mt: 1, fontSize: "0.875rem" } }
+        <FormControl fullWidth size="small" sx={{ flex: 1 }}>
+          <InputLabel id="to-branch-label">To Branch</InputLabel>
+          <Select
+            labelId="to-branch-label"
+            id="to-branch-select"
+            value={toBranch}
+            label="To Branch"
+            onChange={(e: SelectChangeEvent) => onToBranchChange(e.target.value)}
+            disabled={branches.length === 0 || isLoadingBranches}
           >
-            Please select a repository to view available branches
-          </Typography>
-        ) }
-      </Paper>
-    );
+            {branches.map((branch) => (
+              <MenuItem key={`to-${branch}`} value={branch}>
+                {branch}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {isLoadingBranches && (
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <CircularProgress size={20} />
+          </Box>
+        )}
+      </Box>
+
+      {branches.length === 0 && !isLoadingBranches && (
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mt: 1, fontSize: '0.875rem' }}
+        >
+          Please select a repository to view available branches
+        </Typography>
+      )}
+    </Paper>
+  );
 };
 
-export default BranchSelector;
+export default BranchSelector; 

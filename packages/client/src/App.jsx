@@ -264,7 +264,7 @@ const AppContent = () => {
 
       // For testing/development only: mock data if API call fails
       try {
-        const response = await fetch("/api/git/branches", {
+        const response = await fetch("/api/git/repository/set", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -274,7 +274,20 @@ const AppContent = () => {
 
         console.warn("Response status:", response.status);
 
-        const responseData = await response.json();
+        // Check if the response is empty before trying to parse it
+        const responseText = await response.text();
+        if (!responseText) {
+          throw new Error("Empty response from server");
+        }
+
+        // Try to parse the JSON response
+        let responseData;
+        try {
+          responseData = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error("Failed to parse response as JSON:", responseText);
+          throw new Error(`Invalid JSON response: ${parseError.message}`);
+        }
 
         if (!response.ok) {
           // Extract detailed error information
@@ -294,7 +307,9 @@ const AppContent = () => {
         }
 
         console.warn("Branches received:", responseData);
-        setBranches(responseData.branches || []);
+        // Update to use the correct data structure from the server response
+        const branchesArray = responseData.data && responseData.data.branches ? responseData.data.branches : [];
+        setBranches(branchesArray);
       } catch (apiError) {
         console.error("API error, using mock data:", apiError);
         // Mock data in case the API doesn"t work

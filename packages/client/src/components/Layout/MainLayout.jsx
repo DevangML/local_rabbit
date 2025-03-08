@@ -26,7 +26,7 @@ import {
   Brightness7 as Brightness7Icon,
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
-import BranchSelector from "../BranchSelector/BranchSelector";
+import BranchSelector from "../BranchSelector/BranchSelector.tsx";
 
 const MainLayout = ({
   children,

@@ -121,11 +121,21 @@ apiClient.interceptors.request.use(
 // Response interceptor
 apiClient.interceptors.response.use(
         (response) => {
+                // Check if response data is empty before returning
+                if (!response.data && response.status !== 204) { // 204 = No Content
+                        console.warn("[API] Empty response data received");
+                }
                 return response.data;
         },
         async (error) => {
                 // Handle API errors
                 const errorMessage = error.response?.data?.error || error.message || "Unknown error";
+
+                // Handle JSON parsing errors
+                if (error.message && error.message.includes("JSON")) {
+                        console.error("[API] JSON parsing error:", error.message);
+                        return Promise.reject("Invalid JSON response from server. Please check server logs.");
+                }
 
                 // If connection refused error and we"re in dev mode, try server discovery again
                 if ((error.code === "ECONNREFUSED" || error.message.includes("Network Error")) && config.isDevelopment) {
