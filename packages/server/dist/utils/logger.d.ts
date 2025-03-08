@@ -1,0 +1,240 @@
+/// <reference types="node" resolution-mode="require"/>
+/// <reference types="node" resolution-mode="require"/>
+declare const _exports: {
+    silent: boolean;
+    format: winston.Logform.Format;
+    levels: winston.config.AbstractConfigSetLevels;
+    level: string;
+    transports: winston.transport[];
+    exceptions: winston.ExceptionHandler;
+    rejections: winston.RejectionHandler;
+    profilers: object;
+    exitOnError: boolean | Function;
+    defaultMeta?: any;
+    log: winston.LogMethod;
+    add(transport: winston.transport): winston.Logger;
+    remove(transport: winston.transport): winston.Logger;
+    clear(): winston.Logger;
+    close(): winston.Logger;
+    error: winston.LeveledLogMethod;
+    warn: winston.LeveledLogMethod;
+    help: winston.LeveledLogMethod;
+    data: winston.LeveledLogMethod;
+    info: winston.LeveledLogMethod;
+    debug: winston.LeveledLogMethod;
+    prompt: winston.LeveledLogMethod;
+    http: winston.LeveledLogMethod;
+    verbose: winston.LeveledLogMethod;
+    input: winston.LeveledLogMethod;
+    silly: winston.LeveledLogMethod;
+    emerg: winston.LeveledLogMethod;
+    alert: winston.LeveledLogMethod;
+    crit: winston.LeveledLogMethod;
+    warning: winston.LeveledLogMethod;
+    notice: winston.LeveledLogMethod;
+    query(options?: winston.QueryOptions | undefined, callback?: ((err: Error, results: any) => void) | undefined): any;
+    stream(options?: any): NodeJS.ReadableStream;
+    startTimer(): winston.Profiler;
+    profile(id: string | number, meta?: Record<string, any> | undefined): winston.Logger;
+    configure(options: winston.LoggerOptions): void;
+    child(options: Object): winston.Logger;
+    isLevelEnabled(level: string): boolean;
+    isErrorEnabled(): boolean;
+    isWarnEnabled(): boolean;
+    isInfoEnabled(): boolean;
+    isVerboseEnabled(): boolean;
+    isDebugEnabled(): boolean;
+    isSillyEnabled(): boolean;
+    _transform(chunk: any, encoding: BufferEncoding, callback: import("stream").TransformCallback): void;
+    _flush(callback: import("stream").TransformCallback): void;
+    allowHalfOpen: boolean;
+    addListener(event: "close", listener: () => void): winston.Logger;
+    addListener(event: "data", listener: (chunk: any) => void): winston.Logger;
+    addListener(event: "drain", listener: () => void): winston.Logger;
+    addListener(event: "end", listener: () => void): winston.Logger;
+    addListener(event: "error", listener: (err: Error) => void): winston.Logger;
+    addListener(event: "finish", listener: () => void): winston.Logger;
+    addListener(event: "pause", listener: () => void): winston.Logger;
+    addListener(event: "pipe", listener: (src: import("stream").Readable) => void): winston.Logger;
+    addListener(event: "readable", listener: () => void): winston.Logger;
+    addListener(event: "resume", listener: () => void): winston.Logger;
+    addListener(event: "unpipe", listener: (src: import("stream").Readable) => void): winston.Logger;
+    addListener(event: string | symbol, listener: (...args: any[]) => void): winston.Logger;
+    emit(event: "close"): boolean;
+    emit(event: "data", chunk: any): boolean;
+    emit(event: "drain"): boolean;
+    emit(event: "end"): boolean;
+    emit(event: "error", err: Error): boolean;
+    emit(event: "finish"): boolean;
+    emit(event: "pause"): boolean;
+    emit(event: "pipe", src: import("stream").Readable): boolean;
+    emit(event: "readable"): boolean;
+    emit(event: "resume"): boolean;
+    emit(event: "unpipe", src: import("stream").Readable): boolean;
+    emit(event: string | symbol, ...args: any[]): boolean;
+    on(event: "close", listener: () => void): winston.Logger;
+    on(event: "data", listener: (chunk: any) => void): winston.Logger;
+    on(event: "drain", listener: () => void): winston.Logger;
+    on(event: "end", listener: () => void): winston.Logger;
+    on(event: "error", listener: (err: Error) => void): winston.Logger;
+    on(event: "finish", listener: () => void): winston.Logger;
+    on(event: "pause", listener: () => void): winston.Logger;
+    on(event: "pipe", listener: (src: import("stream").Readable) => void): winston.Logger;
+    on(event: "readable", listener: () => void): winston.Logger;
+    on(event: "resume", listener: () => void): winston.Logger;
+    on(event: "unpipe", listener: (src: import("stream").Readable) => void): winston.Logger;
+    on(event: string | symbol, listener: (...args: any[]) => void): winston.Logger;
+    once(event: "close", listener: () => void): winston.Logger;
+    once(event: "data", listener: (chunk: any) => void): winston.Logger;
+    once(event: "drain", listener: () => void): winston.Logger;
+    once(event: "end", listener: () => void): winston.Logger;
+    once(event: "error", listener: (err: Error) => void): winston.Logger;
+    once(event: "finish", listener: () => void): winston.Logger;
+    once(event: "pause", listener: () => void): winston.Logger;
+    once(event: "pipe", listener: (src: import("stream").Readable) => void): winston.Logger;
+    once(event: "readable", listener: () => void): winston.Logger;
+    once(event: "resume", listener: () => void): winston.Logger;
+    once(event: "unpipe", listener: (src: import("stream").Readable) => void): winston.Logger;
+    once(event: string | symbol, listener: (...args: any[]) => void): winston.Logger;
+    prependListener(event: "close", listener: () => void): winston.Logger;
+    prependListener(event: "data", listener: (chunk: any) => void): winston.Logger;
+    prependListener(event: "drain", listener: () => void): winston.Logger;
+    prependListener(event: "end", listener: () => void): winston.Logger;
+    prependListener(event: "error", listener: (err: Error) => void): winston.Logger;
+    prependListener(event: "finish", listener: () => void): winston.Logger;
+    prependListener(event: "pause", listener: () => void): winston.Logger;
+    prependListener(event: "pipe", listener: (src: import("stream").Readable) => void): winston.Logger;
+    prependListener(event: "readable", listener: () => void): winston.Logger;
+    prependListener(event: "resume", listener: () => void): winston.Logger;
+    prependListener(event: "unpipe", listener: (src: import("stream").Readable) => void): winston.Logger;
+    prependListener(event: string | symbol, listener: (...args: any[]) => void): winston.Logger;
+    prependOnceListener(event: "close", listener: () => void): winston.Logger;
+    prependOnceListener(event: "data", listener: (chunk: any) => void): winston.Logger;
+    prependOnceListener(event: "drain", listener: () => void): winston.Logger;
+    prependOnceListener(event: "end", listener: () => void): winston.Logger;
+    prependOnceListener(event: "error", listener: (err: Error) => void): winston.Logger;
+    prependOnceListener(event: "finish", listener: () => void): winston.Logger;
+    prependOnceListener(event: "pause", listener: () => void): winston.Logger;
+    prependOnceListener(event: "pipe", listener: (src: import("stream").Readable) => void): winston.Logger;
+    prependOnceListener(event: "readable", listener: () => void): winston.Logger;
+    prependOnceListener(event: "resume", listener: () => void): winston.Logger;
+    prependOnceListener(event: "unpipe", listener: (src: import("stream").Readable) => void): winston.Logger;
+    prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): winston.Logger;
+    removeListener(event: "close", listener: () => void): winston.Logger;
+    removeListener(event: "data", listener: (chunk: any) => void): winston.Logger;
+    removeListener(event: "drain", listener: () => void): winston.Logger;
+    removeListener(event: "end", listener: () => void): winston.Logger;
+    removeListener(event: "error", listener: (err: Error) => void): winston.Logger;
+    removeListener(event: "finish", listener: () => void): winston.Logger;
+    removeListener(event: "pause", listener: () => void): winston.Logger;
+    removeListener(event: "pipe", listener: (src: import("stream").Readable) => void): winston.Logger;
+    removeListener(event: "readable", listener: () => void): winston.Logger;
+    removeListener(event: "resume", listener: () => void): winston.Logger;
+    removeListener(event: "unpipe", listener: (src: import("stream").Readable) => void): winston.Logger;
+    removeListener(event: string | symbol, listener: (...args: any[]) => void): winston.Logger;
+    pipe<T extends NodeJS.WritableStream>(destination: T, options?: {
+        end?: boolean | undefined;
+    } | undefined): T;
+    compose<T_1 extends NodeJS.ReadableStream>(stream: ((source: any) => void) | T_1 | Iterable<T_1> | AsyncIterable<T_1>, options?: {
+        signal: AbortSignal;
+    } | undefined): T_1;
+    [EventEmitter.captureRejectionSymbol]?<K>(error: Error, event: string | symbol, ...args: any[]): void;
+    off<K_1>(eventName: string | symbol, listener: (...args: any[]) => void): winston.Logger;
+    removeAllListeners(eventName?: string | symbol | undefined): winston.Logger;
+    setMaxListeners(n: number): winston.Logger;
+    getMaxListeners(): number;
+    listeners<K_2>(eventName: string | symbol): Function[];
+    rawListeners<K_3>(eventName: string | symbol): Function[];
+    listenerCount<K_4>(eventName: string | symbol, listener?: Function | undefined): number;
+    eventNames(): (string | symbol)[];
+    readonly readableAborted: boolean;
+    readable: boolean;
+    readonly readableDidRead: boolean;
+    readonly readableEncoding: BufferEncoding | null;
+    readonly readableEnded: boolean;
+    readonly readableFlowing: boolean | null;
+    readonly readableHighWaterMark: number;
+    readonly readableLength: number;
+    readonly readableObjectMode: boolean;
+    destroyed: boolean;
+    readonly closed: boolean;
+    readonly errored: Error | null;
+    _construct?(callback: (error?: Error | null | undefined) => void): void;
+    _read(size: number): void;
+    read(size?: number | undefined): any;
+    setEncoding(encoding: BufferEncoding): winston.Logger;
+    pause(): winston.Logger;
+    resume(): winston.Logger;
+    isPaused(): boolean;
+    unpipe(destination?: NodeJS.WritableStream | undefined): winston.Logger;
+    unshift(chunk: any, encoding?: BufferEncoding | undefined): void;
+    wrap(stream: NodeJS.ReadableStream): winston.Logger;
+    push(chunk: any, encoding?: BufferEncoding | undefined): boolean;
+    iterator(options?: {
+        destroyOnReturn?: boolean | undefined;
+    } | undefined): NodeJS.AsyncIterator<any, any, any>;
+    map(fn: (data: any, options?: Pick<import("stream").ArrayOptions, "signal"> | undefined) => any, options?: import("stream").ArrayOptions | undefined): import("stream").Readable;
+    filter(fn: (data: any, options?: Pick<import("stream").ArrayOptions, "signal"> | undefined) => boolean | Promise<boolean>, options?: import("stream").ArrayOptions | undefined): import("stream").Readable;
+    forEach(fn: (data: any, options?: Pick<import("stream").ArrayOptions, "signal"> | undefined) => void | Promise<void>, options?: import("stream").ArrayOptions | undefined): Promise<void>;
+    toArray(options?: Pick<import("stream").ArrayOptions, "signal"> | undefined): Promise<any[]>;
+    some(fn: (data: any, options?: Pick<import("stream").ArrayOptions, "signal"> | undefined) => boolean | Promise<boolean>, options?: import("stream").ArrayOptions | undefined): Promise<boolean>;
+    find<T_2>(fn: (data: any, options?: Pick<import("stream").ArrayOptions, "signal"> | undefined) => data is T_2, options?: import("stream").ArrayOptions | undefined): Promise<T_2 | undefined>;
+    find(fn: (data: any, options?: Pick<import("stream").ArrayOptions, "signal"> | undefined) => boolean | Promise<boolean>, options?: import("stream").ArrayOptions | undefined): Promise<any>;
+    every(fn: (data: any, options?: Pick<import("stream").ArrayOptions, "signal"> | undefined) => boolean | Promise<boolean>, options?: import("stream").ArrayOptions | undefined): Promise<boolean>;
+    flatMap(fn: (data: any, options?: Pick<import("stream").ArrayOptions, "signal"> | undefined) => any, options?: import("stream").ArrayOptions | undefined): import("stream").Readable;
+    drop(limit: number, options?: Pick<import("stream").ArrayOptions, "signal"> | undefined): import("stream").Readable;
+    take(limit: number, options?: Pick<import("stream").ArrayOptions, "signal"> | undefined): import("stream").Readable;
+    asIndexedPairs(options?: Pick<import("stream").ArrayOptions, "signal"> | undefined): import("stream").Readable;
+    reduce<T_3 = any>(fn: (previous: any, data: any, options?: Pick<import("stream").ArrayOptions, "signal"> | undefined) => T_3, initial?: undefined, options?: Pick<import("stream").ArrayOptions, "signal"> | undefined): Promise<T_3>;
+    reduce<T_4 = any>(fn: (previous: T_4, data: any, options?: Pick<import("stream").ArrayOptions, "signal"> | undefined) => T_4, initial: T_4, options?: Pick<import("stream").ArrayOptions, "signal"> | undefined): Promise<T_4>;
+    _destroy(error: Error | null, callback: (error?: Error | null | undefined) => void): void;
+    destroy(error?: Error | undefined): winston.Logger;
+    [Symbol.asyncIterator](): NodeJS.AsyncIterator<any, any, any>;
+    [Symbol.asyncDispose](): Promise<void>;
+    readonly writable: boolean;
+    readonly writableEnded: boolean;
+    readonly writableFinished: boolean;
+    readonly writableHighWaterMark: number;
+    readonly writableLength: number;
+    readonly writableObjectMode: boolean;
+    readonly writableCorked: number;
+    readonly writableNeedDrain: boolean;
+    _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void;
+    _writev?(chunks: {
+        chunk: any;
+        encoding: BufferEncoding;
+    }[], callback: (error?: Error | null | undefined) => void): void;
+    _final(callback: (error?: Error | null | undefined) => void): void;
+    write(chunk: any, callback?: ((error: Error | null | undefined) => void) | undefined): boolean;
+    write(chunk: any, encoding: BufferEncoding, callback?: ((error: Error | null | undefined) => void) | undefined): boolean;
+    setDefaultEncoding(encoding: BufferEncoding): winston.Logger;
+    end(cb?: (() => void) | undefined): winston.Logger;
+    end(chunk: any, cb?: (() => void) | undefined): winston.Logger;
+    end(chunk: any, encoding: BufferEncoding, cb?: (() => void) | undefined): winston.Logger;
+    cork(): void;
+    uncork(): void;
+};
+export = _exports;
+export type ExtendedLoggerMethods = {
+    /**
+     * - Log a success message
+     */
+    success: Function;
+    /**
+     * - Log an important message
+     */
+    important: Function;
+    /**
+     * - Log a highlighted message
+     */
+    highlight: Function;
+    /**
+     * - Log a section title
+     */
+    section: Function;
+    /**
+     * - Log data as a table
+     */
+    table: Function;
+};
+import winston = require("winston");
