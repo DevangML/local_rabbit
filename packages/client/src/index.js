@@ -1,15 +1,17 @@
 /* global document */
 /* global document */
+/* global document */
+/* global document */
 import React from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
 
-const container = document.void getElementById("root");
-const root = void createRoot(container);
+const container = document.void gvoid void etElementById("root");
+const root = void cvoid void reateRoot(container);
 
-root.void render(
-    <React.StrictMode>
-    <App />
-    </React.StrictMode>
+root.void rvoid void ender(
+        <React.StrictMode>
+        <App />
+        </React.StrictMode>
 ); 

@@ -16,6 +16,16 @@ gitService.loadState().catch((err) => {
 });
 
 /**
+ * @typedef {Object} GitBranches
+ * @property {string[]} all - All branches
+ */
+
+/**
+ * @typedef {Object} GitServiceResult
+ * @property {string[]} [all]
+ */
+
+/**
  * Expand tilde in paths (e.g., "~/Documents" becomes "/Users/username/Documents")
  * @param {string} filePath - Path that may contain tilde
  * @returns {string} - Path with tilde expanded
@@ -29,8 +39,8 @@ const _expandTilde = (filePath) => {
 
 /**
  * Get list of repositories
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
  */
 exports.getRepositories = async (req, res) => {
   try {
@@ -44,24 +54,26 @@ exports.getRepositories = async (req, res) => {
 
 /**
  * Set repository
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
  */
 exports.setRepository = async (req, res) => {
-  const { path: repoPath } = req.body;
+  const { path: repoPath } = /** @type {Record<string, string>} */ (req.body);
 
   if (!repoPath) {
     return res.status(400).json({ error: 'Repository path is required' });
   }
 
   try {
-    const isValid = await gitService.isValidRepo(repoPath);
+    const isValid = await gitService.isValidRepo(_expandTilde(repoPath));
     if (!isValid) {
       return res.status(400).json({ error: 'Not a valid git repository' });
     }
 
     gitService.setRepoPath(repoPath);
-    const branches = await gitService.getBranches();
+    /** @type {GitServiceResult} */
+    const branchesResult = await gitService.getBranches();
+    const branches = { all: branchesResult.all || [] };
     const current = await gitService.getCurrentBranch();
 
     await gitService.saveState();
@@ -79,8 +91,8 @@ exports.setRepository = async (req, res) => {
 
 /**
  * Get branches for current repository
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
  */
 exports.getBranches = async (req, res) => {
   if (!gitService.repoPath) {
@@ -88,14 +100,15 @@ exports.getBranches = async (req, res) => {
   }
 
   try {
+    /** @type {GitBranches} */
     const branches = await gitService.getBranches();
     const current = await gitService.getCurrentBranch();
 
     res.json({
-      branches: branches.all,
+      branches: /** @type {string[]} */ (branches.all),
       current,
     });
-  } catch (error) {
+  } catch (/** @type {unknown} */ error) {
     logger.error('Error getting branches:', error);
     res.status(500).json({ error: 'Failed to get branches' });
   }
@@ -103,8 +116,8 @@ exports.getBranches = async (req, res) => {
 
 /**
  * Get current repository info
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
  */
 exports.getRepositoryInfo = async (req, res) => {
   try {
@@ -112,17 +125,21 @@ exports.getRepositoryInfo = async (req, res) => {
       return res.status(400).json({ error: 'No repository selected' });
     }
 
+    /** @type {GitBranches} */
     const branches = await gitService.getBranches();
     const currentBranch = await gitService.getCurrentBranch();
 
     return res.json({
       path: gitService.repoPath,
       name: path.basename(gitService.repoPath),
-      branches: branches.all || [],
+      branches: /** @type {string[]} */ (branches.all),
       current: currentBranch,
     });
-  } catch (error) {
+  } catch (/** @type {unknown} */ error) {
     logger.error('Error getting repository info:', error);
-    return res.status(500).json({ error: 'Failed to get repository info', details: error.message });
+    return res.status(500).json({
+      error: 'Failed to get repository info',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 };

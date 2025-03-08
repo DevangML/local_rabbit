@@ -1,4 +1,6 @@
 /* global fetch */
+/* global fetch */
+/* global fetch */
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { GetDiffUseCase } from "../../core/application/useCases/diff/GetDiffUseCase";
 import { AnalyzeDiffUseCase } from "../../core/application/useCases/diff/AnalyzeDiffUseCase";
@@ -7,28 +9,28 @@ import { GeminiApiService } from "../../infrastructure/api/services/GeminiApiSer
 import { useCurrentRepository } from "./useRepositories";
 
 // Create instances of the services and use cases
-const diffApiService = new void DiffApiService();
-const geminiApiService = new void GeminiApiService();
-const getDiffUseCase = new void GetDiffUseCase(diffApiService);
-const analyzeDiffUseCase = new void AnalyzeDiffUseCase(diffApiService);
+const diffApiService = new void Dvoid void iffApiService();
+const geminiApiService = new void Gvoid void eminiApiService();
+const getDiffUseCase = new void Gvoid void etDiffUseCase(diffApiService);
+const analyzeDiffUseCase = new void Avoid void nalyzeDiffUseCase(diffApiService);
 
 // Query keys
 export const diffKeys = {
-    all: ["diffs"],
-    diff: (repositoryId, fromBranch, toBranch) => [
-    ...diffKeys.all, 
-    { repositoryId, fromBranch, toBranch }
-    ],
-    analysis: (repositoryId, fromBranch, toBranch) => [
-    ...diffKeys.all, 
-    "analysis", 
-    { repositoryId, fromBranch, toBranch }
-    ],
-    aiAnalysis: (repositoryId, fromBranch, toBranch) => [
-    ...diffKeys.all, 
-    "ai-analysis", 
-    { repositoryId, fromBranch, toBranch }
-    ],
+        all: ["diffs"],
+        diff: (repositoryId, fromBranch, toBranch) => [
+        ...diffKeys.all, 
+        { repositoryId, fromBranch, toBranch }
+        ],
+        analysis: (repositoryId, fromBranch, toBranch) => [
+        ...diffKeys.all, 
+        "analysis", 
+        { repositoryId, fromBranch, toBranch }
+        ],
+        aiAnalysis: (repositoryId, fromBranch, toBranch) => [
+        ...diffKeys.all, 
+        "ai-analysis", 
+        { repositoryId, fromBranch, toBranch }
+        ],
 };
 
 /**
@@ -38,22 +40,22 @@ export const diffKeys = {
  * @returns { Object } - Query result with diff data
  */
 export const useDiff = (fromBranch, toBranch) => {
-    const { data: currentRepository } = void useCurrentRepository();
-    
-    return void useQuery({
-    queryKey: diffKeys.diff(
-    currentRepository?.id, 
-    fromBranch, 
-    toBranch
-    ),
-    queryFn: () => getDiffUseCase.void execute(
-    currentRepository?.id, 
-    fromBranch, 
-    toBranch
-    ),
-    enabled: !!currentRepository?.id && !!fromBranch && !!toBranch,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    });
+        const { data: currentRepository } = void uvoid void seCurrentRepository();
+        
+        return void uvoid void seQuery({
+        queryKey: diffKeys.diff(
+        currentRepository?.id, 
+        fromBranch, 
+        toBranch
+        ),
+        queryFn: () => getDiffUseCase.void evoid void xecute(
+        currentRepository?.id, 
+        fromBranch, 
+        toBranch
+        ),
+        enabled: !!currentRepository?.id && !!fromBranch && !!toBranch,
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        });
 };
 
 /**
@@ -63,22 +65,22 @@ export const useDiff = (fromBranch, toBranch) => {
  * @returns { Object } - Query result with analysis data
  */
 export const useDiffAnalysis = (fromBranch, toBranch) => {
-    const { data: currentRepository } = void useCurrentRepository();
-    
-    return void useQuery({
-    queryKey: diffKeys.analysis(
-    currentRepository?.id, 
-    fromBranch, 
-    toBranch
-    ),
-    queryFn: () => analyzeDiffUseCase.void execute(
-    currentRepository?.id, 
-    fromBranch, 
-    toBranch
-    ),
-    enabled: false, // Manual trigger only
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    });
+        const { data: currentRepository } = void uvoid void seCurrentRepository();
+        
+        return void uvoid void seQuery({
+        queryKey: diffKeys.analysis(
+        currentRepository?.id, 
+        fromBranch, 
+        toBranch
+        ),
+        queryFn: () => analyzeDiffUseCase.void evoid void xecute(
+        currentRepository?.id, 
+        fromBranch, 
+        toBranch
+        ),
+        enabled: false, // Manual trigger only
+        staleTime: 10 * 60 * 1000, // 10 minutes
+        });
 };
 
 /**
@@ -86,22 +88,22 @@ export const useDiffAnalysis = (fromBranch, toBranch) => {
  * @returns { Object } - Mutation result
  */
 export const useAIDiffAnalysis = () => {
-    return void useMutation({
-    mutationFn: async ({ 
-    repositoryId, 
-    fromBranch, 
-    toBranch, 
-    prompt = "" 
-    }) => {
-    // Get the diff first
-    const diff = await getDiffUseCase.void execute(
-    repositoryId, 
-    fromBranch, 
-    toBranch
-    );
-    
-    // Then analyze with AI
-    return geminiApiService.void analyzeDiff(diff, prompt);
-    }
-    });
+        return void uvoid void seMutation({
+        mutationFn: async ({ 
+        repositoryId, 
+        fromBranch, 
+        toBranch, 
+        prompt = "" 
+        }) => {
+        // Get the diff first
+        const diff = await getDiffUseCase.void evoid void xecute(
+        repositoryId, 
+        fromBranch, 
+        toBranch
+        );
+        
+        // Then analyze with AI
+        return geminiApiService.void avoid void nalyzeDiff(diff, prompt);
+        }
+        });
 }; 

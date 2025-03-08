@@ -11,10 +11,10 @@ gitService.loadState().then((repoPath) => {
   if (repoPath) {
     analyzerService.setRepoPath(repoPath);
   }
-  return repoPath; // Return a value to satisfy promise/always-return
+  return repoPath;
 }).catch((err) => {
   logger.error('Failed to load initial state:', err);
-  throw err; // Re-throw to satisfy promise/always-return
+  throw err;
 });
 
 /**
@@ -25,12 +25,13 @@ gitService.loadState().then((repoPath) => {
 
 /**
  * Get diff between two branches
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
  */
 exports.getDiff = async (req, res) => {
   try {
-    const { from: fromBranch, to: toBranch } = req.query;
+    const fromBranch = String(req.query.from);
+    const toBranch = String(req.query.to);
 
     if (!fromBranch || !toBranch) {
       return res.status(400).json({ error: 'Both from and to branches are required' });
@@ -42,7 +43,6 @@ exports.getDiff = async (req, res) => {
 
     const diff = await gitService.getDiff(fromBranch, toBranch);
 
-    // Parse the diff output into a structured format
     /** @type {DiffFile[]} */
     const files = [];
     /** @type {DiffFile | null} */
@@ -53,24 +53,24 @@ exports.getDiff = async (req, res) => {
     diff.split('\n').forEach((line) => {
       if (line.startsWith('diff --git')) {
         if (currentFile) {
-          currentFile.content = currentContent.join('\n');
+          /** @type {DiffFile} */ (currentFile).content = currentContent.join('\n');
           files.push(currentFile);
         }
         const filePath = line.split(' b/')[1];
-        currentFile = { path: filePath, content: '' };
-        currentContent = [];
+        if (filePath) {
+          currentFile = { path: filePath, content: '' };
+          currentContent = [];
+        }
       } else if (currentFile) {
         currentContent.push(line);
       }
     });
 
-    // Add the last file
     if (currentFile) {
-      currentFile.content = currentContent.join('\n');
+      /** @type {DiffFile} */ (currentFile).content = currentContent.join('\n');
       files.push(currentFile);
     }
 
-    // Set cache control headers to prevent 304s
     res.set({
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       Pragma: 'no-cache',
@@ -91,12 +91,12 @@ exports.getDiff = async (req, res) => {
 
 /**
  * Analyze diff between two branches
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
  */
 exports.analyzeDiff = async (req, res) => {
   try {
-    const { fromBranch, toBranch, prompt } = req.body;
+    const { fromBranch, toBranch, prompt } = /** @type {Record<string, string>} */ (req.body);
 
     if (!gitService.repoPath) {
       return res.status(400).json({ error: 'No repository selected' });
@@ -106,10 +106,7 @@ exports.analyzeDiff = async (req, res) => {
       return res.status(400).json({ error: 'Both branches must be specified' });
     }
 
-    // Get diff between branches
     const diff = await gitService.getDiff(fromBranch, toBranch);
-
-    // Analyze the diff with the provided prompt
     const analysis = await analyzerService.analyzeDiff(diff, prompt);
 
     return res.json({
@@ -118,8 +115,12 @@ exports.analyzeDiff = async (req, res) => {
       toBranch,
       repository: gitService.repoPath,
     });
-  } catch (error) {
+  // @ts-ignore
+  } catch (/** @type {Error} */ error) {
     logger.error('Error analyzing diff:', error);
-    return res.status(500).json({ error: 'Failed to analyze diff', details: error.message });
+    return res.status(500).json({
+      error: 'Failed to analyze diff',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 };

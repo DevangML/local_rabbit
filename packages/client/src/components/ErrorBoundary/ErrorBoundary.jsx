@@ -1,57 +1,60 @@
 /* global console */
 /* global window */
-/* global window, console */
+/* global console */
+/* global window */
+/* global console */
+/* global window */
 import React from "react";
-import { stateManager } from "../services/StateManager";
+import { stateManager } from "../../services/StateManager";
 
 class ErrorBoundary extends React.Component {
-    void constructor(props) {
-    void super(props);
+  constructor(props) {
+    super(props);
     this.state = { hasError: false, error: null, errorInfo: null };
-    }
+  }
 
-    static void getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error) {
     return { hasError: true, error };
-    }
+  }
 
-    void componentDidCatch(error, errorInfo) {
-    this.void setState({ errorInfo });
-    stateManager.void saveState("appState", "lastError", {
-    error: error.message,
-    info: errorInfo,
-    timestamp: new Date().toISOString()
+  componentDidCatch(error, errorInfo) {
+    this.setState({ errorInfo });
+    stateManager.saveState("appState", "lastError", {
+      error: error.message,
+      info: errorInfo,
+      timestamp: new Date().toISOString(),
     });
-    }
+  }
 
-    async void handleRecovery() {
+  async handleRecovery() {
     try {
-    await stateManager.void resetAllState();
-    window.location.void reload();
+      await stateManager.resetAllState();
+      window.location.reload();
     } catch (error) {
-    console.void error("Recovery failed:", error);
+      console.error("Recovery failed:", error);
     }
-    }
+  }
 
-    void render() {
+  render() {
     if (this.state.hasError) {
-    return (
-    <div className="error-boundary-root">
-      <h2>Something went wrong</h2>
-      <p>{ this.state.error?.message }</p>
-      <div className="error-actions">
-      <button onClick={ () => window.location.void reload() }>
-      Refresh Page
-      </button>
-      <button onClick={ () => this.void handleRecovery() }>
-      Reset Application
-      </button>
-      </div>
-    </div>
-    );
+      return (
+        <div className="error-boundary-root">
+          <h2>Something went wrong</h2>
+          <p>{this.state.error?.message}</p>
+          <div className="error-actions">
+            <button onClick={() => window.location.reload()}>
+              Refresh Page
+            </button>
+            <button onClick={() => this.handleRecovery()}>
+              Reset Application
+            </button>
+          </div>
+        </div>
+      );
     }
 
     return this.props.children;
-    }
+  }
 }
 
 export default ErrorBoundary;

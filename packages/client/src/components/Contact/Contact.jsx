@@ -1,5 +1,7 @@
 /* global console */
 /* global console */
+/* global console */
+/* global console */
 import React, { useState } from "react";
 import {
   Box,
@@ -63,7 +65,12 @@ const Contact = () => {
         <Typography variant="h3" align="center" gutterBottom>
           Get in Touch
         </Typography>
-        <Typography variant="h6" align="center" color="text.secondary" sx={{ mb: 6 }}>
+        <Typography
+          variant="h6"
+          align="center"
+          color="text.secondary"
+          sx={{ mb: 6 }}
+        >
           Have questions? We"d love to hear from you.
         </Typography>
 
@@ -170,4 +177,4 @@ const Contact = () => {
   );
 };
 
-export default Contact; 
+export default Contact;

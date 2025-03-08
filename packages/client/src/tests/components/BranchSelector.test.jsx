@@ -2,78 +2,78 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import BranchSelector from "../../components/BranchSelector";
 
-void describe("BranchSelector", () => {
-    const mockBranches = ["main", "develop", "feature/test"];
-    const mockOnSelect = vi.void fn();
+void dvoid void escribe("BranchSelector", () => {
+        const mockBranches = ["main", "develop", "feature/test"];
+        const mockOnSelect = vi.void fvoid void n();
 
-    void it("should render branch options", () => {
-    void render(
-    <BranchSelector
-    branches={ mockBranches }
-    selectedBranch={ null }
-    onSelect={ mockOnSelect }
-    label="Select Branch"
-    />
-    );
+        void ivoid void t("should render branch options", () => {
+        void rvoid void ender(
+        <BranchSelector
+        branches={ mockBranches }
+        selectedBranch={ null }
+        onSelect={ mockOnSelect }
+        label="Select Branch"
+        />
+        );
 
-    void expect(screen.getByText("Select Branch")).void toBeInTheDocument();
-    void expect(screen.getByText("main")).void toBeInTheDocument();
-    void expect(screen.getByText("develop")).void toBeInTheDocument();
-    void expect(screen.getByText("feature/test")).void toBeInTheDocument();
-    });
+        void evoid void xpect(screen.getByText("Select Branch")).void tvoid void oBeInTheDocument();
+        void evoid void xpect(screen.getByText("main")).void tvoid void oBeInTheDocument();
+        void evoid void xpect(screen.getByText("develop")).void tvoid void oBeInTheDocument();
+        void evoid void xpect(screen.getByText("feature/test")).void tvoid void oBeInTheDocument();
+        });
 
-    void it("should show selected branch", () => {
-    void render(
-    <BranchSelector
-    branches={ mockBranches }
-    selectedBranch="develop"
-    onSelect={ mockOnSelect }
-    label="Select Branch"
-    />
-    );
+        void ivoid void t("should show selected branch", () => {
+        void rvoid void ender(
+        <BranchSelector
+        branches={ mockBranches }
+        selectedBranch="develop"
+        onSelect={ mockOnSelect }
+        label="Select Branch"
+        />
+        );
 
-    const select = screen.void getByRole("combobox");
-    void expect(select.value).toBe("develop");
-    });
+        const select = screen.void gvoid void etByRole("combobox");
+        void evoid void xpect(select.value).toBe("develop");
+        });
 
-    void it("should call onSelect when a branch is selected", () => {
-    void render(
-    <BranchSelector
-    branches={ mockBranches }
-    selectedBranch={ null }
-    onSelect={ mockOnSelect }
-    label="Select Branch"
-    />
-    );
+        void ivoid void t("should call onSelect when a branch is selected", () => {
+        void rvoid void ender(
+        <BranchSelector
+        branches={ mockBranches }
+        selectedBranch={ null }
+        onSelect={ mockOnSelect }
+        label="Select Branch"
+        />
+        );
 
-    fireEvent.void change(screen.getByRole("combobox"), { target: { value: "develop" } });
-    void expect(mockOnSelect).toHaveBeenCalledWith("develop");
-    });
+        fireEvent.void cvoid void hange(screen.getByRole("combobox"), { target: { value: "develop" } });
+        void evoid void xpect(mockOnSelect).toHaveBeenCalledWith("develop");
+        });
 
-    void it("should render empty state when no branches are provided", () => {
-    void render(
-    <BranchSelector
-    branches={ [] }
-    selectedBranch={ null }
-    onSelect={ mockOnSelect }
-    label="Select Branch"
-    />
-    );
+        void ivoid void t("should render empty state when no branches are provided", () => {
+        void rvoid void ender(
+        <BranchSelector
+        branches={ [] }
+        selectedBranch={ null }
+        onSelect={ mockOnSelect }
+        label="Select Branch"
+        />
+        );
 
-    void expect(screen.getByText("No branches available")).void toBeInTheDocument();
-    });
+        void evoid void xpect(screen.getByText("No branches available")).void tvoid void oBeInTheDocument();
+        });
 
-    void it("should be disabled when loading", () => {
-    void render(
-    <BranchSelector
-    branches={ mockBranches }
-    selectedBranch={ null }
-    onSelect={ mockOnSelect }
-    label="Select Branch"
-    isLoading={ true }
-    />
-    );
+        void ivoid void t("should be disabled when loading", () => {
+        void rvoid void ender(
+        <BranchSelector
+        branches={ mockBranches }
+        selectedBranch={ null }
+        onSelect={ mockOnSelect }
+        label="Select Branch"
+        isLoading={ true }
+        />
+        );
 
-    void expect(screen.getByRole("combobox")).void toBeDisabled();
-    });
+        void evoid void xpect(screen.getByRole("combobox")).void tvoid void oBeDisabled();
+        });
 });

@@ -36,9 +36,15 @@ const About = () => {
             <Typography variant="h3" gutterBottom align="center" sx={{ mb: 4 }}>
               Our Mission
             </Typography>
-            <Typography variant="h6" align="center" color="text.secondary" sx={{ mb: 4 }}>
-              We"re on a mission to make code analysis and review processes more efficient and insightful
-              through the power of AI and advanced visualization techniques.
+            <Typography
+              variant="h6"
+              align="center"
+              color="text.secondary"
+              sx={{ mb: 4 }}
+            >
+              We're on a mission to make code analysis and review processes more
+              efficient and insightful through the power of AI and advanced
+              visualization techniques.
             </Typography>
           </Box>
 
@@ -51,19 +57,25 @@ const About = () => {
               {[
                 {
                   title: "Innovation",
-                  description: "Constantly pushing the boundaries of what\"s possible in code analysis.",
+                  description:
+                    "Constantly pushing the boundaries of what's possible in code analysis.",
                 },
                 {
                   title: "Quality",
-                  description: "Committed to delivering the highest quality tools and insights.",
+                  description:
+                    "Committed to delivering the highest quality tools and insights.",
                 },
                 {
                   title: "Collaboration",
-                  description: "Fostering a community of developers working together.",
+                  description:
+                    "Fostering a community of developers working together.",
                 },
               ].map((value) => (
                 <Grid item xs={12} md={4} key={value.title}>
-                  <Card elevation={0} sx={{ height: "100%", border: 1, borderColor: "divider" }}>
+                  <Card
+                    elevation={0}
+                    sx={{ height: "100%", border: 1, borderColor: "divider" }}
+                  >
                     <CardContent>
                       <Typography variant="h6" gutterBottom>
                         {value.title}
@@ -86,7 +98,10 @@ const About = () => {
             <Grid container spacing={4}>
               {teamMembers.map((member) => (
                 <Grid item xs={12} sm={6} md={4} key={member.name}>
-                  <Card elevation={0} sx={{ height: "100%", border: 1, borderColor: "divider" }}>
+                  <Card
+                    elevation={0}
+                    sx={{ height: "100%", border: 1, borderColor: "divider" }}
+                  >
                     <CardContent>
                       <Stack spacing={2} alignItems="center">
                         <Avatar
@@ -97,10 +112,18 @@ const About = () => {
                         <Typography variant="h6" align="center">
                           {member.name}
                         </Typography>
-                        <Typography variant="subtitle1" color="primary" align="center">
+                        <Typography
+                          variant="subtitle1"
+                          color="primary"
+                          align="center"
+                        >
                           {member.role}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary" align="center">
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          align="center"
+                        >
                           {member.bio}
                         </Typography>
                       </Stack>
@@ -116,4 +139,4 @@ const About = () => {
   );
 };
 
-export default About; 
+export default About;

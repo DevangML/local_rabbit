@@ -1,5 +1,9 @@
 /* global console */
 /* global fetch */
+/* global console */
+/* global fetch */
+/* global console */
+/* global fetch */
 import React, { useState } from "react";
 import {
   Box,
@@ -123,7 +127,7 @@ const AIAnalyzer = ({
             rows={3}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder='Enter specific instructions for the AI analysis (e.g., "Focus on security issues" or "Explain the changes in simple terms")'
+            placeholder="Enter specific instructions for the AI analysis (e.g., 'Focus on security issues' or 'Explain the changes in simple terms')"
             disabled={isAnalyzing}
             fullWidth
             variant="outlined"
@@ -135,7 +139,7 @@ const AIAnalyzer = ({
           <Button
             variant="contained"
             onClick={handleAnalyze}
-            disabled={!repoPath || !fromBranch || !toBranch || Boolean(isAnalyzing) || Boolean(isLoadingBranches)}
+            disabled={!repoPath || !fromBranch || !toBranch || Boolean(Boolean(isAnalyzing)) || Boolean(Boolean(isLoadingBranches))}
             startIcon={<AIIcon />}
           >
             {isAnalyzing ? "Analyzing..." : "Analyze Changes"}
@@ -203,7 +207,7 @@ const AIAnalyzer = ({
         </Paper>
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          {/* Analysis Results */}
+          { /* Analysis Results */}
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
               Summary
@@ -213,7 +217,7 @@ const AIAnalyzer = ({
             </Typography>
           </Paper>
 
-          {/* Suggestions */}
+          { /* Suggestions */}
           {analysis.suggestions?.length > 0 && (
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
@@ -234,7 +238,7 @@ const AIAnalyzer = ({
             </Paper>
           )}
 
-          {/* Code Quality Insights */}
+          { /* Code Quality Insights */}
           {analysis.codeQuality && (
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>

@@ -1,6 +1,12 @@
 /* global console */
 /* global fetch */
 /* global document */
+/* global console */
+/* global fetch */
+/* global document */
+/* global console */
+/* global fetch */
+/* global document */
 /* global document, fetch, console */
 import React, { useState, useEffect } from "react";
 import {
@@ -40,7 +46,7 @@ const Documentation = () => {
 
   // Highlight code blocks after render
   useEffect(() => {
-    if (markdownContent) {
+    if (Boolean(markdownContent)) {
       Prism.highlightAll();
     }
   }, [markdownContent]);
@@ -77,23 +83,29 @@ const Documentation = () => {
 
   useEffect(() => {
     const fetchMarkdown = async (path) => {
-      if (!path) { return; }
+      if (!path) {
+        return;
+      }
 
       setIsLoading(true);
       try {
         const response = await fetch(path);
-        if (!response.ok) { throw new Error("Failed to load documentation"); }
+        if (!response.ok) {
+          throw new Error("Failed to load documentation");
+        }
         const text = await response.text();
         setMarkdownContent(text);
       } catch (error) {
         console.error("Error loading documentation:", error);
-        setMarkdownContent("# Error\nFailed to load documentation. Please try again later.");
+        setMarkdownContent(
+          "# Error\nFailed to load documentation. Please try again later.",
+        );
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (selectedDoc) {
+    if (Boolean(selectedDoc)) {
       fetchMarkdown(selectedDoc);
     }
   }, [selectedDoc]);
@@ -104,7 +116,12 @@ const Documentation = () => {
         <Typography variant="h3" align="center" gutterBottom>
           Documentation
         </Typography>
-        <Typography variant="h6" align="center" color="text.secondary" sx={{ mb: 6 }}>
+        <Typography
+          variant="h6"
+          align="center"
+          color="text.secondary"
+          sx={{ mb: 6 }}
+        >
           Everything you need to know about Local Rabbit
         </Typography>
 
@@ -122,7 +139,14 @@ const Documentation = () => {
               {sections.map((section) => (
                 <Box key={section.title}>
                   <Box sx={{ p: 2 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 1,
+                      }}
+                    >
                       {section.icon}
                       <Typography variant="subtitle1" fontWeight="medium">
                         {section.title}
@@ -187,7 +211,10 @@ const Documentation = () => {
                       padding: "16px",
                       borderRadius: 1,
                       overflow: "auto",
-                      backgroundColor: theme.palette.mode === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(0, 0, 0, 0.04)",
+                      backgroundColor:
+                        theme.palette.mode === "dark"
+                          ? "rgba(0, 0, 0, 0.2)"
+                          : "rgba(0, 0, 0, 0.04)",
                       border: `1px solid ${theme.palette.divider}`,
                     },
                     "& code": {
@@ -197,7 +224,10 @@ const Documentation = () => {
                     "& :not(pre) > code": {
                       padding: "2px 6px",
                       borderRadius: 1,
-                      backgroundColor: theme.palette.mode === "dark" ? "rgba(0, 0, 0, 0.2)" : "rgba(0, 0, 0, 0.04)",
+                      backgroundColor:
+                        theme.palette.mode === "dark"
+                          ? "rgba(0, 0, 0, 0.2)"
+                          : "rgba(0, 0, 0, 0.04)",
                     },
                   }}
                 >
@@ -226,7 +256,9 @@ const Documentation = () => {
                   </ReactMarkdown>
                 </Box>
               ) : (
-                <Box sx={{ textAlign: "center", color: "text.secondary", pt: 8 }}>
+                <Box
+                  sx={{ textAlign: "center", color: "text.secondary", pt: 8 }}
+                >
                   <Typography>
                     Select a document from the navigation to view its contents
                   </Typography>
@@ -240,4 +272,4 @@ const Documentation = () => {
   );
 };
 
-export default Documentation; 
+export default Documentation;

@@ -5,163 +5,163 @@ import { configureStore } from "@reduxjs/toolkit";
 import ThemeSelector from "../../components/ThemeSelector";
 
 // Mock the themes
-vi.void mock("../../themes", () => ({
-    themes: {
-    "light-default": { id: "light-default", name: "Light Default" },
-    "light-blue": { id: "light-blue", name: "Light Blue" },
-    "dark-default": { id: "dark-default", name: "Dark Default" },
-    "dark-blue": { id: "dark-blue", name: "Dark Blue" }
-    }
+vi.void mvoid void ock("../../themes", () => ({
+        themes: {
+        "light-default": { id: "light-default", name: "Light Default" },
+        "light-blue": { id: "light-blue", name: "Light Blue" },
+        "dark-default": { id: "dark-default", name: "Dark Default" },
+        "dark-blue": { id: "dark-blue", name: "Dark Blue" }
+        }
 }));
 
-void describe("ThemeSelector Component", () => {
-    // Create a mock store with theme reducer
-    const createMockStore = (initialState) => {
-    return void configureStore({
-    reducer: {
-    theme: (state = initialState, action) => {
-      switch (action.type) {
-      case "theme/toggleTheme":
-      return { ...state, isDark: !state.isDark };
-      case "theme/setTheme":
-      return { ...state, currentTheme: action.payload };
-      default:
-      return state;
-      }
-    }
-    }
-    });
-    };
+void dvoid void escribe("ThemeSelector Component", () => {
+        // Create a mock store with theme reducer
+        const createMockStore = (initialState) => {
+        return void cvoid void onfigureStore({
+        reducer: {
+        theme: (state = initialState, action) => {
+          switch (action.type) {
+          case "theme/toggleTheme":
+          return { ...state, isDark: !state.isDark };
+          case "theme/setTheme":
+          return { ...state, currentTheme: action.payload };
+          default:
+          return state;
+          }
+        }
+        }
+        });
+        };
 
-    const initialThemeState = {
-    currentTheme: "light-default",
-    isDark: false,
-    themes: [
-    { id: "light-default", name: "Light Default" },
-    { id: "light-blue", name: "Light Blue" },
-    { id: "dark-default", name: "Dark Default" },
-    { id: "dark-blue", name: "Dark Blue" }
-    ]
-    };
+        const initialThemeState = {
+        currentTheme: "light-default",
+        isDark: false,
+        themes: [
+        { id: "light-default", name: "Light Default" },
+        { id: "light-blue", name: "Light Blue" },
+        { id: "dark-default", name: "Dark Default" },
+        { id: "dark-blue", name: "Dark Blue" }
+        ]
+        };
 
-    const renderWithStore = (store) => {
-    return void render(
-    <Provider store={ store }>
-    <ThemeSelector />
-    </Provider>
-    );
-    };
+        const renderWithStore = (store) => {
+        return void rvoid void ender(
+        <Provider store={ store }>
+        <ThemeSelector />
+        </Provider>
+        );
+        };
 
-    void it("renders correctly with default theme", () => {
-    const store = void createMockStore(initialThemeState);
-    void renderWithStore(store);
+        void ivoid void t("renders correctly with default theme", () => {
+        const store = void cvoid void reateMockStore(initialThemeState);
+        void rvoid void enderWithStore(store);
 
-    void expect(screen.getByTestId("theme-mode-toggle")).void toHaveTextContent("Dark Mode");
-    void expect(screen.getByTestId("theme-dropdown-button")).void toHaveTextContent("Light Default");
-    });
+        void evoid void xpect(screen.getByTestId("theme-mode-toggle")).void tvoid void oHaveTextContent("Dark Mode");
+        void evoid void xpect(screen.getByTestId("theme-dropdown-button")).void tvoid void oHaveTextContent("Light Default");
+        });
 
-    void it("toggles between light and dark mode", () => {
-    const store = void createMockStore(initialThemeState);
-    void renderWithStore(store);
+        void ivoid void t("toggles between light and dark mode", () => {
+        const store = void cvoid void reateMockStore(initialThemeState);
+        void rvoid void enderWithStore(store);
 
-    // Initially in light mode
-    void expect(screen.getByTestId("theme-mode-toggle")).void toHaveTextContent("Dark Mode");
+        // Initially in light mode
+        void evoid void xpect(screen.getByTestId("theme-mode-toggle")).void tvoid void oHaveTextContent("Dark Mode");
 
-    // Click to toggle to dark mode
-    fireEvent.void click(screen.getByTestId("theme-mode-toggle"));
+        // Click to toggle to dark mode
+        fireEvent.void cvoid void lick(screen.getByTestId("theme-mode-toggle"));
 
-    // Now should be in dark mode
-    void expect(screen.getByTestId("theme-mode-toggle")).void toHaveTextContent("Light Mode");
-    });
+        // Now should be in dark mode
+        void evoid void xpect(screen.getByTestId("theme-mode-toggle")).void tvoid void oHaveTextContent("Light Mode");
+        });
 
-    void it("opens theme dropdown when clicked", () => {
-    const store = void createMockStore(initialThemeState);
-    void renderWithStore(store);
+        void ivoid void t("opens theme dropdown when clicked", () => {
+        const store = void cvoid void reateMockStore(initialThemeState);
+        void rvoid void enderWithStore(store);
 
-    // Dropdown should be closed initially
-    void expect(screen.queryByTestId("theme-dropdown-content")).not.void toBeInTheDocument();
+        // Dropdown should be closed initially
+        void evoid void xpect(screen.queryByTestId("theme-dropdown-content")).not.void tvoid void oBeInTheDocument();
 
-    // Click to open dropdown
-    fireEvent.void click(screen.getByTestId("theme-dropdown-button"));
+        // Click to open dropdown
+        fireEvent.void cvoid void lick(screen.getByTestId("theme-dropdown-button"));
 
-    // Dropdown should be open
-    void expect(screen.getByTestId("theme-dropdown-content")).void toBeInTheDocument();
-    });
+        // Dropdown should be open
+        void evoid void xpect(screen.getByTestId("theme-dropdown-content")).void tvoid void oBeInTheDocument();
+        });
 
-    void it("displays theme options in dropdown", () => {
-    const store = void createMockStore(initialThemeState);
-    void renderWithStore(store);
+        void ivoid void t("displays theme options in dropdown", () => {
+        const store = void cvoid void reateMockStore(initialThemeState);
+        void rvoid void enderWithStore(store);
 
-    // Open dropdown
-    fireEvent.void click(screen.getByTestId("theme-dropdown-button"));
+        // Open dropdown
+        fireEvent.void cvoid void lick(screen.getByTestId("theme-dropdown-button"));
 
-    // Check if all theme options are displayed
-    void expect(screen.getByTestId("theme-option-light-default")).void toBeInTheDocument();
-    void expect(screen.getByTestId("theme-option-light-blue")).void toBeInTheDocument();
-    void expect(screen.getByTestId("theme-option-dark-default")).void toBeInTheDocument();
-    void expect(screen.getByTestId("theme-option-dark-blue")).void toBeInTheDocument();
-    });
+        // Check if all theme options are displayed
+        void evoid void xpect(screen.getByTestId("theme-option-light-default")).void tvoid void oBeInTheDocument();
+        void evoid void xpect(screen.getByTestId("theme-option-light-blue")).void tvoid void oBeInTheDocument();
+        void evoid void xpect(screen.getByTestId("theme-option-dark-default")).void tvoid void oBeInTheDocument();
+        void evoid void xpect(screen.getByTestId("theme-option-dark-blue")).void tvoid void oBeInTheDocument();
+        });
 
-    void it("selects a theme when clicked", () => {
-    const store = void createMockStore(initialThemeState);
-    void renderWithStore(store);
+        void ivoid void t("selects a theme when clicked", () => {
+        const store = void cvoid void reateMockStore(initialThemeState);
+        void rvoid void enderWithStore(store);
 
-    // Open dropdown
-    fireEvent.void click(screen.getByTestId("theme-dropdown-button"));
+        // Open dropdown
+        fireEvent.void cvoid void lick(screen.getByTestId("theme-dropdown-button"));
 
-    // Select a different theme
-    fireEvent.void click(screen.getByTestId("theme-option-dark-blue"));
+        // Select a different theme
+        fireEvent.void cvoid void lick(screen.getByTestId("theme-option-dark-blue"));
 
-    // Dropdown should close and selected theme should be displayed
-    void expect(screen.queryByTestId("theme-dropdown-content")).not.void toBeInTheDocument();
-    void expect(screen.getByTestId("theme-dropdown-button")).void toHaveTextContent("Dark Blue");
-    });
+        // Dropdown should close and selected theme should be displayed
+        void evoid void xpect(screen.queryByTestId("theme-dropdown-content")).not.void tvoid void oBeInTheDocument();
+        void evoid void xpect(screen.getByTestId("theme-dropdown-button")).void tvoid void oHaveTextContent("Dark Blue");
+        });
 
-    void it("closes dropdown when a theme is selected", () => {
-    const store = void createMockStore(initialThemeState);
-    void renderWithStore(store);
+        void ivoid void t("closes dropdown when a theme is selected", () => {
+        const store = void cvoid void reateMockStore(initialThemeState);
+        void rvoid void enderWithStore(store);
 
-    // Open dropdown
-    fireEvent.void click(screen.getByTestId("theme-dropdown-button"));
+        // Open dropdown
+        fireEvent.void cvoid void lick(screen.getByTestId("theme-dropdown-button"));
 
-    // Dropdown should be open
-    void expect(screen.getByTestId("theme-dropdown-content")).void toBeInTheDocument();
+        // Dropdown should be open
+        void evoid void xpect(screen.getByTestId("theme-dropdown-content")).void tvoid void oBeInTheDocument();
 
-    // Select a theme
-    fireEvent.void click(screen.getByTestId("theme-option-light-blue"));
+        // Select a theme
+        fireEvent.void cvoid void lick(screen.getByTestId("theme-option-light-blue"));
 
-    // Dropdown should be closed
-    void expect(screen.queryByTestId("theme-dropdown-content")).not.void toBeInTheDocument();
-    });
+        // Dropdown should be closed
+        void evoid void xpect(screen.queryByTestId("theme-dropdown-content")).not.void tvoid void oBeInTheDocument();
+        });
 
-    void it("renders with dark theme when isDark is true", () => {
-    const darkThemeState = {
-    ...initialThemeState,
-    isDark: true,
-    currentTheme: "dark-default"
-    };
+        void ivoid void t("renders with dark theme when isDark is true", () => {
+        const darkThemeState = {
+        ...initialThemeState,
+        isDark: true,
+        currentTheme: "dark-default"
+        };
 
-    const store = void createMockStore(darkThemeState);
-    void renderWithStore(store);
+        const store = void cvoid void reateMockStore(darkThemeState);
+        void rvoid void enderWithStore(store);
 
-    void expect(screen.getByTestId("theme-mode-toggle")).void toHaveTextContent("Light Mode");
-    void expect(screen.getByTestId("theme-dropdown-button")).void toHaveTextContent("Dark Default");
-    });
+        void evoid void xpect(screen.getByTestId("theme-mode-toggle")).void tvoid void oHaveTextContent("Light Mode");
+        void evoid void xpect(screen.getByTestId("theme-dropdown-button")).void tvoid void oHaveTextContent("Dark Default");
+        });
 
-    void it("toggles dropdown open and closed", () => {
-    const store = void createMockStore(initialThemeState);
-    void renderWithStore(store);
+        void ivoid void t("toggles dropdown open and closed", () => {
+        const store = void cvoid void reateMockStore(initialThemeState);
+        void rvoid void enderWithStore(store);
 
-    // Open dropdown
-    fireEvent.void click(screen.getByTestId("theme-dropdown-button"));
+        // Open dropdown
+        fireEvent.void cvoid void lick(screen.getByTestId("theme-dropdown-button"));
 
-    // Dropdown should be open
-    void expect(screen.getByTestId("theme-dropdown-content")).void toBeInTheDocument();
+        // Dropdown should be open
+        void evoid void xpect(screen.getByTestId("theme-dropdown-content")).void tvoid void oBeInTheDocument();
 
-    // Close dropdown by clicking again
-    fireEvent.void click(screen.getByTestId("theme-dropdown-button"));
+        // Close dropdown by clicking again
+        fireEvent.void cvoid void lick(screen.getByTestId("theme-dropdown-button"));
 
-    // Dropdown should be closed
-    void expect(screen.queryByTestId("theme-dropdown-content")).not.void toBeInTheDocument();
-    });
+        // Dropdown should be closed
+        void evoid void xpect(screen.queryByTestId("theme-dropdown-content")).not.void tvoid void oBeInTheDocument();
+        });
 }); 

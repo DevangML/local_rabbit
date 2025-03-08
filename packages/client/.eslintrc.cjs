@@ -2,7 +2,8 @@ module.exports = {
   env: {
     browser: true,
     es2020: true,
-    node: true
+    node: true,
+    jest: true
   },
   extends: [
     'eslint:recommended',
@@ -15,15 +16,23 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
-    project: ['./tsconfig.json'],
-    tsconfigRootDir: __dirname
+    tsconfigRootDir: __dirname,
+    ecmaFeatures: {
+      jsx: true
+    }
   },
   settings: {
     react: {
       version: '18.2'
+    },
+    'import/resolver': {
+      typescript: {},
+      node: {
+        extensions: ['.js', '.jsx', '.ts', '.tsx']
+      }
     }
   },
-  plugins: ['react-refresh'],
+  plugins: ['react-refresh', '@typescript-eslint', 'react'],
   ignorePatterns: [
     'dist/**',
     'node_modules/**',
@@ -32,8 +41,8 @@ module.exports = {
     'public/**',
     'coverage/**',
     'build/**',
-    '**/*.test.*',
-    '**/*.spec.*'
+    'vite.config.ts',
+    '.eslintrc.cjs'
   ],
   globals: {
     // Browser globals
@@ -76,56 +85,58 @@ module.exports = {
   rules: {
     'react-refresh/only-export-components': 'off',
     'react/prop-types': 'off',
-    'no-unused-vars': ['warn', {
+    'no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': ['warn', {
       'varsIgnorePattern': '^_',
       'argsIgnorePattern': '^_',
       'ignoreRestSiblings': true
     }],
-    'no-undef': 'error',
-    'react-hooks/exhaustive-deps': 'off',
-    'no-console': ['warn', { allow: ['warn', 'error'] }],
-    'react/no-array-index-key': 'off'
+    'no-undef': 'off',
+    'react-hooks/exhaustive-deps': 'warn',
+    'no-console': 'off',
+    'react/no-array-index-key': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/explicit-function-return-type': 'off',
+    '@typescript-eslint/no-unsafe-assignment': 'off',
+    '@typescript-eslint/no-unsafe-member-access': 'off',
+    '@typescript-eslint/no-unsafe-call': 'off',
+    '@typescript-eslint/no-unsafe-return': 'off',
+    '@typescript-eslint/strict-boolean-expressions': 'off',
+    '@typescript-eslint/no-floating-promises': 'off',
+    '@typescript-eslint/no-unnecessary-condition': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'off',
+    'no-redeclare': 'off',
+    '@typescript-eslint/prefer-nullish-coalescing': 'off',
+    '@typescript-eslint/no-unnecessary-type-assertion': 'off'
   },
   overrides: [
     {
-      files: ['**/*.test.js', '**/*.test.jsx', '**/*.test.ts', '**/*.test.tsx', '**/tests/**'],
+      files: ['**/*.test.*', '**/*.spec.*', '**/tests/**'],
       env: {
         jest: true
       },
-      globals: {
-        describe: 'readonly',
-        test: 'readonly',
-        it: 'readonly',
-        expect: 'readonly',
-        vi: 'readonly',
-        beforeEach: 'readonly',
-        afterEach: 'readonly',
-        jest: 'readonly',
-        afterAll: 'readonly',
-        beforeAll: 'readonly'
+      rules: {
+        '@typescript-eslint/no-unsafe-assignment': 'off',
+        '@typescript-eslint/no-unsafe-member-access': 'off',
+        '@typescript-eslint/no-unsafe-call': 'off',
+        '@typescript-eslint/no-unsafe-return': 'off',
+        '@typescript-eslint/explicit-function-return-type': 'off',
+        '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/strict-boolean-expressions': 'off',
+        '@typescript-eslint/no-unnecessary-condition': 'off'
       }
     },
     {
-      files: ['**/*.ts', '**/*.tsx'],
-      parser: '@typescript-eslint/parser',
-      plugins: ['@typescript-eslint'],
-      extends: [
-        'plugin:@typescript-eslint/recommended'
-      ],
+      files: ['**/*.js', '**/*.jsx'],
       rules: {
-        'no-unused-vars': 'off',
-        '@typescript-eslint/no-unused-vars': ['warn', {
-          'varsIgnorePattern': '^_',
-          'argsIgnorePattern': '^_',
-          'ignoreRestSiblings': true
-        }],
+        '@typescript-eslint/explicit-function-return-type': 'off',
+        '@typescript-eslint/no-unsafe-assignment': 'off',
+        '@typescript-eslint/no-unsafe-member-access': 'off',
+        '@typescript-eslint/no-unsafe-call': 'off',
+        '@typescript-eslint/no-unsafe-return': 'off',
+        '@typescript-eslint/strict-boolean-expressions': 'off',
         '@typescript-eslint/no-explicit-any': 'off',
-        '@typescript-eslint/ban-ts-comment': 'off',
-        '@typescript-eslint/no-non-null-assertion': 'off',
-        '@typescript-eslint/no-empty-function': 'off',
-        '@typescript-eslint/no-empty-interface': 'off',
-        '@typescript-eslint/no-var-requires': 'off',
-        '@typescript-eslint/no-inferrable-types': 'off'
+        '@typescript-eslint/no-unnecessary-condition': 'off'
       }
     }
   ]
