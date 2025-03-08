@@ -1,49 +1,32 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "target": "es2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "resolveJsonModule": true,
     "allowJs": true,
     "checkJs": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "sourceMap": true,
-    "strict": true,
-    "noEmit": true,
-    "baseUrl": ".",
+    "declaration": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
     "paths": {
-      "@/*": [
-        "src/*"
-      ],
-      "@local-rabbit/client/*": [
-        "../client/src/*"
+      "*": [
+        "node_modules/*",
+        "src/types/*"
       ]
-    },
-    "types": [
-      "node",
-      "vite/client"
-    ],
-    "noImplicitAny": true,
-    "noImplicitThis": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictBindCallApply": true,
-    "strictPropertyInitialization": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    "noImplicitReturns": true,
-    "allowUnreachableCode": false,
-    "exactOptionalPropertyTypes": true
+    }
   },
   "include": [
     "src/**/*"
   ],
-  "references": [
-    {
-      "path": "../client"
-    }
+  "exclude": [
+    "node_modules",
+    "dist"
   ]
 }

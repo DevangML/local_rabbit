@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import ViteComlink from 'vite-plugin-comlink';
 import WebfontDownload from 'vite-plugin-webfont-dl';
 import optimizer from 'vite-plugin-optimizer';
-import robotsPlugin from 'vite-plugin-robots';
+import { robots } from 'vite-plugin-robots';
 import VConsole from 'vite-plugin-vconsole';
 import path from 'path';
 
@@ -23,22 +23,14 @@ export default defineConfig({
       entries: ['./src/main.tsx'],
       esbuild: {
         minify: true,
-        target: 'es2020'
+        target: 'es2020',
+        loader: { '.ts': 'ts', '.tsx': 'tsx' },
+        jsxFactory: 'React.createElement',
+        jsxFragment: 'React.Fragment',
+        jsx: 'react',
       }
     }),
-    (robotsPlugin as any)({
-      sitemap: [
-        'https://yourdomain.com/sitemap.xml'
-      ],
-      policies: [
-        {
-          userAgent: '*',
-          allow: '/',
-          disallow: ['/api', '/admin'],
-          crawlDelay: 10
-        }
-      ]
-    }),
+    robots(),
     VConsole({
       entry: path.resolve('src/main.tsx'),
       localEnabled: true,

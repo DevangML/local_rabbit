@@ -14,6 +14,14 @@ const { performance } = require('perf_hooks');
 const winston = require('winston');
 const logger = require('./logger');
 
+/** @typedef {Object} PerformanceItem
+ * @property {number} value - The item's value
+ * @property {number} [score] - Optional score
+ * @property {number} [id] - Optional id
+ * @property {boolean} [active] - Whether the item is active
+ * @property {any} [rest] - Any other properties
+ */
+
 // Create reports directory if it doesn't exist
 const reportsDir = path.join(__dirname, '..', '..', 'reports');
 if (!fs.existsSync(reportsDir)) {
@@ -153,7 +161,9 @@ const arrayManipulationTest = async () => {
         if (!grouped[range]) {
           grouped[range] = [];
         }
-        grouped[range].push(item);
+        if (Array.isArray(grouped[range])) {
+          grouped[range].push(item);
+        }
       });
 
       results.push(Object.keys(grouped).length);
@@ -175,7 +185,7 @@ const arrayManipulationTest = async () => {
       // Chained operations with Lodash
       const processed = _(optimizedTestArray)
         .filter('active')
-        .map((item) => ({ ...item, score: item.value * 2 }))
+        .map((/** @type {PerformanceItem} */ item) => ({ ...item, score: item.value * 2 }))
         .sortBy('score')
         .value();
 
@@ -331,7 +341,7 @@ const objectManipulationTest = async () => {
 
       // Extract values with Lodash
       const values = [];
-      _.forEach(merged, function iterateValues(val) {
+      _.forEach(merged, function iterateValues(/** @type {any} */ val) {
         if (_.has(val, 'value')) {
           values.push(val.value);
         } else if (_.isObject(val)) {

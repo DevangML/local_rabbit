@@ -4,7 +4,87 @@ const { execSync } = require('child_process');
 const axios = require('axios');
 const logger = require('../utils/logger');
 
+/**
+ * @typedef {Object} FileDiffHunk
+ * @property {number} index - The index of the hunk
+ * @property {string} content - The content of the hunk
+ */
+
+/**
+ * @typedef {{[key: string]: string}} FileTypeMap
+ */
+
+/**
+ * @typedef {Object} ReviewIssue
+ * @property {string} message - The issue message
+ * @property {'high'|'medium'|'low'} severity - The severity of the issue
+ * @property {number} [line] - Optional line number
+ * @property {number} [column] - Optional column number
+ * @property {string} [code] - Optional code snippet
+ * @property {string} [file] - Optional file path
+ */
+
+/**
+ * @typedef {Object} FileReviewData
+ * @property {string} path - The file path
+ * @property {string} type - The file type
+ * @property {FileDiffHunk[]} [hunks] - The diff hunks
+ * @property {string} [content] - The file content
+ * @property {ReviewIssue[]} [issues] - The issues found
+ * @property {string[]} [suggestions] - The suggestions
+ * @property {string} [review] - The review content
+ */
+
+/**
+ * @typedef {Object} IssuesBySeverity
+ * @property {number} high - Number of high severity issues
+ * @property {number} medium - Number of medium severity issues
+ * @property {number} low - Number of low severity issues
+ */
+
+/**
+ * @typedef {{[fileType: string]: FileReviewData[]}} FilesByType
+ */
+
+/**
+ * @typedef {{[filePath: string]: FileReviewData}} ReviewsByPath
+ */
+
+/**
+ * @typedef {Object} ReviewSummary
+ * @property {Object} issueCount - Issue count by severity
+ * @property {number} issueCount.high - Number of high severity issues
+ * @property {number} issueCount.medium - Number of medium severity issues
+ * @property {number} issueCount.low - Number of low severity issues
+ * @property {number} issueCount.total - Total number of issues
+ * @property {{[key: string]: number}} fileTypes - File types count
+ * @property {ReviewIssue[]} topIssues - Top issues
+ */
+
+/**
+ * @typedef {Object} GitServiceType
+ * @property {function(string, string, string): Promise<string>} getDiffBetweenBranches - Method to get diff between branches
+ */
+
+/**
+ * @typedef {Object} GeminiResponseType
+ * @property {Array<{content: {parts: Array<{text: string}>}}>} candidates - The response candidates
+ */
+
+/**
+ * @typedef {Object} ReviewResponse
+ * @property {Object} summary - The review summary
+ * @property {FileReviewData[]} files - The reviewed files
+ */
+
+/**
+ * CodeReviewService class
+ * Responsible for analyzing code differences and providing AI-powered code reviews
+ */
 class CodeReviewService {
+  /**
+   * Initialize the CodeReviewService
+   */
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY;
 
@@ -31,60 +111,70 @@ class CodeReviewService {
     this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
     this.maxRetries = 3;
     this.maxTokensPerRequest = 4096; // Control token usage
+
+    // Import GitService dynamically to avoid circular dependencies
+    this.GitService = require('./GitService.js');
   }
 
   /**
-   * Review code changes in a pull request
+   * Review pull request by analyzing the diff between branches
    * @param {string} repoPath - Path to the repository
-   * @param {string} baseBranch - Base branch (e.g., main)
-   * @param {string} headBranch - Head branch (feature branch)
-   * @returns {Promise<Object>} - Review results
+   * @param {string} baseBranch - Base branch name
+   * @param {string} headBranch - Head branch name
+   * @returns {Promise<ReviewResponse>} Review results
    */
   async reviewPullRequest(repoPath, baseBranch, headBranch) {
     try {
-      // Get the diff between branches
-      const diffOutput = await this.getDiffBetweenBranches(repoPath, baseBranch, headBranch);
-
-      // Parse the diff into files
-      const files = await this.parseGitDiff(diffOutput);
+      /** @type {FileReviewData[]} */
+      const files = await this.getDiffBetweenBranches(repoPath, baseBranch, headBranch);
 
       // Analyze files in chunks to optimize token usage
+      /** @type {FileReviewData[]} */
       const reviewResults = await this.analyzeFilesWithTokenOptimization(files);
 
       return {
         summary: this.generateSummary(reviewResults),
         files: reviewResults,
       };
-    } catch (error) {
+    } catch (/** @type {unknown} */ error) {
       logger.error('Error reviewing pull request:', error);
-      throw new Error(`Failed to review pull request: ${error.message}`);
+      if (error instanceof Error) {
+        throw new Error(`Failed to review pull request: ${error.message}`);
+      }
+      throw new Error('Failed to review pull request: Unknown error');
     }
   }
 
   /**
    * Get diff between two branches
-   * @param {string} repoPath - Repository path
-   * @param {string} baseBranch - Base branch
-   * @param {string} headBranch - Head branch
-   * @returns {Promise<string>} - Git diff output
+   * @param {string} repoPath - Path to the repository
+   * @param {string} baseBranch - Base branch name
+   * @param {string} headBranch - Head branch name
+   * @returns {Promise<FileReviewData[]>} Parsed diff files
    */
   async getDiffBetweenBranches(repoPath, baseBranch, headBranch) {
     try {
-      const diffCommand = `git diff ${baseBranch}...${headBranch}`;
-      const diffOutput = execSync(diffCommand, { cwd: repoPath, maxBuffer: 10 * 1024 * 1024 }).toString();
-      return diffOutput;
-    } catch (error) {
+      // @ts-ignore - Create GitService instance
+      const gitService = new this.GitService(repoPath);
+      // @ts-ignore - Call instance method
+      const diffOutput = await gitService.getDiffBetweenBranches(repoPath, baseBranch, headBranch);
+      return this.parseGitDiff(diffOutput);
+    } catch (/** @type {unknown} */ error) {
       logger.error('Error getting diff between branches:', error);
-      throw new Error(`Failed to get diff between branches: ${error.message}`);
+      if (error instanceof Error) {
+        throw new Error(`Failed to get diff between branches: ${error.message}`);
+      }
+      throw new Error('Failed to get diff between branches: Unknown error');
     }
   }
 
   /**
-   * Parse git diff output into structured file objects
-   * @param {string} diffOutput - Git diff output
-   * @returns {Promise<Array<Object>>} - Array of file objects
+   * Parse the git diff output and transform it into a structured format
+   * @param {string} diffOutput - Raw git diff output
+   * @returns {Promise<FileReviewData[]>} Parsed file data
    */
   async parseGitDiff(diffOutput) {
+    /** @type {FileReviewData[]} */
     const files = [];
     const diffFiles = diffOutput.split('diff --git ').filter(Boolean);
 
@@ -98,26 +188,39 @@ class CodeReviewService {
 
         // Extract changed lines
         const hunkMatches = [...fileDiff.matchAll(/@@\s-\d+,\d+\s\+\d+,\d+\s@@/g)];
+        /** @type {FileDiffHunk[]} */
         const hunks = [];
 
         if (hunkMatches.length > 0) {
           for (let i = 0; i < hunkMatches.length; i++) {
-            const currentMatchIndex = hunkMatches[i].index || 0;
-            const nextMatchIndex = i < hunkMatches.length - 1 ? (hunkMatches[i + 1].index || 0) : fileDiff.length;
+            const currentMatch = hunkMatches[i];
+            const currentMatchIndex = currentMatch && currentMatch.index !== undefined ? currentMatch.index : 0;
+
+            const nextMatch = i < hunkMatches.length - 1 ? hunkMatches[i + 1] : null;
+            const nextMatchIndex = nextMatch && nextMatch.index !== undefined
+              ? nextMatch.index
+              : fileDiff.length;
+
             const hunkContent = fileDiff.substring(currentMatchIndex, nextMatchIndex);
-            hunks.push(hunkContent);
+            hunks.push({
+              index: i,
+              content: hunkContent
+            });
           }
         }
 
         files.push({
           path: filePath,
-          extension,
+          type: this.getFileType(extension),
           hunks,
           content: fileDiff,
-          type: this.getFileType(extension),
         });
-      } catch (error) {
-        logger.warn(`Error parsing diff for a file: ${error.message}`);
+      } catch (/** @type {unknown} */ error) {
+        if (error instanceof Error) {
+          logger.warn(`Error parsing diff for a file: ${error.message}`);
+        } else {
+          logger.warn('Error parsing diff for a file: Unknown error');
+        }
       }
     }
 
@@ -125,16 +228,17 @@ class CodeReviewService {
   }
 
   /**
-   * Get file type based on extension
+   * Get the file type based on the extension
    * @param {string} extension - File extension
-   * @returns {string} - File type
+   * @returns {string} File type
    */
   getFileType(extension) {
+    /** @type {FileTypeMap} */
     const fileTypes = {
       js: 'JavaScript',
-      jsx: 'React',
+      jsx: 'React JSX',
       ts: 'TypeScript',
-      tsx: 'React TypeScript',
+      tsx: 'React TSX',
       py: 'Python',
       java: 'Java',
       rb: 'Ruby',
@@ -148,96 +252,108 @@ class CodeReviewService {
       kt: 'Kotlin',
       md: 'Markdown',
       json: 'JSON',
-      yml: 'YAML',
       yaml: 'YAML',
+      yml: 'YAML',
+      html: 'HTML',
       css: 'CSS',
       scss: 'SCSS',
-      html: 'HTML',
       xml: 'XML',
     };
 
+    // Check if the extension exists in the fileTypes object, if not return 'Unknown'
     return fileTypes[extension] || 'Unknown';
   }
 
   /**
    * Analyze files with token optimization
-   * @param {Array<Object>} files - Array of file objects
-   * @returns {Promise<Array<Object>>} - Analysis results for each file
+   * @param {FileReviewData[]} files - Files to analyze
+   * @returns {Promise<FileReviewData[]>} Analyzed files with reviews
    */
   async analyzeFilesWithTokenOptimization(files) {
-    // Group files by type to enable domain-specific analysis
     const filesByType = this.groupFilesByType(files);
+    /** @type {FileReviewData[]} */
     const results = [];
 
-    // Process each file type group
-    for (const [type, typeFiles] of Object.entries(filesByType)) {
-      // Further chunk the files within each type to optimize token usage
-      const fileChunks = this.chunkFilesByTokenSize(typeFiles);
+    try {
+      for (const [fileType, typeFiles] of Object.entries(filesByType)) {
+        // Split files into chunks to optimize token usage
+        const fileChunks = this.chunkFilesByTokenSize(typeFiles);
 
-      for (const chunk of fileChunks) {
-        try {
-          // Get language-specific review for this chunk
-          const chunkReviews = await this.getAIReviewForChunk(chunk, type);
-          results.push(...chunkReviews);
-        } catch (error) {
-          logger.error(`Error reviewing ${type} files chunk:`, error);
-          // Add basic info for files that failed analysis
-          chunk.forEach((file) => {
-            results.push({
-              path: file.path,
-              type: file.type,
-              issues: [{ title: 'Analysis failed', severity: 'low' }],
-              suggestions: ['File could not be analyzed due to an error.'],
-            });
-          });
+        for (const chunk of fileChunks) {
+          const reviewedFiles = await this.getAIReviewForChunk(chunk, fileType);
+          results.push(...reviewedFiles);
         }
       }
-    }
 
-    return results;
+      // Map results back to original files to ensure all files have reviews
+      return this.matchReviewsToOriginalFiles(results, files);
+    } catch (/** @type {unknown} */ error) {
+      // If the AI review fails, return basic information for all files
+      logger.error('Error analyzing files with AI:', error);
+
+      // Create basic results for all files
+      files.forEach((file) => {
+        if (file && typeof file === 'object') {
+          results.push({
+            path: file.path,
+            type: file.type,
+            issues: [{ message: 'Analysis failed', severity: 'low' }],
+            suggestions: ['File could not be analyzed due to an error.'],
+          });
+        }
+      });
+
+      return results;
+    }
   }
 
   /**
-   * Group files by their type for more focused analysis
-   * @param {Array<Object>} files - Array of file objects
-   * @returns {Object} - Files grouped by type
+   * Group files by their type
+   * @param {FileReviewData[]} files - Files to group
+   * @returns {FilesByType} Files grouped by type
    */
   groupFilesByType(files) {
-    /** @type {{[key: string]: Array<Object>}} */
+    /** @type {FilesByType} */
     const filesByType = {};
 
     for (const file of files) {
-      if (!filesByType[file.type]) {
-        filesByType[file.type] = [];
+      if (file && typeof file === 'object' && file.type) {
+        if (!filesByType[file.type]) {
+          filesByType[file.type] = [];
+        }
+        filesByType[file.type].push(file);
       }
-      filesByType[file.type].push(file);
     }
 
     return filesByType;
   }
 
   /**
-   * Chunk files based on estimated token size to optimize API calls
-   * @param {Array<Object>} files - Array of file objects
-   * @returns {Array<Array<Object>>} - Array of file chunks
+   * Chunk files by token size to optimize API calls
+   * @param {FileReviewData[]} files - Files to chunk
+   * @returns {Array<FileReviewData[]>} Chunked files
    */
   chunkFilesByTokenSize(files) {
+    /** @type {Array<FileReviewData[]>} */
     const chunks = [];
+    /** @type {FileReviewData[]} */
     let currentChunk = [];
     let currentTokens = 0;
 
     for (const file of files) {
-      // Rough token estimation based on content length
-      const estimatedTokens = Math.ceil(file.content.length / 4);
+      if (file && typeof file === 'object' && file.content) {
+        // Rough token estimation based on content length
+        const estimatedTokens = Math.ceil(file.content.length / 4);
 
-      if (currentTokens + estimatedTokens > this.maxTokensPerRequest && currentChunk.length > 0) {
-        chunks.push([...currentChunk]);
-        currentChunk = [];
-        currentTokens = 0;
+        if (currentTokens + estimatedTokens > this.maxTokensPerRequest && currentChunk.length > 0) {
+          chunks.push([...currentChunk]);
+          currentChunk = [];
+          currentTokens = 0;
+        }
+
+        currentChunk.push(file);
+        currentTokens += estimatedTokens;
       }
-
-      currentChunk.push(file);
-      currentTokens += estimatedTokens;
     }
 
     if (currentChunk.length > 0) {
@@ -249,191 +365,172 @@ class CodeReviewService {
 
   /**
    * Get AI review for a chunk of files
-   * @param {Array<Object>} files - Array of file objects
-   * @param {string} fileType - Type of files being reviewed
-   * @returns {Promise<Array<Object>>} - Review results
+   * @param {FileReviewData[]} files - Files to review
+   * @param {string} fileType - Type of the files
+   * @returns {Promise<FileReviewData[]>} Reviewed files
    */
   async getAIReviewForChunk(files, fileType) {
-    // Create optimized prompt that focuses analysis on the specific file type
-    const prompt = this.createTypeSpecificPrompt(files, fileType);
+    try {
+      const prompt = this.createTypeSpecificPrompt(files, fileType);
+      const response = await this.callGeminiAPI(prompt);
+      return this.parseReviewResponse(response, files);
+    } catch (/** @type {unknown} */ error) {
+      logger.error(`Error getting AI review for ${fileType} files:`, error);
 
-    // Call Gemini API
-    const response = await this.callGeminiAPI(prompt);
-
-    // Parse and validate the response
-    return this.parseReviewResponse(response, files);
+      // Return files with error information
+      return files.map(file => ({
+        path: file.path,
+        type: file.type,
+        issues: [{ message: 'Review failed', severity: 'low' }],
+        suggestions: ['File could not be reviewed due to an error.'],
+      }));
+    }
   }
 
   /**
-   * Create type-specific prompt for better analysis
-   * @param {Array<Object>} files - Array of file objects
-   * @param {string} fileType - Type of files being reviewed
-   * @returns {string} - Enhanced prompt
+   * Create type-specific prompt for AI review
+   * @param {FileReviewData[]} files - Files to review
+   * @param {string} fileType - Type of the files
+   * @returns {string} Generated prompt
    */
   createTypeSpecificPrompt(files, fileType) {
-    // Language-specific guidelines based on file type
-    const languageGuidelines = {
-      JavaScript: 'Focus on modern JS practices, ES6+ features, potential memory leaks, and performance issues.',
-      TypeScript: 'Check for proper type usage, interface definitions, and type safety issues.',
-      Python: 'Focus on PEP 8 compliance, Pythonic patterns, and common anti-patterns.',
-      Java: 'Check for OOP best practices, thread safety issues, and performance considerations.',
-      // Add more language-specific guidelines as needed
-    };
-
-    const guidelines = languageGuidelines[/** @type {keyof typeof languageGuidelines} */(fileType)] || 'Focus on code quality, maintainability, and potential bugs.';
-
     // Create compact diff representation with only essential information
-    const filesDiffSummary = files.map((file) => ({
-      path: file.path,
-      hunks: file.hunks.length > 0 ? file.hunks : ['File changed'],
-    }));
+    /** @type {Array<{path: string, hunks: string[]}>} */
+    const filesDiffSummary = files.map((file) => {
+      if (file && typeof file === 'object' && file.path) {
+        return {
+          path: file.path,
+          hunks: Array.isArray(file.hunks) && file.hunks.length > 0
+            ? file.hunks.map(hunk => typeof hunk === 'string' ? hunk : hunk.content)
+            : ['File changed'],
+        };
+      }
+      return { path: 'unknown', hunks: ['File changed'] };
+    });
 
     return `
-You are a senior ${fileType} developer performing a code review. Review the following file changes.
+      You are a senior software engineer conducting a code review.
+      Please review the following code changes in ${fileType} files:
 
-${guidelines}
+      ${JSON.stringify(filesDiffSummary, null, 2)}
 
-For each file, identify:
-1. Potential bugs or errors
-2. Performance issues
-3. Security vulnerabilities
-4. Code style and maintainability concerns
-5. Suggested improvements
+      For each file:
+      1. Identify potential bugs, performance issues, security vulnerabilities, and code style problems.
+      2. Suggest improvements for code quality, readability, and maintainability.
+      3. Assign a severity (high, medium, low) to each issue you find.
 
-Format your response as JSON with the following structure for each file:
-{
-  "files": [
-    {
-      "path": "file path",
-      "issues": [
-        {
-          "title": "Brief issue title",
-          "description": "Detailed description",
-          "severity": "high|medium|low",
-          "line": "line number or range (if applicable)"
-        }
-      ],
-      "suggestions": [
-        "Specific actionable suggestion"
-      ]
-    }
-  ]
-}
+      Your response should be in JSON format:
+      {
+        "files": [
+          {
+            "path": "file_path",
+            "issues": [
+              {
+                "message": "Issue description",
+                "severity": "high|medium|low",
+                "line": optional_line_number,
+                "column": optional_column_number,
+                "code": "optional_problematic_code_snippet"
+              }
+            ],
+            "suggestions": [
+              "Suggestion 1",
+              "Suggestion 2"
+            ]
+          }
+        ]
+      }
 
-Here are the code changes to review:
-${JSON.stringify(filesDiffSummary, null, 2)}
-`;
+      Focus on quality over quantity, and make practical, specific suggestions.
+    `;
   }
 
   /**
-   * Call the Gemini API
-   * @param {string} prompt - Enhanced prompt
-   * @returns {Promise<Object>} - Raw API response
+   * Call Gemini API with the prompt
+   * @param {string} prompt - Generated prompt
+   * @returns {Promise<ReviewResponse>} API response
    */
   async callGeminiAPI(prompt) {
-    if (!this.apiKey || this.apiKey === 'your-gemini-api-key-here') {
-      throw new Error('Gemini API key is missing or invalid. Please set a valid API key in your .env file.');
-    }
-
-    // Debug: Log API key information right before the call
-    const keyLength = this.apiKey.length;
-    const firstChars = this.apiKey.substring(0, 4);
-    const lastChars = this.apiKey.substring(keyLength - 4);
-    logger.info(`[API CALL] Using Gemini API key with length ${keyLength}. Key: ${firstChars}...${lastChars}`);
-    logger.info(`[API CALL] Making request to: ${this.baseUrl}`);
-
-    const url = `${this.baseUrl}?key=${this.apiKey}`;
-
-    const requestBody = {
-      contents: [
-        {
-          parts: [
-            {
-              text: prompt
-            }
-          ]
-        }
-      ],
-      generationConfig: {
-        temperature: 0.2,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 4096, // Limit output tokens
-      }
-    };
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
+    const logger = require('../utils/logger');
 
     try {
-      const response = await axios.post(url, requestBody, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      logger.info(`[API CALL] Sending request to Gemini API`);
 
+      // Get API key from environment variable
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error('GEMINI_API_KEY environment variable is not set');
+      }
+
+      // Initialize Gemini API client
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+
+      // Generate response
+      const result = await model.generateContent(prompt);
       logger.info(`[API CALL] Successful response from Gemini API`);
-      return response.data;
-    } catch (/** @type {Error & {response?: any, request?: any}} */ error) {
+
+      // @ts-ignore - Raw response from API, will be processed later
+      return result.response;
+    } catch (/** @type {unknown} */ error) {
       // Debug: Log detailed error information
       logger.error('[API CALL ERROR] Error calling Gemini API:');
-      if (error.response) {
-        logger.error(`[API CALL ERROR] Status: ${error.response.status}`);
-        logger.error(`[API CALL ERROR] Data: ${JSON.stringify(error.response.data, null, 2)}`);
-        logger.error(`[API CALL ERROR] Headers: ${JSON.stringify(error.response.headers, null, 2)}`);
-      } else if (error.request) {
-        logger.error('[API CALL ERROR] No response received');
-        logger.error(`[API CALL ERROR] Request: ${JSON.stringify(error.request, null, 2)}`);
-      } else {
-        logger.error(`[API CALL ERROR] Error message: ${error.message}`);
-      }
-
-      // Check specifically for API key errors
-      if (error.response?.data?.error?.details?.some(
-        /**
-         * @param {{reason: string}} detail - API error detail
-         * @returns {boolean} - Whether the error is related to API key
-         */
-        function (detail) {
-          return detail.reason === "API_KEY_INVALID" || detail.reason === "API_KEY_EXPIRED";
+      if (error instanceof Error) {
+        if ('response' in error) {
+          // @ts-ignore
+          logger.error(`Status: ${error.response?.status}`);
+          // @ts-ignore
+          logger.error(`Data: ${JSON.stringify(error.response?.data)}`);
+        } else if ('request' in error) {
+          logger.error('No response received');
+        } else {
+          logger.error(`Error message: ${error.message}`);
         }
-      )) {
-        logger.error('[API CALL ERROR] Invalid Gemini API key. Please check your API key and ensure it is valid.');
-        throw new Error('Invalid Gemini API key. Please get a valid key from https://ai.google.dev/');
+      } else {
+        logger.error('Unknown error:', error);
       }
-
-      // Throw a general error for other cases
-      throw new Error(`Gemini API error: ${error.message}`);
+      throw error;
     }
   }
 
   /**
-   * Parse the review response from Gemini API
-   * @param {Object} response - Raw API response
-   * @param {Array<Object>} originalFiles - Original files that were analyzed
-   * @returns {Array<Object>} - Parsed file reviews
+   * Parse review response from API
+   * @param {ReviewResponse} response - API response
+   * @param {FileReviewData[]} originalFiles - Original files
+   * @returns {FileReviewData[]} Parsed reviews
    */
   parseReviewResponse(response, originalFiles) {
     try {
-      // Extract text content from Gemini response
-      const textContent = response.candidates[0].content.parts[0].text;
+      // @ts-ignore - Handle the Gemini API response format
+      if (response && typeof response === 'object' &&
+        // @ts-ignore - Candidates property from Gemini API
+        Array.isArray(response.candidates) &&
+        // @ts-ignore - Candidates property from Gemini API
+        response.candidates.length > 0) {
 
-      // Find JSON in the response
-      const jsonMatch = textContent.match(/\{[\s\S]*\}/);
+        // @ts-ignore - Extract text content from Gemini response
+        const textContent = response.candidates[0].content.parts[0].text;
 
-      if (!jsonMatch) {
-        throw new Error('No JSON found in Gemini response');
+        // Find JSON in the response
+        const jsonMatch = textContent.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error('No JSON found in response');
+        }
+
+        /** @type {{ files: FileReviewData[] }} */
+        const reviewData = JSON.parse(jsonMatch[0]);
+        if (!reviewData || !Array.isArray(reviewData.files)) {
+          throw new Error('Invalid JSON structure in response');
+        }
+
+        return reviewData.files;
       }
 
-      // Parse the JSON
-      const jsonResponse = JSON.parse(jsonMatch[0]);
+      throw new Error('Invalid response format');
+    } catch (/** @type {unknown} */ error) {
+      logger.error('Error parsing review response:', error);
 
-      // Ensure we have file reviews
-      if (!jsonResponse.files || !Array.isArray(jsonResponse.files)) {
-        throw new Error('Invalid response format: missing files array');
-      }
-
-      // Match response to original files to ensure all files have reviews
-      return this.matchReviewsToOriginalFiles(jsonResponse.files, originalFiles);
-    } catch (error) {
-      logger.error('Error parsing Gemini response:', error);
       // Return basic information for the files
       return originalFiles.map((file) => ({
         path: file.path,
@@ -446,93 +543,127 @@ ${JSON.stringify(filesDiffSummary, null, 2)}
 
   /**
    * Match reviews to original files
-   * @param {Array<Object>} fileReviews - Reviews returned by Gemini
-   * @param {Array<Object>} originalFiles - Original files that were analyzed
-   * @returns {Array<Object>} - Complete file reviews
+   * @param {FileReviewData[]} fileReviews - File reviews
+   * @param {FileReviewData[]} originalFiles - Original files
+   * @returns {FileReviewData[]} Matched reviews
    */
   matchReviewsToOriginalFiles(fileReviews, originalFiles) {
+    /** @type {ReviewsByPath} */
     const reviewsByPath = {};
 
     // Create lookup by path
     fileReviews.forEach((review) => {
-      if (review.path) {
+      if (review && typeof review === 'object' && review.path) {
         reviewsByPath[review.path] = review;
       }
     });
 
     // Ensure all original files have reviews
     return originalFiles.map((file) => {
-      const review = reviewsByPath[file.path];
+      if (file && typeof file === 'object' && file.path) {
+        const review = reviewsByPath[file.path];
 
-      if (review) {
+        if (review) {
+          return {
+            path: file.path,
+            type: file.type,
+            issues: review.issues || [],
+            suggestions: review.suggestions || [],
+            review: review.review,
+          };
+        }
+
+        // Default for files without reviews
         return {
           path: file.path,
           type: file.type,
-          issues: review.issues || [],
-          suggestions: review.suggestions || [],
+          issues: [],
+          suggestions: ['No specific issues found.'],
         };
       }
 
-      // Default for files without reviews
+      // Fallback for invalid files
       return {
-        path: file.path,
-        type: file.type,
+        path: 'unknown',
+        type: 'unknown',
         issues: [],
-        suggestions: ['No specific issues found.'],
+        suggestions: ['Invalid file object'],
       };
     });
   }
 
   /**
-   * Generate a summary of all file reviews
-   * @param {Array<Object>} fileReviews - Reviews for all files
-   * @returns {Object} - Summary object
+   * Generate summary from file reviews
+   * @param {FileReviewData[]} fileReviews - File reviews
+   * @returns {ReviewSummary} Generated summary
    */
   generateSummary(fileReviews) {
+    /** @type {IssuesBySeverity} */
     const issuesBySeverity = {
       high: 0,
       medium: 0,
       low: 0,
     };
 
+    /** @type {{[key: string]: number}} */
+    const fileTypeCount = {};
+
     // Count issues by severity
     fileReviews.forEach((file) => {
-      if (file.issues && Array.isArray(file.issues)) {
-        file.issues.forEach((issue) => {
-          if (issue.severity && issuesBySeverity[issue.severity] !== undefined) {
-            issuesBySeverity[issue.severity]++;
-          }
-        });
+      if (file && typeof file === 'object') {
+        // Count file types
+        if (file.type) {
+          fileTypeCount[file.type] = (fileTypeCount[file.type] || 0) + 1;
+        }
+
+        // Count issues by severity
+        if (file.issues && Array.isArray(file.issues)) {
+          file.issues.forEach((issue) => {
+            if (issue && typeof issue === 'object' && issue.severity) {
+              const severity = issue.severity;
+              if (severity === 'high' || severity === 'medium' || severity === 'low') {
+                issuesBySeverity[severity]++;
+              }
+            }
+          });
+        }
       }
     });
 
-    // Determine overall quality
-    let overallQuality = 'good';
-    if (issuesBySeverity.high > 0) {
-      overallQuality = 'needs work';
-    } else if (issuesBySeverity.medium > 3) {
-      overallQuality = 'fair';
-    }
+    // Calculate total issues
+    const totalIssues = issuesBySeverity.high + issuesBySeverity.medium + issuesBySeverity.low;
 
     // Extract top issues
-    const allIssues = fileReviews.flatMap((file) => (file.issues || []).map((issue) => ({
-      ...issue,
-      file: file.path,
-    })));
+    /** @type {ReviewIssue[]} */
+    const allIssues = fileReviews.flatMap((file) => {
+      if (file && typeof file === 'object' && file.path && file.issues && Array.isArray(file.issues)) {
+        return file.issues.map((issue) => ({
+          ...issue,
+          file: file.path,
+        }));
+      }
+      return [];
+    });
 
-    const highPriorityIssues = allIssues
-      .filter((issue) => issue.severity === 'high')
-      .slice(0, 3);
+    // Sort issues by severity (high -> medium -> low)
+    const highPriorityIssues = allIssues.filter(issue => issue.severity === 'high');
+    const mediumPriorityIssues = allIssues.filter(issue => issue.severity === 'medium');
+
+    // Combine issues, prioritizing high and medium severity
+    const topIssues = [
+      ...highPriorityIssues.slice(0, 5),
+      ...mediumPriorityIssues.slice(0, 5 - Math.min(highPriorityIssues.length, 5)),
+    ].slice(0, 5);
 
     return {
-      filesAnalyzed: fileReviews.length,
       issueCount: {
-        total: Object.values(issuesBySeverity).reduce((a, b) => a + b, 0),
-        ...issuesBySeverity,
+        high: issuesBySeverity.high,
+        medium: issuesBySeverity.medium,
+        low: issuesBySeverity.low,
+        total: totalIssues,
       },
-      overallQuality,
-      topIssues: highPriorityIssues,
-      generatedAt: new Date().toISOString(),
+      fileTypes: fileTypeCount,
+      topIssues,
     };
   }
 }

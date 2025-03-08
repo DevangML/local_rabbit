@@ -22,14 +22,14 @@ import {
 } from "@mui/icons-material";
 import "./DiffViewer.css";
 
-export interface DiffLine {
+export type DiffLine = {
       type: "added" | "removed" | "unchanged" | "header";
       content: string;
       oldLineNumber?: number | undefined;
       newLineNumber?: number | undefined;
 }
 
-interface DiffFile {
+type DiffFile = {
       path: string;
       changes: DiffLine[];
       stats: {
@@ -39,18 +39,18 @@ interface DiffFile {
       };
 }
 
-interface DiffViewerProps {
+type DiffViewerProps = {
       files: DiffFile[];
 }
 
-interface DiffLineProps {
+type DiffLineProps = {
       type: DiffLine["type"];
       content: string;
       oldLineNumber?: number | undefined;
       newLineNumber?: number | undefined;
 }
 
-interface FileDiffProps {
+type FileDiffProps = {
       file: DiffFile;
 }
 

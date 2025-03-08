@@ -11,6 +11,11 @@ router.use('/api', diffRoutes);
 router.use('/api/code-review', codeReviewRoutes);
 
 // Health check route
+/**
+ * Health check endpoint
+ * @param {import('express').Request} req - Express request
+ * @param {import('express').Response} res - Express response
+ */
 router.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });

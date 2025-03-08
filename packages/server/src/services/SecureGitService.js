@@ -174,7 +174,7 @@ class SecureGitService {
   }
 
   /**
-   * Search a directory for Git repositories
+   * Recursively search directory for Git repositories
    * @param {string} dir - Directory to search
    * @param {Array<{path: string, name: string}>} repos - Array to store found repositories
    * @param {number} [depth=0] - Current search depth
@@ -185,7 +185,7 @@ class SecureGitService {
     try {
       const entries = await fs.readdir(dir, { withFileTypes: true });
 
-      if (entries.some((entry) => entry.name === '.git')) {
+      if (entries.some((/** @type {import('fs').Dirent} */ entry) => entry.name === '.git')) {
         repos.push({
           path: dir,
           name: path.basename(dir),

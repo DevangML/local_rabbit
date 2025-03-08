@@ -18,12 +18,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
-  background: var(--background-secondary);
-  border-bottom: 1px solid var(--border-color);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 .diff-header h2 {
@@ -98,13 +94,8 @@ body {
 }
 
 .diff-viewer {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--background-primary);
-  color: var(--text-primary);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-family: 'JetBrains Mono', monospace;
+  width: 100%;
   overflow: hidden;
 }
 
@@ -750,23 +741,46 @@ body {
 }
 
 .diff-line {
-  margin: 0;
-  padding: 0.25rem 0.5rem;
-  font-family: monospace;
-  white-space: pre;
+  display: flex;
+  font-size: 0.875rem;
   line-height: 1.5;
 }
 
-.diff-line.addition {
-  background-color: rgba(46, 160, 67, 0.15);
+.diff-line-number {
+  width: 40px;
+  color: rgba(0, 0, 0, 0.6);
+  text-align: right;
+  user-select: none;
+  padding-right: 8px;
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+  font-size: 0.8rem;
 }
 
-.diff-line.deletion {
-  background-color: rgba(248, 81, 73, 0.15);
+.diff-line-content {
+  flex: 1;
+  padding-left: 8px;
+  padding-right: 8px;
+  white-space: pre-wrap;
+  overflow-x: auto;
 }
 
-.diff-line.context {
-  color: var(--text-secondary);
+.diff-line-added {
+  background-color: rgba(163, 190, 140, 0.2);
+  border-left: 4px solid #4caf50;
+}
+
+.diff-line-removed {
+  background-color: rgba(247, 118, 142, 0.2);
+  border-left: 4px solid #f44336;
+}
+
+.diff-line-unchanged {
+  border-left: 4px solid transparent;
+}
+
+.diff-line-header {
+  background-color: rgba(122, 162, 247, 0.1);
+  border-left: 4px solid #7aa2f7;
 }
 
 .diff-expand {
@@ -816,14 +830,9 @@ body {
 }
 
 .diff-controls {
-  position: sticky;
-  top: 0;
-  padding: 0.5rem;
-  background: var(--background-primary);
-  border-bottom: 1px solid var(--border-color);
-  z-index: 10;
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 16px;
 }
 
 .view-mode-button {
@@ -1235,4 +1244,16 @@ body {
   --error-color: #dc3545;
   --error-border: #f5c6cb;
   --error-background: #f8d7da;
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  .diff-line-number {
+    color: rgba(255, 255, 255, 0.6);
+    border-right-color: rgba(255, 255, 255, 0.12);
+  }
+  
+  .diff-header {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+  }
 }

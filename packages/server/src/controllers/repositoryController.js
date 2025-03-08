@@ -56,6 +56,7 @@ exports.getRepositories = async (req, res) => {
  * Set repository
  * @param {import('express').Request} req - Express request object
  * @param {import('express').Response} res - Express response object
+ * @returns {Promise<import('express').Response | void>} Express response
  */
 exports.setRepository = async (req, res) => {
   const { path: repoPath } = /** @type {Record<string, string>} */ (req.body);
@@ -82,14 +83,10 @@ exports.setRepository = async (req, res) => {
 
     await gitService.saveState();
 
-    res.json({
-      path: repoPath,
-      branches: branches.all,
-      current,
-    });
+    return res.status(200).json({ success: true, data: { path: expandedPath, branches: branches.all, current } });
   } catch (error) {
     logger.error('Error setting repository:', error);
-    res.status(500).json({ error: 'Failed to set repository' });
+    return res.status(500).json({ error: 'Failed to set repository', message: error instanceof Error ? error.message : 'Unknown error' });
   }
 };
 
@@ -97,6 +94,7 @@ exports.setRepository = async (req, res) => {
  * Get branches
  * @param {import('express').Request} req - Express request object
  * @param {import('express').Response} res - Express response object
+ * @returns {Promise<import('express').Response | void>} Express response
  */
 exports.getBranches = async (req, res) => {
   try {
@@ -108,13 +106,10 @@ exports.getBranches = async (req, res) => {
     const branches = await gitService.getBranches();
     const current = await gitService.getCurrentBranch();
 
-    res.json({
-      branches: branches.all || [],
-      current,
-    });
-  } catch (/** @type {unknown} */ error) {
+    return res.status(200).json({ success: true, data: { branches: branches.all || [], current } });
+  } catch (error) {
     logger.error('Error getting branches:', error);
-    res.status(500).json({ error: 'Failed to get branches' });
+    return res.status(500).json({ error: 'Failed to get branches', message: error instanceof Error ? error.message : 'Unknown error' });
   }
 };
 

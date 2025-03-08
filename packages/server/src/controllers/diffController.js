@@ -7,12 +7,12 @@ const gitService = new GitService();
 const analyzerService = new AnalyzerService();
 
 // Load initial state
-gitService.loadState().then((repoPath) => {
+gitService.loadState().then((/** @type {string|null} */ repoPath) => {
   if (repoPath) {
     analyzerService.setRepoPath(repoPath);
   }
   return repoPath;
-}).catch((err) => {
+}).catch((/** @type {unknown} */ err) => {
   logger.error('Failed to load initial state:', err);
   throw err;
 });
@@ -50,7 +50,7 @@ exports.getDiff = async (req, res) => {
     /** @type {string[]} */
     let currentContent = [];
 
-    diff.split('\n').forEach((line) => {
+    diff.split('\n').forEach((/** @type {string} */ line) => {
       if (line.startsWith('diff --git')) {
         if (currentFile) {
           /** @type {DiffFile} */ (currentFile).content = currentContent.join('\n');
@@ -115,7 +115,7 @@ exports.analyzeDiff = async (req, res) => {
       toBranch,
       repository: gitService.repoPath,
     });
-  // @ts-ignore
+    // @ts-ignore
   } catch (/** @type {Error} */ error) {
     logger.error('Error analyzing diff:', error);
     return res.status(500).json({

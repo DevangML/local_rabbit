@@ -17,7 +17,10 @@ const logFormat = format.combine(
 const _consoleFormat = format.combine(
   format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   format.printf(({
-    level, message, timestamp, ...meta
+    /** @type {string} */ level,
+    /** @type {string} */ message,
+    /** @type {string} */ timestamp,
+    ...meta
   }) => {
     // Define color scheme for different log levels
     /**
@@ -59,7 +62,13 @@ const _consoleFormat = format.combine(
 
 // Add a new format for machine-readable output
 const _machineFormat = format.printf(({
-  level, message, _timestamp, file, line, column, ...meta
+  /** @type {string} */ level,
+  /** @type {string} */ message,
+  /** @type {string} */ _timestamp,
+  /** @type {string|undefined} */ file,
+  /** @type {string|undefined} */ line,
+  /** @type {string|undefined} */ column,
+  ...meta
 }) => {
   // Default to logger.js if no file is specified
   const sourceFile = file || 'logger.js';
@@ -148,20 +157,28 @@ const enhanceLogger = (originalLogger) => {
       const error = new Error();
       // Add null check for stack
       if (!error.stack) {
-        return typedLogger[level](message, meta);
+        return typedLogger && typeof typedLogger[level] === 'function'
+          ? typedLogger[level](message, meta)
+          : console.log(message);
       }
       const stack = error.stack.split('\n')[2];
       if (!stack) {
-        return typedLogger[level](message, meta);
+        return typedLogger && typeof typedLogger[level] === 'function'
+          ? typedLogger[level](message, meta)
+          : console.log(message);
       }
       const match = stack.match(/\((.+):(\d+):(\d+)\)$/);
       if (match) {
         // Provide default values to ensure strings
         const [, file = 'unknown', line = '0', column = '0'] = match;
         const sourceLocation = addSourceLocation(file, line, column);
-        return typedLogger[level](message, sourceLocation(message, meta));
+        return typedLogger && typeof typedLogger[level] === 'function'
+          ? typedLogger[level](message, sourceLocation(message, meta))
+          : console.log(message);
       }
-      return typedLogger[level](message, meta);
+      return typedLogger && typeof typedLogger[level] === 'function'
+        ? typedLogger[level](message, meta)
+        : console.log(message);
     };
   });
 

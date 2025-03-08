@@ -1,17 +1,20 @@
 declare module 'simple-git' {
-  interface SimpleGit {
+  export interface SimpleGit {
+    init(): Promise<any>;
+    add(files: string | string[]): Promise<any>;
+    commit(message: string): Promise<any>;
     status(): Promise<any>;
     checkout(branch: string): Promise<any>;
     branch(): Promise<any>;
     diff(options?: string[]): Promise<string>;
-    raw(args: string[]): Promise<string>;
-    checkIsRepo(): Promise<boolean>;
-    show(options: string[]): Promise<string>;
-    log(options: any): Promise<any>;
-    // Add other methods as needed
+    diffSummary(options?: string[]): Promise<any>;
+    fetch(): Promise<any>;
+    pull(): Promise<any>;
+    push(): Promise<any>;
+    remote(): Promise<any>;
+    reset(options?: string[]): Promise<any>;
+    show(options?: string[]): Promise<any>;
   }
 
-  function simpleGit(baseDir?: string): SimpleGit;
-  
-  export = simpleGit;
+  export default function simpleGit(baseDir?: string, options?: any): SimpleGit;
 } 

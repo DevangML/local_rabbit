@@ -1,8 +1,9 @@
-const simpleGit = require('simple-git');
 const path = require('path');
 const fs = require('fs').promises;
 const fsSync = require('fs');
 const os = require('os');
+// @ts-ignore - Import simple-git with correct syntax
+const simpleGitFactory = require('simple-git');
 const logger = require('../utils/logger');
 const config = require('../config');
 
@@ -40,7 +41,8 @@ const validatePath = (filePath, allowedPaths = []) => {
 class GitService {
   constructor(repoPath = '') {
     this.repoPath = repoPath;
-    this.git = simpleGit(repoPath);
+    // @ts-ignore - simpleGit is callable at runtime
+    this.git = simpleGitFactory(repoPath);
     // Ensure the state directory exists
     const stateDir = path.join(__dirname, '..', '..', path.dirname(config.git.statePath));
     if (!fsSync.existsSync(stateDir)) {
@@ -55,7 +57,8 @@ class GitService {
    */
   setRepoPath(repoPath) {
     this.repoPath = repoPath;
-    this.git = simpleGit(repoPath);
+    // @ts-ignore - simpleGit is callable at runtime
+    this.git = simpleGitFactory(repoPath);
   }
 
   /**
@@ -175,100 +178,79 @@ class GitService {
    * @returns {Promise<Array<{path: string, name: string}>>} - Array of repository objects
    */
   static async findRepositories() {
-    try {
-      const homeDir = os.homedir();
-      // Common places to find repositories
-      const commonDirs = [
-        path.join(homeDir, 'Documents'),
-        path.join(homeDir, 'Projects'),
-        path.join(homeDir, 'Development'),
-        path.join(homeDir, 'Code'),
-        path.join(homeDir, 'Github'),
-      ];
+    const homeDir = os.homedir();
+    /** @type {string[]} */
+    const results = [];
+    const checkedDirs = new Set();
 
-      // Add the current directory to the list for testing
-      const currentDir = process.cwd();
-      commonDirs.push(path.dirname(currentDir));
+    // Starting search locations
+    const startLocations = [
+      homeDir,
+      path.join(homeDir, 'projects'),
+      path.join(homeDir, 'workspace'),
+      path.join(homeDir, 'repositories'),
+      path.join(homeDir, 'git'),
+      path.join(homeDir, 'src'),
+      path.join(homeDir, 'Documents'),
+      path.join(homeDir, 'code'),
+      // Add common project directories
+    ];
 
-      logger.info('Searching for repositories in directories:', commonDirs);
+    logger.info(`Searching for Git repositories in common locations...`);
 
-      const repositories = [];
-      const validDirs = [];
+    /**
+     * @param {string} dir
+     * @param {number} depth
+     */
+    const scanForGitRepos = async (dir, depth = 0) => {
+      // Don't scan too deep
+      if (depth > 3) return;
 
-      // First validate all directories before attempting to search them
-      for (const dir of commonDirs) {
-        if (validatePath(dir)) {
-          try {
-            // eslint-disable-next-line security/detect-non-literal-fs-filename
-            const dirStat = await fs.stat(dir).catch(() => null);
-            if (dirStat && dirStat.isDirectory()) {
-              validDirs.push(dir);
-            }
-          } catch (error) {
-            logger.warn(`Error checking directory ${dir}:`, error instanceof Error ? error.message : String(error));
-          }
+      // Skip if we've already checked this directory
+      const normalizedDir = path.normalize(dir);
+      if (checkedDirs.has(normalizedDir)) return;
+      checkedDirs.add(normalizedDir);
+
+      try {
+        // Check if this directory is a git repo
+        const gitDir = path.join(dir, '.git');
+        if (fsSync.existsSync(gitDir) && fsSync.statSync(gitDir).isDirectory()) {
+          results.push(dir);
+          return; // Found a repo, don't scan deeper
         }
-      }
 
-      logger.info('Valid directories to search:', validDirs);
+        // Limit total repositories to prevent excessive scanning
+        if (results.length >= 25) return;
 
-      // Process each directory one by one (safer than parallel)
-      for (const dir of validDirs) {
-        try {
-          // Get subdirectories
-          // eslint-disable-next-line security/detect-non-literal-fs-filename
-          const items = await fs.readdir(dir, { withFileTypes: true }).catch((err) => {
-            logger.warn(`Error reading directory ${dir}:`, err.message);
-            return [];
-          });
+        // Scan subdirectories
+        const items = await fs.readdir(dir, { withFileTypes: true });
 
-          if (!items || !items.length) continue;
-
+        if (items && items.length > 0) {
+          // @ts-ignore - fs.Dirent is the correct type but TypeScript doesn't recognize it
           const subdirs = items
-            .filter((item) => item.isDirectory())
-            .map((item) => path.join(dir, item.name));
+            .filter((/** @type {{isDirectory: () => boolean}} */ item) => item.isDirectory())
+            .map((/** @type {{isDirectory: () => boolean, name: string}} */ item) => path.join(dir, item.name));
 
           // Check each subdirectory for .git folder (with a reasonable limit)
           const checkLimit = Math.min(subdirs.length, 25); // limit to 25 directories per parent
-          logger.info(`Checking ${checkLimit} subdirectories in ${dir}`);
-
           for (let i = 0; i < checkLimit; i++) {
-            const subdir = subdirs[i];
-            try {
-              // Skip if path validation fails
-              if (!validatePath(subdir)) continue;
-
-              // Ensure subdir is a string before using it
-              if (typeof subdir !== 'string') continue;
-
-              const gitDir = path.join(subdir, '.git');
-              if (!validatePath(gitDir)) continue;
-
-              // Check if .git directory exists
-              // eslint-disable-next-line security/detect-non-literal-fs-filename
-              const gitDirStat = await fs.stat(gitDir).catch(() => null);
-              if (!gitDirStat || !gitDirStat.isDirectory()) continue;
-
-              // It's a git repository - add it without doing any git operations that might hang
-              repositories.push({
-                path: subdir,
-                name: typeof subdir === 'string' ? path.basename(subdir) : '',
-              });
-            } catch (error) {
-              logger.warn(`Error checking repository ${subdir}:`, error instanceof Error ? error.message : String(error));
-            }
+            await scanForGitRepos(subdirs[i], depth + 1);
           }
-        } catch (error) {
-          logger.warn(`Error processing directory ${dir}:`, error instanceof Error ? error.message : String(error));
         }
+      } catch (error) {
+        // Silently skip directories we can't access
       }
+    };
 
-      logger.info(`Found ${repositories.length} repositories`);
-      return repositories;
-    } catch (error) {
-      logger.error('Error finding repositories:', error instanceof Error ? error : String(error));
-      return [];
+    for (const dir of startLocations) {
+      await scanForGitRepos(dir);
     }
+
+    logger.info(`Found ${results.length} repositories`);
+    return results.map(repoPath => ({
+      path: repoPath,
+      name: path.basename(repoPath)
+    }));
   }
 
   /**
@@ -278,7 +260,8 @@ class GitService {
    */
   async isGitRepository(dirPath) {
     try {
-      const git = simpleGit(dirPath);
+      // @ts-ignore - simpleGit is callable at runtime
+      const git = simpleGitFactory(dirPath);
       return await git.checkIsRepo();
     } catch (error) {
       return false;
