@@ -63,7 +63,7 @@ class Calculator {
 
         // Apply sort
         if (options.sortFn) {
-        result = result.sort((a, b) => options.sortFn!(a as unknown as T, b as unknown as T));
+        result = result.sort((a, b) => options.sortFn(a as unknown as T, b as unknown as T));
         }
 
         // Apply grouping

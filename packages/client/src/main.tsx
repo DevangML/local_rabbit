@@ -17,7 +17,7 @@ const updateSW = registerSW({
         // Using a custom approach instead of window.confirm to comply with linting rules
         // In a real application, this would be replaced with a proper UI notification
         const shouldUpdate = true; // Auto-update without asking
-        if (Boolean(shouldUpdate)) {
+        if (shouldUpdate) {
         updateSW(true);
         }
         },

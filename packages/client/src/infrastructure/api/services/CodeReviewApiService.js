@@ -85,7 +85,7 @@ class CodeReviewApiService {
       let url = "/api/code-review/branches";
 
       // If path is directly provided, include it as a query parameter
-      if (Boolean(path)) {
+      if (path) {
         url += `?path=${encodeURIComponent(path)}`;
       }
 

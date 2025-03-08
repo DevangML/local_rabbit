@@ -21,7 +21,7 @@ const Header = () => {
   // Initialize theme from localStorage or system preference
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
-    if (Boolean(savedTheme)) {
+    if (savedTheme) {
       setIsDarkMode(savedTheme === "dark");
     } else {
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;

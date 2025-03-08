@@ -82,7 +82,7 @@ class CodeReviewService {
   /**
    * Parse git diff output into structured file objects
    * @param {string} diffOutput - Git diff output
-   * @returns {Promise<Array>} - Array of file objects
+   * @returns {Promise<Array<Object>>} - Array of file objects
    */
   async parseGitDiff(diffOutput) {
     const files = [];
@@ -102,8 +102,8 @@ class CodeReviewService {
 
         if (hunkMatches.length > 0) {
           for (let i = 0; i < hunkMatches.length; i++) {
-            const currentMatchIndex = hunkMatches[i].index;
-            const nextMatchIndex = i < hunkMatches.length - 1 ? hunkMatches[i + 1].index : fileDiff.length;
+            const currentMatchIndex = hunkMatches[i].index || 0;
+            const nextMatchIndex = i < hunkMatches.length - 1 ? (hunkMatches[i + 1].index || 0) : fileDiff.length;
             const hunkContent = fileDiff.substring(currentMatchIndex, nextMatchIndex);
             hunks.push(hunkContent);
           }
@@ -161,8 +161,8 @@ class CodeReviewService {
 
   /**
    * Analyze files with token optimization
-   * @param {Array} files - Array of file objects
-   * @returns {Promise<Array>} - Analysis results for each file
+   * @param {Array<Object>} files - Array of file objects
+   * @returns {Promise<Array<Object>>} - Analysis results for each file
    */
   async analyzeFilesWithTokenOptimization(files) {
     // Group files by type to enable domain-specific analysis
@@ -199,10 +199,11 @@ class CodeReviewService {
 
   /**
    * Group files by their type for more focused analysis
-   * @param {Array} files - Array of file objects
+   * @param {Array<Object>} files - Array of file objects
    * @returns {Object} - Files grouped by type
    */
   groupFilesByType(files) {
+    /** @type {{[key: string]: Array<Object>}} */
     const filesByType = {};
 
     for (const file of files) {
@@ -217,8 +218,8 @@ class CodeReviewService {
 
   /**
    * Chunk files based on estimated token size to optimize API calls
-   * @param {Array} files - Array of file objects
-   * @returns {Array} - Array of file chunks
+   * @param {Array<Object>} files - Array of file objects
+   * @returns {Array<Array<Object>>} - Array of file chunks
    */
   chunkFilesByTokenSize(files) {
     const chunks = [];
@@ -248,9 +249,9 @@ class CodeReviewService {
 
   /**
    * Get AI review for a chunk of files
-   * @param {Array} files - Array of file objects
+   * @param {Array<Object>} files - Array of file objects
    * @param {string} fileType - Type of files being reviewed
-   * @returns {Promise<Array>} - Review results
+   * @returns {Promise<Array<Object>>} - Review results
    */
   async getAIReviewForChunk(files, fileType) {
     // Create optimized prompt that focuses analysis on the specific file type
@@ -265,7 +266,7 @@ class CodeReviewService {
 
   /**
    * Create type-specific prompt for better analysis
-   * @param {Array} files - Array of file objects
+   * @param {Array<Object>} files - Array of file objects
    * @param {string} fileType - Type of files being reviewed
    * @returns {string} - Enhanced prompt
    */
@@ -279,7 +280,7 @@ class CodeReviewService {
       // Add more language-specific guidelines as needed
     };
 
-    const guidelines = languageGuidelines[fileType] || 'Focus on code quality, maintainability, and potential bugs.';
+    const guidelines = languageGuidelines[/** @type {keyof typeof languageGuidelines} */(fileType)] || 'Focus on code quality, maintainability, and potential bugs.';
 
     // Create compact diff representation with only essential information
     const filesDiffSummary = files.map((file) => ({
@@ -370,7 +371,7 @@ ${JSON.stringify(filesDiffSummary, null, 2)}
 
       logger.info(`[API CALL] Successful response from Gemini API`);
       return response.data;
-    } catch (error) {
+    } catch (/** @type {Error & {response?: any, request?: any}} */ error) {
       // Debug: Log detailed error information
       logger.error('[API CALL ERROR] Error calling Gemini API:');
       if (error.response) {
@@ -385,8 +386,15 @@ ${JSON.stringify(filesDiffSummary, null, 2)}
       }
 
       // Check specifically for API key errors
-      if (error.response?.data?.error?.details?.some(detail =>
-        detail.reason === "API_KEY_INVALID" || detail.reason === "API_KEY_EXPIRED")) {
+      if (error.response?.data?.error?.details?.some(
+        /**
+         * @param {{reason: string}} detail - API error detail
+         * @returns {boolean} - Whether the error is related to API key
+         */
+        function (detail) {
+          return detail.reason === "API_KEY_INVALID" || detail.reason === "API_KEY_EXPIRED";
+        }
+      )) {
         logger.error('[API CALL ERROR] Invalid Gemini API key. Please check your API key and ensure it is valid.');
         throw new Error('Invalid Gemini API key. Please get a valid key from https://ai.google.dev/');
       }
@@ -399,8 +407,8 @@ ${JSON.stringify(filesDiffSummary, null, 2)}
   /**
    * Parse the review response from Gemini API
    * @param {Object} response - Raw API response
-   * @param {Array} originalFiles - Original files that were analyzed
-   * @returns {Array} - Parsed file reviews
+   * @param {Array<Object>} originalFiles - Original files that were analyzed
+   * @returns {Array<Object>} - Parsed file reviews
    */
   parseReviewResponse(response, originalFiles) {
     try {
@@ -438,9 +446,9 @@ ${JSON.stringify(filesDiffSummary, null, 2)}
 
   /**
    * Match reviews to original files
-   * @param {Array} fileReviews - Reviews returned by Gemini
-   * @param {Array} originalFiles - Original files that were analyzed
-   * @returns {Array} - Complete file reviews
+   * @param {Array<Object>} fileReviews - Reviews returned by Gemini
+   * @param {Array<Object>} originalFiles - Original files that were analyzed
+   * @returns {Array<Object>} - Complete file reviews
    */
   matchReviewsToOriginalFiles(fileReviews, originalFiles) {
     const reviewsByPath = {};
@@ -477,7 +485,7 @@ ${JSON.stringify(filesDiffSummary, null, 2)}
 
   /**
    * Generate a summary of all file reviews
-   * @param {Array} fileReviews - Reviews for all files
+   * @param {Array<Object>} fileReviews - Reviews for all files
    * @returns {Object} - Summary object
    */
   generateSummary(fileReviews) {

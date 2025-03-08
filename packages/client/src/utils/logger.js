@@ -22,7 +22,7 @@ export class Logger {
     for (const line of stackLines) {
       if (line.includes("at ") && !line.includes("logger.js")) {
         const match = line.match(/\((.*?):(\d+):(\d+)\)/) || line.match(/at (.*?):(\d+):(\d+)/);
-        if (Boolean(match)) {
+        if (match) {
           const [, file, lineNum, colNum] = match;
           const srcIndex = file.indexOf("src/");
           location = srcIndex >= 0 ? file.slice(srcIndex) : `${file}:${lineNum}:${colNum}`;

@@ -94,7 +94,7 @@ const DiffSearch: React.FC<DiffSearchProps> = ({ onSearch, initialFilters = {}, 
     }, []);
 
     const handleSubmit = (e?: React.FormEvent) => {
-        e?.preventDefault();
+        e.preventDefault();
         onSearch({ query, filters: activeFilters });
         setIsOpen(false);
         if (searchInputRef.current) {
@@ -116,7 +116,7 @@ const DiffSearch: React.FC<DiffSearchProps> = ({ onSearch, initialFilters = {}, 
     const handleFilterChange = (category: keyof Filter, value: string) => {
         setActiveFilters(prev => ({
           ...prev,
-          [category]: prev[category]?.includes(value)
+          [category]: prev[category].includes(value)
             ? prev[category].filter(item => item !== value)
             : [...(prev[category] || []), value]
         }));

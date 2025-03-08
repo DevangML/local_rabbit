@@ -8,7 +8,7 @@ const parseDiff = (diffText) => {
 
         for (const line of lines) {
                 if (line.startsWith("diff --git")) {
-                        if (Boolean(currentFile)) {
+                        if (currentFile) {
                                 files.push(currentFile);
                         }
 
@@ -27,7 +27,7 @@ const parseDiff = (diffText) => {
 
                 if (line.startsWith("@@")) {
                         const match = line.match(/@@ -(\d+),?\d* \+(\d+),?\d* @@/);
-                        if (Boolean(match)) {
+                        if (match) {
                                 oldLineNumber = parseInt(match[1], 10);
                                 newLineNumber = parseInt(match[2], 10);
                                 currentFile.changes.push({
@@ -68,7 +68,7 @@ const parseDiff = (diffText) => {
                 }
         }
 
-        if (Boolean(currentFile)) {
+        if (currentFile) {
                 files.push(currentFile);
         }
 

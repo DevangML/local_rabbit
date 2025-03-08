@@ -6,7 +6,12 @@ const os = require('os');
 const logger = require('../utils/logger');
 const config = require('../config');
 
-// Helper function to validate paths before fs operations
+/**
+ * Helper function to validate paths before fs operations
+ * @param {string|undefined} filePath - Path to validate
+ * @param {string[]} [allowedPaths=[]] - List of allowed paths
+ * @returns {boolean} - True if path is valid
+ */
 const validatePath = (filePath, allowedPaths = []) => {
   if (!filePath) return false;
 
@@ -167,7 +172,7 @@ class GitService {
 
   /**
    * Find Git repositories in common directories
-   * @returns {Promise<Array>} - Array of repository objects
+   * @returns {Promise<Array<{path: string, name: string}>>} - Array of repository objects
    */
   static async findRepositories() {
     try {
@@ -200,7 +205,7 @@ class GitService {
               validDirs.push(dir);
             }
           } catch (error) {
-            logger.warn(`Error checking directory ${dir}:`, error.message);
+            logger.warn(`Error checking directory ${dir}:`, error instanceof Error ? error.message : String(error));
           }
         }
       }
@@ -233,6 +238,9 @@ class GitService {
               // Skip if path validation fails
               if (!validatePath(subdir)) continue;
 
+              // Ensure subdir is a string before using it
+              if (typeof subdir !== 'string') continue;
+
               const gitDir = path.join(subdir, '.git');
               if (!validatePath(gitDir)) continue;
 
@@ -244,21 +252,21 @@ class GitService {
               // It's a git repository - add it without doing any git operations that might hang
               repositories.push({
                 path: subdir,
-                name: path.basename(subdir),
+                name: typeof subdir === 'string' ? path.basename(subdir) : '',
               });
             } catch (error) {
-              logger.warn(`Error checking repository ${subdir}:`, error.message);
+              logger.warn(`Error checking repository ${subdir}:`, error instanceof Error ? error.message : String(error));
             }
           }
         } catch (error) {
-          logger.warn(`Error processing directory ${dir}:`, error.message);
+          logger.warn(`Error processing directory ${dir}:`, error instanceof Error ? error.message : String(error));
         }
       }
 
       logger.info(`Found ${repositories.length} repositories`);
       return repositories;
     } catch (error) {
-      logger.error('Error finding repositories:', error);
+      logger.error('Error finding repositories:', error instanceof Error ? error : String(error));
       return [];
     }
   }

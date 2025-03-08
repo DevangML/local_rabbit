@@ -32,7 +32,7 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
   useEffect(() => {
     try {
       const storedRepos = localStorage.getItem("recentRepositories");
-      if (Boolean(storedRepos)) {
+      if (storedRepos) {
         setRecentRepositories(JSON.parse(storedRepos));
       }
     } catch (err) {
@@ -42,7 +42,7 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
 
   // Fetch branches when repository is selected
   useEffect(() => {
-    if (Boolean(selectedRepository)) {
+    if (selectedRepository) {
       fetchBranches();
 
       // Add to recent repositories
@@ -174,7 +174,7 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
 
       // Update input field for visual feedback
       const input = document.getElementById("folderPath");
-      if (Boolean(input)) {
+      if (input) {
         input.value = repoPath;
       }
 
@@ -223,11 +223,11 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
         if (e.target.files.length > 0) {
           const folderPath = e.target.files[0].path.split("/").slice(0, -1).join("/");
           const folderInput = document.getElementById("folderPath");
-          if (Boolean(folderInput)) {
+          if (folderInput) {
             folderInput.value = folderPath;
             // Trigger the form submission
             const form = document.getElementById("repoForm");
-            if (Boolean(form)) {
+            if (form) {
               form.dispatchEvent(new Event("submit", { cancelable: true }));
             }
           }

@@ -50,7 +50,7 @@ const RecoveryOptions = ({ onRecover }) => {
           const state = JSON.parse(e.target.result);
           const success = await stateManager.importState(state);
           if (!success) { throw new Error("Failed to import state"); }
-          if (Boolean(onRecover)) { onRecover(); }
+          if (onRecover) { onRecover(); }
         } catch (err) {
           setError("Failed to import state: " + err.message);
         } finally {
@@ -82,7 +82,7 @@ const RecoveryOptions = ({ onRecover }) => {
       setError(null);
       const success = await stateManager.resetAllState();
       if (!success) { throw new Error("Failed to reset state"); }
-      if (Boolean(onRecover)) { onRecover(); }
+      if (onRecover) { onRecover(); }
     } catch (err) {
       setError("Failed to reset state: " + err.message);
     }

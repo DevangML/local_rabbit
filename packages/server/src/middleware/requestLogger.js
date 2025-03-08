@@ -1,10 +1,10 @@
 const logger = require('../utils/logger');
 
 /**
- * Request logging middleware
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next function
+ * Middleware to log HTTP requests and responses
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ * @param {import('express').NextFunction} next - Express next function
  */
 const requestLogger = (req, res, next) => {
   const start = Date.now();

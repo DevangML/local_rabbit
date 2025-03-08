@@ -34,8 +34,8 @@ const RepoSelector = ({ onRepoSelect }) => {
     onRepoSelect(repo);
   };
 
-  if (Boolean(loading)) { return <div className="loading">Loading repositories...</div>; }
-  if (Boolean(error)) { return <div className="error">{error}</div>; }
+  if (loading) { return <div className="loading">Loading repositories...</div>; }
+  if (error) { return <div className="error">{error}</div>; }
 
   return (
     <div className="repo-selector">

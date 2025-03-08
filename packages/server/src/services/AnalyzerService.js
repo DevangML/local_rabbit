@@ -2,7 +2,29 @@ const _path = require('path');
 // eslint-disable-next-line no-unused-vars
 const fs = require('fs').promises;
 const logger = require('../utils/logger');
-const { _exec } = require('child_process');
+const { exec } = require('child_process');
+
+/**
+ * @typedef {Object} FileChange
+ * @property {string} name - File name
+ * @property {string} extension - File extension
+ * @property {number} additions - Number of added lines
+ * @property {number} deletions - Number of deleted lines
+ * @property {string[]} changes - Array of change lines
+ * @property {string} path - File path
+ * @property {{impactLevel?: 'high' | 'medium' | 'low' | 'unknown'}} [analysis] - Analysis results
+ */
+
+/**
+ * @typedef {Object} ComplexityResult
+ * @property {number} score - Complexity score
+ * @property {number} changes - Number of changes
+ */
+
+/**
+ * @typedef {Object} GeminiService
+ * @property {Function} analyzeDiff - Method to analyze diff using AI
+ */
 
 class AnalyzerService {
   static COMPLEXITY_THRESHOLDS = {
@@ -11,8 +33,14 @@ class AnalyzerService {
     HIGH: 50
   };
 
-  constructor(repoPath = '') {
+  /**
+   * Create a new AnalyzerService instance
+   * @param {string} repoPath - Path to the repository
+   * @param {GeminiService|null} geminiService - Service for AI-powered analysis
+   */
+  constructor(repoPath = '', geminiService = null) {
     this.repoPath = repoPath;
+    this.geminiService = geminiService;
   }
 
   /**
@@ -34,7 +62,7 @@ class AnalyzerService {
       const files = AnalyzerService.parseDiff(diffOutput);
 
       // If a custom prompt is provided, use it for AI analysis
-      if (prompt) {
+      if (prompt && this.geminiService) {
         const aiAnalysis = await this.geminiService.analyzeDiff(files, prompt);
         return {
           ...aiAnalysis,
@@ -75,18 +103,27 @@ class AnalyzerService {
   /**
    * Parse git diff output into structured file objects
    * @param {string} diffOutput - Git diff output
-   * @returns {Array} - Array of file objects
+   * @returns {FileChange[]} - Array of file objects
    */
   static parseDiff(diffOutput) {
     if (!diffOutput) return [];
 
+    /** @type {FileChange[]} */
     const files = [];
+    /** @type {FileChange|null} */
     let currentFile = null;
 
     diffOutput.split('\n').forEach(line => {
       if (line.startsWith('diff --git')) {
         if (currentFile) files.push(currentFile);
-        currentFile = { changes: [] };
+        currentFile = {
+          name: '',
+          extension: '',
+          additions: 0,
+          deletions: 0,
+          changes: [],
+          path: ''
+        };
       } else if (currentFile) {
         currentFile.changes.push(line);
       }
@@ -102,6 +139,7 @@ class AnalyzerService {
    * @returns {string} - File type
    */
   static getFileType(extension) {
+    /** @type {{[key: string]: string}} */
     const fileTypes = {
       js: 'JavaScript',
       ts: 'TypeScript',
@@ -119,8 +157,8 @@ class AnalyzerService {
 
   /**
    * Calculate complexity metrics for a file
-   * @param {Object} file - File object
-   * @returns {Object} - Complexity metrics
+   * @param {FileChange} file - File object
+   * @returns {ComplexityResult} - Complexity metrics
    */
   static calculateComplexity(file) {
     const totalChanges = file.additions + file.deletions;
@@ -139,10 +177,10 @@ class AnalyzerService {
   }
 
   /**
-   * Calculate impact level of changes
-   * @param {Object} file - File object
-   * @param {Object} complexity - Complexity metrics
-   * @returns {string} - Impact level
+   * Calculate impact level based on complexity
+   * @param {FileChange} file - File object
+   * @param {ComplexityResult} complexity - Complexity metrics
+   * @returns {string} - Impact level (high, medium, low)
    */
   static calculateImpactLevel(file, complexity) {
     if (complexity.score === 3) return 'high';
@@ -152,21 +190,21 @@ class AnalyzerService {
 
   /**
    * Analyze a file's changes
-   * @param {Object} file - File object
+   * @param {FileChange} file - File object
    * @returns {Promise<Object>} - Analysis results
    */
   async analyzeFile(file) {
     try {
       // Determine file type based on extension
-      const fileType = this.getFileType(file.extension);
+      const fileType = AnalyzerService.getFileType(file.extension);
 
       // Calculate complexity metrics
-      const complexity = this.calculateComplexity(file);
+      const complexity = AnalyzerService.calculateComplexity(file);
 
       return {
         fileType,
         complexity,
-        impactLevel: this.calculateImpactLevel(file, complexity),
+        impactLevel: AnalyzerService.calculateImpactLevel(file, complexity),
       };
     } catch (error) {
       logger.error(`Error analyzing file ${file.path}:`, error);
@@ -180,7 +218,7 @@ class AnalyzerService {
 
   /**
    * Generate a summary of the analyzed diff
-   * @param {Array} files - Array of analyzed file objects
+   * @param {FileChange[]} files - Array of analyzed file objects
    * @returns {Object} - Summary object
    */
   static generateSummary(files) {
@@ -189,6 +227,7 @@ class AnalyzerService {
     const totalDeletions = files.reduce((sum, file) => sum + file.deletions, 0);
 
     // Count files by impact level
+    /** @type {{high: number, medium: number, low: number, unknown: number}} */
     const impactCounts = {
       high: 0,
       medium: 0,
@@ -198,7 +237,12 @@ class AnalyzerService {
 
     files.forEach((file) => {
       if (file.analysis && file.analysis.impactLevel) {
-        impactCounts[file.analysis.impactLevel] += 1;
+        const level = file.analysis.impactLevel;
+        if (level === 'high' || level === 'medium' || level === 'low') {
+          impactCounts[level] += 1;
+        } else {
+          impactCounts.unknown += 1;
+        }
       } else {
         impactCounts.unknown += 1;
       }

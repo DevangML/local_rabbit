@@ -9,6 +9,14 @@ class CoverageTracker {
     this.historyPath = path.join(__dirname, '../../coverage/history.json');
   }
 
+  /**
+   * Track test coverage results
+   * @param {Object} testResults - Test results containing coverage data
+   * @param {Object} testResults.coverageMap - Coverage map with data property
+   * @param {Function} testResults.coverageMap.getCoverageSummary - Method to get coverage summary
+   * @param {Object} testResults.coverageMap.data - Coverage data by file path
+   * @returns {Promise<void>}
+   */
   async trackCoverage(testResults) {
     const timestamp = new Date().toISOString();
     const coverage = {
@@ -67,6 +75,11 @@ class CoverageTracker {
     };
   }
 
+  /**
+   * Get coverage data for a specific file
+   * @param {string} filePath - Path to the file
+   * @returns {Object|null} - Coverage data for the file or null if not found
+   */
   getFileCoverage(filePath) {
     const latest = Array.from(this.coverageData.values()).pop();
     return latest?.files.get(filePath) || null;

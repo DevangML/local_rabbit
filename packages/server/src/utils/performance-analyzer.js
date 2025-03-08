@@ -31,11 +31,18 @@ const log = {
 };
 
 /**
+ * @typedef {Object} TestResult
+ * @property {number} duration - Test duration in milliseconds
+ * @property {number} opsPerSecond - Operations per second
+ * @property {any} result - Result of the test function
+ */
+
+/**
  * Run a performance test
  * @param {string} name - Test name
  * @param {Function} fn - Function to test
  * @param {number} iterations - Number of iterations
- * @returns {Object} Test results
+ * @returns {Promise<TestResult>} Test results
  */
 const runTest = async (name, fn, iterations = 1000) => {
   log.info(`Running test: ${name} (${iterations} iterations)`);
@@ -62,6 +69,7 @@ const runTest = async (name, fn, iterations = 1000) => {
  * @param {Function} standardFn - Standard implementation
  * @param {Function} optimizedFn - Optimized implementation
  * @param {number} iterations - Number of iterations
+ * @returns {Promise<{testName: string, standardResult: TestResult, optimizedResult: TestResult, improvement: number}>} Comparison results
  */
 const compareImplementations = async (testName, standardFn, optimizedFn, iterations = 1000) => {
   log.header(testName);
@@ -97,6 +105,10 @@ const arrayManipulationTest = async () => {
   const testArray = generateArray(arraySize);
 
   // Standard implementation
+  /**
+   * @param {number} iterations - Number of iterations to run
+   * @returns {Promise<number[]>} Results of the test
+   */
   const standardArrayManipulation = async (iterations) => {
     const results = [];
 
@@ -126,6 +138,10 @@ const arrayManipulationTest = async () => {
   };
 
   // Optimized implementation with Lodash
+  /**
+   * @param {number} iterations - Number of iterations to run
+   * @returns {Promise<number[]>} Results of the test
+   */
   const optimizedArrayManipulation = async (iterations) => {
     const results = [];
     const optimizedTestArray = generateArray(1000);

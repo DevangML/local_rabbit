@@ -65,11 +65,11 @@ const ReviewPanel = ({ fromBranch, toBranch }) => {
     }
   };
 
-  if (Boolean(isLoading)) {
+  if (isLoading) {
     return <div className="loading">Running review...</div>;
   }
 
-  if (Boolean(error)) {
+  if (error) {
     return <div className="error">Error: {error}</div>;
   }
 

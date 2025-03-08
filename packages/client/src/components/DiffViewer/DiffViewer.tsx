@@ -64,7 +64,7 @@ const SideBySideDiffLine: React.FC<DiffLineProps> = ({ type, content, oldLineNum
       const isHeader = type === "header";
 
       const getLineStyle = (side?: "left" | "right"): SxProps<Theme> => {
-        if (Boolean(isHeader)) {
+        if (isHeader) {
           return {
             backgroundColor: "rgba(122, 162, 247, 0.1)",
             borderLeft: "4px solid #7aa2f7",
@@ -72,7 +72,7 @@ const SideBySideDiffLine: React.FC<DiffLineProps> = ({ type, content, oldLineNum
         }
 
         if (side === "left") {
-          if (Boolean(isRemoved)) {
+          if (isRemoved) {
             return {
               backgroundColor: "rgba(247, 118, 142, 0.2)",
               borderLeft: `4px solid ${theme.palette.error.main}`,
@@ -82,7 +82,7 @@ const SideBySideDiffLine: React.FC<DiffLineProps> = ({ type, content, oldLineNum
             borderLeft: "4px solid transparent",
           };
         } else { // right side
-          if (Boolean(isAdded)) {
+          if (isAdded) {
             return {
               backgroundColor: "rgba(163, 190, 140, 0.2)",
               borderLeft: `4px solid ${theme.palette.success.main}`,
@@ -95,7 +95,7 @@ const SideBySideDiffLine: React.FC<DiffLineProps> = ({ type, content, oldLineNum
       };
 
       // For header lines, span both columns
-      if (Boolean(isHeader)) {
+      if (isHeader) {
         return (
           <Box sx={{ display: "flex", width: "100%" }}>
             <Box

@@ -33,7 +33,7 @@ class Cache {
       if (typeof localStorage === "undefined") { return; }
 
       const persistedCache = localStorage.getItem("app_cache");
-      if (Boolean(persistedCache)) {
+      if (persistedCache) {
         const parsed = JSON.parse(persistedCache);
         Object.entries(parsed).forEach(([key, value]) => {
           this.cache.set(key, value);
@@ -73,7 +73,7 @@ class Cache {
   }
 
   sortObjectKeys(obj) {
-    if (obj === null || !Boolean(typeof obj === "object") || !Boolean(Array.isArray(obj))) {
+    if (obj === null || !(typeof obj === "object") || !Array.isArray(obj)) {
       return obj;
     }
 
@@ -125,7 +125,7 @@ class Cache {
       if (typeof localStorage !== "undefined") {
         localStorage.removeItem("app_cache");
 
-        if (Boolean(triggerEvent)) {
+        if (triggerEvent) {
           // Notify other tabs that cache was cleared
           localStorage.setItem("cache_cleared", Date.now().toString());
         }
@@ -146,7 +146,7 @@ class Cache {
       }
     }
 
-    if (Boolean(deleted)) {
+    if (deleted) {
       this.persistToLocalStorage();
     }
   }
@@ -154,7 +154,7 @@ class Cache {
   async getOrFetch(type, params, fetchFn) {
     try {
       const cachedData = this.get(type, params);
-      if (Boolean(cachedData)) {
+      if (cachedData) {
         console.warn(`Cache hit for ${type}`);
         return cachedData;
       }

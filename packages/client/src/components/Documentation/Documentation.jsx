@@ -46,7 +46,7 @@ const Documentation = () => {
 
   // Highlight code blocks after render
   useEffect(() => {
-    if (Boolean(markdownContent)) {
+    if (markdownContent) {
       Prism.highlightAll();
     }
   }, [markdownContent]);
@@ -105,7 +105,7 @@ const Documentation = () => {
       }
     };
 
-    if (Boolean(selectedDoc)) {
+    if (selectedDoc) {
       fetchMarkdown(selectedDoc);
     }
   }, [selectedDoc]);

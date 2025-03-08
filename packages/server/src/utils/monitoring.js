@@ -1,8 +1,24 @@
 const os = require('os');
 const logger = require('./logger');
 
+/**
+ * @typedef {Object} SystemMetrics
+ * @property {string} timestamp - ISO timestamp
+ * @property {Object} memory - Memory metrics
+ * @property {number} memory.total - Total memory
+ * @property {number} memory.free - Free memory
+ * @property {number} memory.used - Used memory
+ * @property {string} memory.usage - Memory usage percentage
+ * @property {Object} cpu - CPU metrics
+ * @property {number[]} cpu.loadAvg - Load averages
+ * @property {number} cpu.cpus - Number of CPUs
+ * @property {number} uptime - System uptime
+ * @property {Object} [process] - Process metrics
+ */
+
 class MonitoringUtils {
   static getSystemMetrics() {
+    /** @type {SystemMetrics} */
     const metrics = {
       timestamp: new Date().toISOString(),
       memory: {
@@ -34,13 +50,19 @@ class MonitoringUtils {
       logger.info('System Metrics:', metrics);
 
       // Alert on high memory usage
-      if (metrics.memory.usage > 90) {
+      if (parseFloat(metrics.memory.usage) > 90) {
         logger.warn('High memory usage detected:', metrics.memory);
       }
 
       // Alert on high CPU load
-      if (metrics.cpu.loadAvg[0] > metrics.cpu.cpus * 0.8) {
-        logger.warn('High CPU load detected:', metrics.cpu);
+      if (Array.isArray(metrics.cpu.loadAvg) && metrics.cpu.loadAvg.length > 0) {
+        // Use type assertion to tell TypeScript we know what we're doing
+        const cpuCount = /** @type {number} */ (metrics.cpu.cpus);
+        // Safely access the first element of the array
+        const loadAvg = metrics.cpu.loadAvg[0] || 0;
+        if (loadAvg > cpuCount * 0.8) {
+          logger.warn('High CPU load detected:', metrics.cpu);
+        }
       }
     };
 
@@ -59,8 +81,17 @@ class MonitoringUtils {
     };
   }
 
+  /**
+   * @typedef {Object} HealthStatus
+   * @property {string} status - Health status (healthy, degraded, unhealthy)
+   * @property {string} timestamp - ISO timestamp
+   * @property {Object} metrics - System metrics
+   * @property {string[]} [issues] - List of health issues
+   */
+
   static async checkHealth() {
     const metrics = this.getSystemMetrics();
+    /** @type {HealthStatus} */
     const health = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
@@ -68,19 +99,30 @@ class MonitoringUtils {
         memory: metrics.memory,
         cpu: metrics.cpu,
       },
+      issues: [] // Initialize issues array
     };
 
     // Check memory usage
-    if (metrics.memory.usage > 90) {
+    if (parseFloat(metrics.memory.usage) > 90) {
       health.status = 'unhealthy';
-      health.issues = ['High memory usage'];
+      // Ensure issues array exists
+      const issues = health.issues || [];
+      issues.push('High memory usage');
+      health.issues = issues;
     }
 
     // Check CPU load
-    if (metrics.cpu.loadAvg[0] > metrics.cpu.cpus * 0.8) {
-      health.status = health.status === 'healthy' ? 'degraded' : 'unhealthy';
-      health.issues = health.issues || [];
-      health.issues.push('High CPU load');
+    if (Array.isArray(metrics.cpu.loadAvg) && metrics.cpu.loadAvg.length > 0) {
+      // Use type assertion to tell TypeScript we know what we're doing
+      const cpuCount = /** @type {number} */ (metrics.cpu.cpus);
+      // Safely access the first element of the array
+      const loadAvg = metrics.cpu.loadAvg[0] || 0;
+      if (loadAvg > cpuCount * 0.8) {
+        health.status = health.status === 'healthy' ? 'degraded' : 'unhealthy';
+        // Ensure issues array exists
+        health.issues = health.issues || [];
+        health.issues.push('High CPU load');
+      }
     }
 
     return health;

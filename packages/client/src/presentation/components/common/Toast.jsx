@@ -24,7 +24,7 @@ const Toast = ({
 
                 const timer = setTimeout(() => {
                         setVisible(false);
-                        if (Boolean(onClose)) {
+                        if (onClose) {
                                 onClose();
                         }
                 }, duration);
@@ -35,7 +35,7 @@ const Toast = ({
         // Handle manual close
         const handleClose = () => {
                 setVisible(false);
-                if (Boolean(onClose)) {
+                if (onClose) {
                         onClose();
                 }
         };

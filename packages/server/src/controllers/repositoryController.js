@@ -31,7 +31,7 @@ gitService.loadState().catch((err) => {
  * @returns {string} - Path with tilde expanded
  */
 const _expandTilde = (filePath) => {
-  if (filePath.startsWith('~/')) {
+  if (filePath && filePath.startsWith('~/')) {
     return path.join(homedir(), filePath.slice(2));
   }
   return filePath;
@@ -65,12 +65,16 @@ exports.setRepository = async (req, res) => {
   }
 
   try {
-    const isValid = await gitService.isValidRepo(_expandTilde(repoPath));
+    // First set the repo path, then check if it's valid
+    const expandedPath = _expandTilde(repoPath);
+    gitService.setRepoPath(expandedPath);
+    const isValid = await gitService.isValidRepo();
+
     if (!isValid) {
       return res.status(400).json({ error: 'Not a valid git repository' });
     }
 
-    gitService.setRepoPath(repoPath);
+    // Repository is already set above, no need to set it again
     /** @type {GitServiceResult} */
     const branchesResult = await gitService.getBranches();
     const branches = { all: branchesResult.all || [] };
@@ -90,22 +94,22 @@ exports.setRepository = async (req, res) => {
 };
 
 /**
- * Get branches for current repository
+ * Get branches
  * @param {import('express').Request} req - Express request object
  * @param {import('express').Response} res - Express response object
  */
 exports.getBranches = async (req, res) => {
-  if (!gitService.repoPath) {
-    return res.status(400).json({ error: 'No repository selected' });
-  }
-
   try {
-    /** @type {GitBranches} */
+    if (!gitService.repoPath) {
+      return res.status(400).json({ error: 'No repository selected' });
+    }
+
+    /** @type {GitServiceResult} */
     const branches = await gitService.getBranches();
     const current = await gitService.getCurrentBranch();
 
     res.json({
-      branches: /** @type {string[]} */ (branches.all),
+      branches: branches.all || [],
       current,
     });
   } catch (/** @type {unknown} */ error) {
@@ -125,14 +129,14 @@ exports.getRepositoryInfo = async (req, res) => {
       return res.status(400).json({ error: 'No repository selected' });
     }
 
-    /** @type {GitBranches} */
+    /** @type {GitServiceResult} */
     const branches = await gitService.getBranches();
     const currentBranch = await gitService.getCurrentBranch();
 
     return res.json({
       path: gitService.repoPath,
       name: path.basename(gitService.repoPath),
-      branches: /** @type {string[]} */ (branches.all),
+      branches: branches.all || [],
       current: currentBranch,
     });
   } catch (/** @type {unknown} */ error) {
