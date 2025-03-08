@@ -22,16 +22,35 @@ if (!fs.existsSync(reportsDir)) {
 
 // Logger setup
 const log = {
+  /**
+   * @param {string} message - Log message
+   */
   info: (message) => winston.info(message),
+  /**
+   * @param {string} message - Success message
+   */
   success: (message) => winston.info(chalk.green(message)),
+  /**
+   * @param {string} message - Error message
+   */
   error: (message) => winston.error(message),
+  /**
+   * @param {string} message - Warning message
+   */
   warn: (message) => winston.warn(message),
+  /**
+   * @param {string} message - Result message
+   */
   result: (message) => winston.info(chalk.cyan(message)),
+  /**
+   * @param {string} message - Header message
+   */
   header: (message) => winston.info(chalk.bold.white(`\n=== ${message} ===`)),
 };
 
 /**
  * @typedef {Object} TestResult
+ * @property {string} name - Test name
  * @property {number} duration - Test duration in milliseconds
  * @property {number} opsPerSecond - Operations per second
  * @property {any} result - Result of the test function
@@ -58,7 +77,7 @@ const runTest = async (name, fn, iterations = 1000) => {
     name,
     duration,
     iterations,
-    opsPerSecond: (iterations / (duration / 1000)).toFixed(2),
+    opsPerSecond: Number((iterations / (duration / 1000)).toFixed(2)),
     result,
   };
 };
@@ -94,6 +113,10 @@ const compareImplementations = async (testName, standardFn, optimizedFn, iterati
 // Test 1: Array Manipulation
 const arrayManipulationTest = async () => {
   // Generate test data
+  /**
+   * @param {number} size - Size of the array to generate
+   * @returns {Array<{id: number, value: number, name: string, active: boolean}>} Generated array
+   */
   const generateArray = (size) => Array.from({ length: size }, (unused, index) => ({
     id: index,
     value: Math.random() * 1000,
@@ -122,6 +145,7 @@ const arrayManipulationTest = async () => {
       const sorted = mapped.sort((a, b) => a.id - b.id);
 
       // Group by ranges
+      /** @type {Record<number, Array<any>>} */
       const grouped = {};
       sorted.forEach((item) => {
         const range = Math.floor(item.id / 1000) * 1000;
@@ -134,7 +158,7 @@ const arrayManipulationTest = async () => {
       results.push(Object.keys(grouped).length);
     }
 
-    return results.length;
+    return results;
   };
 
   // Optimized implementation with Lodash

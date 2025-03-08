@@ -22,7 +22,7 @@ import {
 } from "@mui/icons-material";
 import "./DiffViewer.css";
 
-interface DiffLine {
+export interface DiffLine {
       type: "added" | "removed" | "unchanged" | "header";
       content: string;
       oldLineNumber?: number | undefined;
