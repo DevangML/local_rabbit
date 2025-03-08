@@ -8,11 +8,12 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import dotenv from 'dotenv';
+import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server.js';
-import React from 'react';
 
 // Import the server-side rendering function from the client
+// @ts-ignore - This file will be generated at build time
 import { renderPage } from '../../client/dist/server/entry-server.js';
 
 // Load environment variables

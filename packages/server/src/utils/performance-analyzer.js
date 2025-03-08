@@ -52,6 +52,7 @@ const log = {
  * @typedef {Object} TestResult
  * @property {string} name - Test name
  * @property {number} duration - Test duration in milliseconds
+ * @property {number} iterations - Number of iterations
  * @property {number} opsPerSecond - Operations per second
  * @property {any} result - Result of the test function
  */
@@ -195,6 +196,10 @@ const arrayManipulationTest = async () => {
 // Test 2: Parallel Processing
 const parallelProcessingTest = async () => {
   // Simulate an async operation
+  /**
+   * @param {number} id - The operation identifier
+   * @returns {Promise<Object>} A promise that resolves with the operation result
+   */
   const simulateAsyncOperation = (id) => new Promise((resolve) => {
     const delay = Math.random() * 20; // Random delay up to 20ms
     setTimeout(() => {
@@ -216,6 +221,7 @@ const parallelProcessingTest = async () => {
     const results = await async.mapLimit(
       items,
       10, // Concurrency limit
+      /** @param {number} item */
       async (item) => simulateAsyncOperation(item),
     );
 
@@ -233,11 +239,17 @@ const parallelProcessingTest = async () => {
 // Test 3: Object Manipulation
 const objectManipulationTest = async () => {
   // Generate test data
+  /**
+   * @param {number} depth - The depth of the nested object
+   * @param {number} breadth - The breadth of the nested object
+   * @returns {Object} The generated nested object
+   */
   const generateNestedObject = (depth, breadth) => {
     if (depth === 0) {
       return { value: Math.random() * 1000 };
     }
 
+    /** @type {Record<string, any>} */
     const obj = {};
     for (let i = 0; i < breadth; i += 1) {
       obj[`prop${i}`] = generateNestedObject(depth - 1, breadth);
@@ -249,6 +261,10 @@ const objectManipulationTest = async () => {
   const testObject = generateNestedObject(3, 5);
 
   // Standard implementation
+  /**
+   * @param {number} iterations - Number of iterations to run
+   * @returns {Promise<number>} Results of the test
+   */
   const standardObjectManipulation = async (iterations) => {
     const results = [];
 
@@ -266,6 +282,11 @@ const objectManipulationTest = async () => {
       };
 
       // Extract values
+      /**
+       * @param {any} obj - The object to extract values from
+       * @param {Array<number>} result - The array to store results in
+       * @returns {Array<number>} The extracted values
+       */
       const extractValues = (obj, result = []) => {
         if (obj.value !== undefined) {
           result.push(obj.value);
@@ -289,6 +310,10 @@ const objectManipulationTest = async () => {
   };
 
   // Optimized implementation with Lodash
+  /**
+   * @param {number} iterations - Number of iterations to run
+   * @returns {Promise<number>} Results of the test
+   */
   const optimizedObjectManipulation = async (iterations) => {
     const results = [];
 
@@ -365,9 +390,13 @@ const runAllTests = async () => {
     );
 
     log.success('\nPerformance report saved to reports/performance-report.json');
-  } catch (error) {
-    log.error(`Error running tests: ${error.message}`);
-    console.error(error);
+  } catch (/** @type {unknown} */ error) {
+    if (error instanceof Error) {
+      log.error(`Error running tests: ${error.message}`);
+      console.error(error);
+    } else {
+      log.error('Unknown error occurred');
+    }
   }
 };
 
@@ -387,6 +416,11 @@ class PerformanceAnalyzer {
     this.measurements = new Map();
   }
 
+  /**
+   * @param {string} operation - The operation name to measure
+   * @param {Function} fn - The function to measure
+   * @returns {Promise<{result: any, duration: number}>} The result and duration
+   */
   async measure(operation, fn) {
     const start = process.hrtime.bigint();
     try {
@@ -400,6 +434,11 @@ class PerformanceAnalyzer {
     }
   }
 
+  /**
+   * @param {string} operation - The operation name to measure
+   * @param {Function} fn - The function to measure
+   * @returns {{result: any, duration: number}} The result and duration
+   */
   measureSync(operation, fn) {
     const start = process.hrtime.bigint();
     try {
@@ -413,6 +452,10 @@ class PerformanceAnalyzer {
     }
   }
 
+  /**
+   * @param {string} operation - The operation name
+   * @param {bigint} duration - The duration in nanoseconds
+   */
   recordMeasurement(operation, duration) {
     if (!this.measurements.has(operation)) {
       this.measurements.set(operation, {
@@ -428,11 +471,15 @@ class PerformanceAnalyzer {
     stats.durations.push(Number(duration));
   }
 
+  /**
+   * @param {string} operation - The operation name
+   * @returns {Object|null} The metrics for the operation
+   */
   getMetrics(operation) {
     const stats = this.measurements.get(operation);
     if (!stats) return null;
 
-    const durations = stats.durations.sort((a, b) => a - b);
+    const durations = stats.durations.sort((/** @type {number} */ a, /** @type {number} */ b) => a - b);
     const p95Index = Math.floor(durations.length * 0.95);
     const p99Index = Math.floor(durations.length * 0.99);
 
@@ -448,6 +495,7 @@ class PerformanceAnalyzer {
   }
 
   getStats() {
+    /** @type {Record<string, {count: number, totalTime: number, avgTime: number}>} */
     const stats = {};
     this.measurements.forEach((value, key) => {
       stats[key] = {
@@ -459,6 +507,9 @@ class PerformanceAnalyzer {
     return stats;
   }
 
+  /**
+   * @param {string} [operation] - The operation to reset, or all if not specified
+   */
   reset(operation) {
     if (operation) {
       this.measurements.delete(operation);

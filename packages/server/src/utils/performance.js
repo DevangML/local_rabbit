@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Performance utilities using Lodash and Async
  * This file provides optimized utility functions for common operations
@@ -24,33 +25,39 @@ const memoizeWithTTL = (fn, options = {}) => {
     resolver = undefined,
   } = options;
 
+  // Initialize maps for cache and timestamps
   const cache = new Map();
   const timestamps = new Map();
 
+  // Create the memoized function
   const memoized = _.memoize(
-    (...args) => {
+    function () {
+      const args = Array.from(arguments);
       const now = Date.now();
-      const key = resolver ? resolver(...args) : JSON.stringify(args);
+      const key = resolver ? resolver.apply(null, args) : JSON.stringify(args);
 
+      // Set timestamp for this key
       timestamps.set(key, now);
 
       // Clean up old entries if cache exceeds maxSize
       if (cache.size > maxSize) {
-        const oldestKey = [...timestamps.entries()]
-          .sort(([, a], [, b]) => a - b)[0][0];
-
-        cache.delete(oldestKey);
-        timestamps.delete(oldestKey);
+        const entries = Array.from(timestamps.entries());
+        if (entries.length > 0) {
+          const oldestKey = entries.sort(([, a], [, b]) => a - b)[0][0];
+          cache.delete(oldestKey);
+          timestamps.delete(oldestKey);
+        }
       }
 
-      return fn(...args);
+      return fn.apply(null, args);
     },
     resolver,
   );
 
   // Wrap the memoized function to check TTL
-  return (...args) => {
-    const key = resolver ? resolver(...args) : JSON.stringify(args);
+  return function () {
+    const args = Array.from(arguments);
+    const key = resolver ? resolver.apply(null, args) : JSON.stringify(args);
     const timestamp = timestamps.get(key);
 
     if (timestamp && Date.now() - timestamp > maxAge) {
@@ -58,18 +65,18 @@ const memoizeWithTTL = (fn, options = {}) => {
       timestamps.delete(key);
     }
 
-    return memoized(...args);
+    return memoized.apply(null, args);
   };
 };
 
 /**
  * Run tasks in parallel with concurrency control
- * @param {Array} items - Array of items to process
+ * @param {Array<any>} items - Array of items to process
  * @param {Function} task - Task function that returns a promise
  * @param {Object} options - Options object
  * @param {number} [options.concurrency=5] - Maximum number of concurrent tasks
  * @param {boolean} [options.stopOnError=false] - Whether to stop on first error
- * @returns {Promise<Array>} Results array
+ * @returns {Promise<Array<any>>} Results array
  */
 const parallelizeTask = async (items, task, options = {}) => {
   const {
@@ -95,8 +102,12 @@ const parallelizeTask = async (items, task, options = {}) => {
           if (stopOnError) {
             throw error;
           }
-          logger.error(chalk.red(`Error processing item: ${error.message}`));
-          return { error: error.message, item };
+          if (error instanceof Error) {
+            logger.error(chalk.red(`Error processing item: ${error.message}`));
+            return { error: error.message, item };
+          }
+          logger.error(chalk.red(`Error processing item: Unknown error`));
+          return { error: 'Unknown error', item };
         }
       },
     );
@@ -107,7 +118,11 @@ const parallelizeTask = async (items, task, options = {}) => {
     return results;
   } catch (error) {
     const duration = Date.now() - startTime;
-    logger.error(chalk.red(`Parallel execution failed after ${duration}ms: ${error.message}`));
+    if (error instanceof Error) {
+      logger.error(chalk.red(`Parallel execution failed after ${duration}ms: ${error.message}`));
+    } else {
+      logger.error(chalk.red(`Parallel execution failed after ${duration}ms: Unknown error`));
+    }
     throw error;
   }
 };
@@ -118,10 +133,12 @@ const parallelizeTask = async (items, task, options = {}) => {
  * @param {number} [wait=1000] - Throttle wait time in milliseconds
  * @returns {Function} Throttled function
  */
-const throttleFunction = (fn, wait = 1000) => _.throttle(fn, wait, {
-  leading: true,
-  trailing: true,
-});
+const throttleFunction = (fn, wait = 1000) => {
+  return _.throttle(fn, wait, {
+    leading: true,
+    trailing: true,
+  });
+};
 
 /**
  * Debounce a function to delay its execution
@@ -129,18 +146,20 @@ const throttleFunction = (fn, wait = 1000) => _.throttle(fn, wait, {
  * @param {number} [wait=300] - Debounce wait time in milliseconds
  * @returns {Function} Debounced function
  */
-const debounceFunction = (fn, wait = 300) => _.debounce(fn, wait, {
-  leading: false,
-  trailing: true,
-  maxWait: wait * 3,
-});
+const debounceFunction = (fn, wait = 300) => {
+  return _.debounce(fn, wait, {
+    leading: false,
+    trailing: true,
+    maxWait: wait * 3,
+  });
+};
 
 /**
  * Batch process an array of items
- * @param {Array} items - Array of items to process
+ * @param {Array<any>} items - Array of items to process
  * @param {Function} processFn - Function to process each batch
  * @param {number} [batchSize=100] - Size of each batch
- * @returns {Promise<Array>} Combined results
+ * @returns {Promise<Array<any>>} Combined results
  */
 const batchProcess = async (items, processFn, batchSize = 100) => {
   const startTime = Date.now();

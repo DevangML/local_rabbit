@@ -13,4 +13,5 @@ logger.info('Server starting...');
 logger.debug('Debug mode enabled');
 logger.warn('This is a test warning');
 logger.error('This is a test error');
+// @ts-ignore - Custom success method defined in logger.js
 logger.success('Logger initialized successfully');

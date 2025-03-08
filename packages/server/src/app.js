@@ -1,4 +1,5 @@
 const express = require('express');
+// @ts-ignore
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
@@ -19,6 +20,7 @@ if (!fs.existsSync(logsDir)) {
 }
 
 // Security middleware
+// @ts-ignore
 app.use(helmet());
 
 // CORS middleware
