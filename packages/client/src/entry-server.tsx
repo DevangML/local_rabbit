@@ -8,6 +8,7 @@ import { CacheProvider } from '@emotion/react';
 import createEmotionServer from '@emotion/server/create-instance';
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
+import { React19Features } from './components/React19Features';
 
 // Create the Emotion cache for SSR
 const cache = createCache({
@@ -90,6 +91,11 @@ function SSRApp() {
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/docs" element={<Documentation />} />
+              <Route path="/react19" element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <React19Features />
+                </Suspense>
+              } />
               <Route path="*" element={
                 <Suspense fallback={<LoadingFallback />}>
                   <div>
@@ -106,7 +112,7 @@ function SSRApp() {
   );
 }
 
-// Export the render function for server use
+// Export the render function for server use with streaming support
 export function renderPage(url: string) {
   return (
     <StaticRouter location={url}>
@@ -117,6 +123,11 @@ export function renderPage(url: string) {
 
 // Export the emotion cache and server utilities
 export { cache, extractCriticalToChunks, constructStyleTagsFromChunks };
+
+// Export a function for streaming rendering
+export function renderToStream(url: string) {
+  return renderPage(url);
+}
 
 // Keep the default export for backward compatibility
 export default function render(props: any) {

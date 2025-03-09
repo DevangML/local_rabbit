@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import React from 'react';
-import { renderToString } from 'react-dom/server';
+import { renderToString, renderToPipeableStream } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server.js';
 import { cpus } from 'os';
 
@@ -20,6 +20,7 @@ type EmotionConstructStyleTags = (chunks: Array<{ key: string; ids: Array<string
 // Define type for entry server module
 type EntryServer = {
   renderPage: (url: string) => React.ReactElement;
+  renderToStream?: (url: string) => React.ReactElement;
   extractCriticalToChunks: EmotionCriticalToChunks;
   constructStyleTagsFromChunks: EmotionConstructStyleTags;
 };
@@ -31,6 +32,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // This way we can run the server in development without the client build
 const isDev = process.env.NODE_ENV === 'development';
 let renderPage: (url: string) => React.ReactElement | null = () => null;
+let renderToStream: (url: string) => React.ReactElement | null = () => null;
 let extractCriticalToChunks: EmotionCriticalToChunks | null = null;
 let constructStyleTagsFromChunks: EmotionConstructStyleTags | null = null;
 
@@ -48,6 +50,7 @@ if (!isDev) {
         // @ts-ignore - This file will be generated at build time
         const entryServer = await import(ssrEntryPath) as EntryServer;
         renderPage = entryServer.renderPage;
+        renderToStream = entryServer.renderToStream || entryServer.renderPage;
         extractCriticalToChunks = entryServer.extractCriticalToChunks;
         constructStyleTagsFromChunks = entryServer.constructStyleTagsFromChunks;
         console.log('Successfully loaded SSR from client workspace build');
@@ -66,6 +69,7 @@ if (!isDev) {
           // @ts-ignore - Try alternative path
           const entryServer = await import(altPath) as EntryServer;
           renderPage = entryServer.renderPage;
+          renderToStream = entryServer.renderToStream || entryServer.renderPage;
           extractCriticalToChunks = entryServer.extractCriticalToChunks;
           constructStyleTagsFromChunks = entryServer.constructStyleTagsFromChunks;
           console.log('Successfully loaded SSR from alternative path');
@@ -82,6 +86,7 @@ if (!isDev) {
           // @ts-ignore - Try one more path
           const entryServer = await import(urlPath) as EntryServer;
           renderPage = entryServer.renderPage;
+          renderToStream = entryServer.renderToStream || entryServer.renderPage;
           extractCriticalToChunks = entryServer.extractCriticalToChunks;
           constructStyleTagsFromChunks = entryServer.constructStyleTagsFromChunks;
           console.log('Successfully loaded SSR from resolved URL path');
@@ -247,18 +252,132 @@ const ssrHandler: RequestHandler = async (req, res) => {
     }
 
     // Production mode with SSR enabled
-    const app = renderPage(req.url);
-    if (!app || !extractCriticalToChunks || !constructStyleTagsFromChunks) {
-      throw new Error('SSR components not properly initialized');
+    // Use React 19 streaming capabilities
+    if (renderToStream && renderToPipeableStream) {
+      const appElement = renderToStream(req.url);
+      
+      // Check if appElement is null before proceeding
+      if (!appElement) {
+        console.warn('renderToStream returned null, falling back to traditional SSR');
+      } else {
+        // Extract critical CSS if available
+        let styleTag = '';
+        if (extractCriticalToChunks && constructStyleTagsFromChunks) {
+          try {
+            const chunks = extractCriticalToChunks(appElement);
+            styleTag = constructStyleTagsFromChunks(chunks);
+          } catch (cssError) {
+            console.warn('Failed to extract critical CSS:', cssError);
+          }
+        }
+        
+        // Prepare the HTML shell
+        const htmlStart = `
+          <!DOCTYPE html>
+          <html lang="en">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <meta name="description" content="Local Rabbit Application" />
+              <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+              <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+              <link rel="manifest" href="/manifest.json" />
+              <title>Local Rabbit</title>
+              ${styleTag}
+            </head>
+            <body>
+              <div id="root">
+        `;
+        
+        const htmlEnd = `
+              </div>
+              <script>
+                window.__INITIAL_STATE__ = ${JSON.stringify(initialState)};
+              </script>
+              <script type="module" src="/assets/index.js"></script>
+            </body>
+          </html>
+        `;
+        
+        // Set headers for streaming
+        res.setHeader('Content-Type', 'text/html');
+        res.setHeader('Transfer-Encoding', 'chunked');
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        
+        // Create the stream
+        const { pipe } = renderToPipeableStream(appElement, {
+          bootstrapScripts: ['/assets/index.js'],
+          onShellReady() {
+            // The content above all Suspense boundaries is ready
+            res.write(htmlStart);
+            pipe(res);
+          },
+          onAllReady() {
+            // If you don't want streaming, you can use this instead of onShellReady
+            // All the content is now ready, including Suspense boundaries
+            res.write(htmlEnd);
+          },
+          onError(error) {
+            console.error('Streaming SSR error:', error);
+            // If something errors before the shell is ready, fall back to client rendering
+            if (!res.headersSent) {
+              res.statusCode = 500;
+              res.send('Internal Server Error');
+            }
+          }
+        });
+        
+        return;
+      }
     }
-
-    const html = renderToString(app);
-
-    // Extract critical CSS
-    const emotionChunks = extractCriticalToChunks(app);
-    const emotionTags = constructStyleTagsFromChunks(emotionChunks);
-
-    const template = `
+    
+    // Fallback to traditional SSR if streaming is not available
+    const app = renderPage(req.url);
+    
+    // If SSR is not available, return a basic HTML shell
+    if (!app) {
+      const template = `
+        <!DOCTYPE html>
+        <html lang="en">
+          <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <meta name="description" content="Local Rabbit Application" />
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+            <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+            <link rel="manifest" href="/manifest.json" />
+            <title>Local Rabbit</title>
+          </head>
+          <body>
+            <div id="root"></div>
+            <script>
+              window.__INITIAL_STATE__ = ${JSON.stringify(initialState)};
+            </script>
+            <script type="module" src="/assets/index.js"></script>
+          </body>
+        </html>
+      `;
+      
+      res.setHeader('Content-Type', 'text/html');
+      return res.send(template);
+    }
+    
+    // Extract critical CSS if available
+    let styleTag = '';
+    if (extractCriticalToChunks && constructStyleTagsFromChunks) {
+      try {
+        const chunks = extractCriticalToChunks(app);
+        styleTag = constructStyleTagsFromChunks(chunks);
+      } catch (cssError) {
+        console.warn('Failed to extract critical CSS:', cssError);
+      }
+    }
+    
+    // Render the app to string
+    const appHtml = renderToString(app);
+    
+    // Create the full HTML response
+    const html = `
       <!DOCTYPE html>
       <html lang="en">
         <head>
@@ -268,51 +387,24 @@ const ssrHandler: RequestHandler = async (req, res) => {
           <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
           <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
           <link rel="manifest" href="/manifest.json" />
-          ${emotionTags}
           <title>Local Rabbit</title>
+          ${styleTag}
         </head>
         <body>
-          <div id="root">${html}</div>
+          <div id="root">${appHtml}</div>
           <script>
             window.__INITIAL_STATE__ = ${JSON.stringify(initialState)};
           </script>
-          <script type="module" src="${isDev ? '/src/main.tsx' : '/assets/main.js'}"></script>
-        </body>
-      </html>
-    `;
-
-    res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Cache-Control', 'no-store, must-revalidate');
-    res.send(template);
-  } catch (error) {
-    console.error('SSR Error:', error);
-    // Fallback to client-side rendering in case of SSR error
-    const template = `
-      <!DOCTYPE html>
-      <html lang="en">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta name="description" content="Local Rabbit Application (CSR Fallback)" />
-          <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-          <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-          <link rel="manifest" href="/manifest.json" />
-          <title>Local Rabbit (CSR Fallback)</title>
-        </head>
-        <body>
-          <div id="root"></div>
-          <script>
-            window.__INITIAL_STATE__ = ${JSON.stringify({ url: req.url, env: process.env.NODE_ENV })};
-            console.error("SSR failed, falling back to client-side rendering");
-          </script>
-          <script type="module" src="${isDev ? '/src/main.tsx' : '/assets/main.js'}"></script>
+          <script type="module" src="/assets/index.js"></script>
         </body>
       </html>
     `;
     
     res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Cache-Control', 'no-store, must-revalidate');
-    res.status(500).send(template);
+    return res.send(html);
+  } catch (error) {
+    console.error('SSR error:', error);
+    res.status(500).send('Server Error');
   }
 };
 

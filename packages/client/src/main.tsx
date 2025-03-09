@@ -64,11 +64,11 @@ if (!root) {
 }
 
 // Create the app with React 19 features
-const App = () => (
+const App: React.FC = () => (
   <React.StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <RouterProvider router={router} />
+      <RouterProvider router={router} fallbackElement={<div>Loading...</div>} />
     </ThemeProvider>
   </React.StrictMode>
 );

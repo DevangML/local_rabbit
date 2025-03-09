@@ -6,6 +6,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme } from "@mui/material/styles";
 import App from './App';
+import { React19Features } from './components/React19Features';
 
 // Loading fallback component with better UX
 const LoadingFallback = () => (
@@ -74,7 +75,11 @@ const routes = [
       },
       {
         path: 'react19',
-        element: <div>React 19 Features</div>
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <React19Features />
+          </Suspense>
+        )
       },
       {
         path: 'products',
