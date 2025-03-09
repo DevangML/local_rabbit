@@ -3,8 +3,9 @@ import { ThemeProvider } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import CssBaseline from "@mui/material/CssBaseline";
-import { Routes, Route } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { createTheme } from "@mui/material/styles";
+import { Navigation } from "./components/Navigation";
 
 const theme = createTheme();
 import { FeatureDemo } from "./components/FeatureDemo";
@@ -26,10 +27,10 @@ export default function App(): JSX.Element {
                 }>
                     <ThemeProvider theme={ theme }>
                         <CssBaseline />
-                        <Routes>
-                            <Route path="/" element={ <FeatureDemo /> } />
-                            <Route path="/home" element={ <Home /> } />
-                        </Routes>
+                        <Navigation />
+                        <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+                            <Outlet />
+                        </Box>
                     </ThemeProvider>
                 </Suspense>
             </Box>

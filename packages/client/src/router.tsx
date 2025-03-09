@@ -5,101 +5,92 @@ import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme } from "@mui/material/styles";
+import App from './App';
 import { FeatureDemo } from "./components/FeatureDemo";
+import { React19Features } from "./components/React19Features";
 
 const theme = createTheme();
 
 // Lazy load components
 const Home = lazy(() => import("./pages/Home"));
-const Products = lazy(() => import("./pages/Products"));
-const About = lazy(() => import("./pages/About"));
-const Contact = lazy(() => import("./pages/Contact"));
-const Documentation = lazy(() => import("./pages/Documentation"));
+
+// Create placeholder components for pages that might not exist yet
+const Products = () => (
+  <div>
+    <h1>Products</h1>
+    <p>This is the products page.</p>
+  </div>
+);
+
+const About = () => (
+  <div>
+    <h1>About</h1>
+    <p>This is the about page.</p>
+  </div>
+);
+
+const Contact = () => (
+  <div>
+    <h1>Contact</h1>
+    <p>This is the contact page.</p>
+  </div>
+);
+
+const Documentation = () => (
+  <div>
+    <h1>Documentation</h1>
+    <p>This is the documentation page.</p>
+  </div>
+);
 
 // Create a router with future flags enabled
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: (
-      <Box sx={{ 
-        display: "flex",
-        flexDirection: "column",
-        minHeight: "100vh"
-      }}>
-        <Suspense fallback={
-          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-            <CircularProgress />
-          </Box>
-        }>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <FeatureDemo />
-          </ThemeProvider>
-        </Suspense>
-      </Box>
-    )
-  },
-  {
-    path: '/home',
-    element: (
-      <Box sx={{ 
-        display: "flex",
-        flexDirection: "column",
-        minHeight: "100vh"
-      }}>
-        <Suspense fallback={
-          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-            <CircularProgress />
-          </Box>
-        }>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
+    element: <App />,
+    children: [
+      {
+        index: true,
+        element: <FeatureDemo />
+      },
+      {
+        path: 'home',
+        element: (
+          <Suspense fallback={<CircularProgress />}>
             <Home />
-          </ThemeProvider>
-        </Suspense>
-      </Box>
-    )
-  },
-  {
-    path: '/products',
-    element: (
-      <Suspense fallback={<CircularProgress />}>
-        <Products />
-      </Suspense>
-    )
-  },
-  {
-    path: '/about',
-    element: (
-      <Suspense fallback={<CircularProgress />}>
-        <About />
-      </Suspense>
-    )
-  },
-  {
-    path: '/contact',
-    element: (
-      <Suspense fallback={<CircularProgress />}>
-        <Contact />
-      </Suspense>
-    )
-  },
-  {
-    path: '/docs',
-    element: (
-      <Suspense fallback={<CircularProgress />}>
-        <Documentation />
-      </Suspense>
-    )
-  },
-  {
-    path: '*',
-    element: (
-      <div>
-        <h1>404 - Not Found</h1>
-        <p>The requested page could not be found.</p>
-      </div>
-    )
+          </Suspense>
+        )
+      },
+      {
+        path: 'react19',
+        element: <React19Features />
+      },
+      {
+        path: 'products',
+        element: <Products />
+      },
+      {
+        path: 'about',
+        element: <About />
+      },
+      {
+        path: 'contact',
+        element: <Contact />
+      },
+      {
+        path: 'docs',
+        element: <Documentation />
+      },
+      {
+        path: '*',
+        element: (
+          <div>
+            <h1>404 - Not Found</h1>
+            <p>The requested page could not be found.</p>
+          </div>
+        )
+      }
+    ]
   }
 ], {
   future: {

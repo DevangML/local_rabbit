@@ -4,7 +4,8 @@ import {
   RoutesProps as OriginalRoutesProps,
   Route as OriginalRoute,
   Routes as OriginalRoutes,
-  RouterProviderProps
+  RouterProviderProps,
+  OutletProps
 } from 'react-router-dom';
 
 declare module 'react-router-dom' {
@@ -16,6 +17,9 @@ declare module 'react-router-dom' {
   
   // Override the RouterProvider component type
   export const RouterProvider: React.FC<RouterProviderProps>;
+  
+  // Override the Outlet component type
+  export const Outlet: React.FC<OutletProps>;
 }
 
 declare module 'react-router-dom/server' {
