@@ -27,12 +27,13 @@ if (typeof window !== 'undefined') {
   window.__EMOTION_INSERTION_EFFECT__ = true;
 }
 
-// Ensure useInsertionEffect is available
-// This is a defensive approach to make sure the hook is defined
-if (!React.useInsertionEffect) {
-  // @ts-ignore - Add useInsertionEffect if it doesn't exist
-  React.useInsertionEffect = React.useLayoutEffect || React.useEffect || ((fn: () => void) => fn());
-}
+// Define our own useInsertionEffect hook that falls back to useLayoutEffect or useEffect
+// This avoids modifying the React import directly
+export const useInsertionEffectPolyfill = 
+  React.useInsertionEffect || 
+  React.useLayoutEffect || 
+  React.useEffect || 
+  ((fn: () => void) => fn());
 
 // Import the module to reference it before augmentation
 import '@mui/styled-engine';
@@ -46,7 +47,6 @@ declare module '@mui/styled-engine' {
 }
 
 // Create a safe wrapper for React elements to prevent "Objects are not valid as a React child" errors
-// Instead of modifying React.createElement (which is read-only in ESM), we provide a utility function
 export function safeChild(child: any): any {
   if (child === null || child === undefined) {
     return null;
@@ -75,6 +75,11 @@ export function safeRender(children: React.ReactNode): React.ReactNode {
   }
   return safeChild(children);
 }
+
+// Create a wrapper component that safely renders its children
+export const SafeRender: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return React.createElement(React.Fragment, null, safeRender(children));
+};
 
 // Export a dummy function to ensure this file is not tree-shaken
 export function fixEmotion() {
