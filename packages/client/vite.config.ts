@@ -223,8 +223,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@mui/styled-engine': path.resolve(__dirname, '../../node_modules/@mui/styled-engine'),
-      '@emotion/use-insertion-effect-with-fallbacks': path.resolve(__dirname, '../../node_modules/@emotion/use-insertion-effect-with-fallbacks'),
+      '@mui/styled-engine': path.resolve(__dirname, './src/mui-patches/styled-engine.js'),
+      '@emotion/use-insertion-effect-with-fallbacks': path.resolve(__dirname, './src/mui-patches/emotion/use-insertion-effect-with-fallbacks.js'),
       '@emotion/react': path.resolve(__dirname, '../../node_modules/@emotion/react'),
       '@emotion/styled': path.resolve(__dirname, '../../node_modules/@emotion/styled'),
       '@emotion/cache': path.resolve(__dirname, '../../node_modules/@emotion/cache')

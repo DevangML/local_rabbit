@@ -6,13 +6,9 @@
 /* global window */
 /* global window, document, console */
 
-// Fix for Emotion initialization issues
-// This needs to be before any other imports
-if (typeof window !== 'undefined') {
-  // Fix for "Cannot access 'Wo' before initialization" error
-  // @ts-ignore
-  window.__EMOTION_INSERTION_EFFECT__ = true;
-}
+// Import the emotion fix before any other imports
+// This fixes Emotion initialization issues and MUI styled-engine compatibility
+import './emotion-fix';
 
 import React from "react";
 import { hydrateRoot, createRoot } from "react-dom/client";

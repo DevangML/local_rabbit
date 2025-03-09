@@ -1,3 +1,7 @@
+// Import the emotion fix before any other imports
+// This fixes Emotion initialization issues and MUI styled-engine compatibility
+import './emotion-fix';
+
 import React, { Suspense } from "react";
 import { StaticRouter } from "react-router-dom/server";
 import { Routes, Route } from "react-router-dom";
