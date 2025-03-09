@@ -5,6 +5,15 @@
 /* global document */
 /* global window */
 /* global window, document, console */
+
+// Fix for Emotion initialization issues
+// This needs to be before any other imports
+if (typeof window !== 'undefined') {
+  // Fix for "Cannot access 'Wo' before initialization" error
+  // @ts-ignore
+  window.__EMOTION_INSERTION_EFFECT__ = true;
+}
+
 import React from "react";
 import { hydrateRoot, createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";

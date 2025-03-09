@@ -55,25 +55,61 @@ const createResource = <T,>(promise: Promise<T>) => {
 };
 
 // Simulate a data fetching resource
-const fetchTodos = () => 
-  new Promise<Todo[]>(resolve => 
-    setTimeout(() => 
-      resolve([
-        { id: 1, text: 'Learn React 19 Concurrent Mode', completed: false },
-        { id: 2, text: 'Implement Suspense for data fetching', completed: false },
-        { id: 3, text: 'Use the useOptimistic hook', completed: false },
-      ]), 
-      1500
-    )
-  );
+// Use immediately invoked function expression to avoid variable hoisting issues
+const initialTodosResource = (() => {
+  const fetchTodos = () => 
+    new Promise<Todo[]>(resolve => 
+      setTimeout(() => 
+        resolve([
+          { id: 1, text: 'Learn React 19 Concurrent Mode', completed: false },
+          { id: 2, text: 'Implement Suspense for data fetching', completed: false },
+          { id: 3, text: 'Use the useOptimistic hook', completed: false },
+        ]), 
+        // Use a shorter timeout for SSR to prevent long server rendering times
+        typeof window !== 'undefined' ? 1500 : 100
+      )
+    );
+  
+  return createResource(fetchTodos());
+})();
 
-// Create a resource for initial todos
-const initialTodosResource = createResource(fetchTodos());
+// Empty data resource for SSR fallback
+const getEmptyTodosResource = () => {
+  return {
+    read: () => ([
+      { id: 1, text: 'Learn React 19 Concurrent Mode', completed: false },
+      { id: 2, text: 'Implement Suspense for data fetching', completed: false },
+      { id: 3, text: 'Use the useOptimistic hook', completed: false },
+    ])
+  };
+};
 
 // Lazy-loaded component that demonstrates Suspense
 const SuspensefulCounter = () => {
   const [count, setCount] = useState(0);
   
+  // Return a simpler version during SSR
+  if (typeof window === 'undefined') {
+    return (
+      <Card sx={{ mt: 3, p: 2 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Suspense-Ready Counter
+          </Typography>
+          <Typography variant="body1">Count: 0</Typography>
+          <Button 
+            variant="contained" 
+            disabled={true}
+            sx={{ mt: 2 }}
+          >
+            Increment
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Client-side rendering with full functionality
   return (
     <Card sx={{ mt: 3, p: 2 }}>
       <CardContent>
@@ -95,8 +131,14 @@ const SuspensefulCounter = () => {
 
 // Component that uses Suspense for data fetching
 const TodoList = () => {
+  // Check if we're in a browser environment to avoid SSR issues
+  const isBrowser = typeof window !== 'undefined';
+  
+  // Use an approach that's safe for SSR
+  const resource = isBrowser ? initialTodosResource : getEmptyTodosResource();
+  
   // Read data from our resource - this will suspend if data is not ready
-  const initialTodos = initialTodosResource.read();
+  const initialTodos = resource.read();
   
   // State for todos
   const [todos, setTodos] = useState<Todo[]>(initialTodos);
@@ -161,6 +203,54 @@ const TodoList = () => {
     });
   };
   
+  // Render a simpler version during SSR to avoid hydration issues
+  if (typeof window === 'undefined') {
+    return (
+      <>
+        <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Add New Todo
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <TextField 
+              label="New Todo" 
+              variant="outlined" 
+              size="small"
+              fullWidth
+              disabled={true}
+            />
+            <Button 
+              variant="contained" 
+              disabled={true}
+            >
+              Add
+            </Button>
+          </Box>
+        </Paper>
+        
+        <Paper elevation={3} sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Todo List (with Optimistic UI)
+          </Typography>
+          
+          <List>
+            {initialTodos.map((todo, index) => (
+              <React.Fragment key={todo.id}>
+                {index > 0 && <Divider />}
+                <ListItem>
+                  <ListItemText
+                    primary={todo.text}
+                  />
+                </ListItem>
+              </React.Fragment>
+            ))}
+          </List>
+        </Paper>
+      </>
+    );
+  }
+  
+  // Full client-side rendering
   return (
     <>
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
@@ -244,8 +334,50 @@ const TodoList = () => {
   );
 };
 
+// Create a simple error boundary for catching Suspense errors
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
+  constructor(props: {children: React.ReactNode}) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+          <Typography variant="h6" color="error">Something went wrong.</Typography>
+          <Button 
+            variant="contained" 
+            onClick={() => this.setState({ hasError: false })}
+            sx={{ mt: 2 }}
+          >
+            Try again
+          </Button>
+        </Paper>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 // Main component that demonstrates React 18 features
 export const React19Features: React.FC = () => {
+  // Track if component has mounted to handle hydration safely
+  const [hasMounted, setHasMounted] = useState(false);
+  
+  // After initial render, mark component as mounted
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+  
+  // Use simplified rendering during SSR to avoid Suspense and complex component issues
+  const isSSR = typeof window === 'undefined';
+  
   return (
     <Box sx={{ padding: 3, maxWidth: 800, margin: '0 auto' }}>
       <Typography variant="h4" gutterBottom>
@@ -255,23 +387,36 @@ export const React19Features: React.FC = () => {
         This component demonstrates features that are compatible with React 18.
       </Typography>
       
-      {/* Suspense for data fetching */}
-      <Suspense fallback={
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress />
-        </Box>
-      }>
-        <TodoList />
-      </Suspense>
-      
-      {/* Suspense for code splitting */}
-      <Suspense fallback={
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress />
-        </Box>
-      }>
-        <SuspensefulCounter />
-      </Suspense>
+      {/* For SSR - render components directly without Suspense to avoid streaming issues */}
+      {isSSR ? (
+        <>
+          <TodoList />
+          <SuspensefulCounter />
+        </>
+      ) : (
+        /* For client-side rendering - use Suspense and ErrorBoundary */
+        <>
+          <ErrorBoundary>
+            <Suspense fallback={
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                <CircularProgress />
+              </Box>
+            }>
+              {hasMounted && <TodoList />}
+            </Suspense>
+          </ErrorBoundary>
+          
+          <ErrorBoundary>
+            <Suspense fallback={
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                <CircularProgress />
+              </Box>
+            }>
+              {hasMounted && <SuspensefulCounter />}
+            </Suspense>
+          </ErrorBoundary>
+        </>
+      )}
       
       <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
         <Typography variant="h6" gutterBottom>
@@ -310,4 +455,7 @@ export const React19Features: React.FC = () => {
       </Paper>
     </Box>
   );
-}; 
+};
+
+// Export as default for compatibility with both direct imports and lazy loading
+export default React19Features; 

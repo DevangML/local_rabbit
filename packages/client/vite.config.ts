@@ -135,19 +135,22 @@ export default defineConfig({
         '@emotion/server/create-instance',
         '@emotion/cache',
         '@emotion/react',
-        '@emotion/styled'
+        '@emotion/styled',
+        '@emotion/use-insertion-effect-with-fallbacks',
+        '@mui/styled-engine',
+        '@mui/styled-engine/StyledEngineProvider'
       ]
     } : {
       output: {
         manualChunks: (id) => {
           if (id.includes('node_modules')) {
-            if (id.includes('@emotion')) return 'emotion-vendor';
             if (id.includes('react')) return 'react-vendor';
-            if (id.includes('@mui')) return 'mui-vendor';
+            if (id.includes('@mui') || id.includes('@emotion')) return 'mui-vendor';
             return 'vendor';
           }
         }
-      }
+      },
+      preserveEntrySignatures: 'strict'
     },
     chunkSizeWarningLimit: 800,
     assetsInlineLimit: 4096,
@@ -164,7 +167,6 @@ export default defineConfig({
       'react-dom',
       'react/jsx-runtime',
       'react/jsx-dev-runtime',
-      '@emotion',
       '@emotion/react',
       '@emotion/styled',
       '@emotion/cache',
@@ -186,7 +188,8 @@ export default defineConfig({
         '@emotion/react',
         '@emotion/styled',
         '@emotion/cache',
-        '@emotion/server'
+        '@emotion/server',
+        '@emotion/use-insertion-effect-with-fallbacks'
       ]
     }
   },
@@ -199,6 +202,10 @@ export default defineConfig({
       '@mui/icons-material',
       '@emotion/react',
       '@emotion/styled',
+      '@emotion/cache',
+      '@emotion/use-insertion-effect-with-fallbacks',
+      '@mui/styled-engine',
+      '@mui/styled-engine/StyledEngineProvider',
       'three',
       '@react-three/fiber',
       '@react-three/drei',
@@ -206,6 +213,25 @@ export default defineConfig({
       '@tanstack/react-query',
       'axios',
       'framer-motion'
-    ]
+    ],
+    esbuildOptions: {
+      define: {
+        global: 'globalThis'
+      }
+    }
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@mui/styled-engine': path.resolve(__dirname, '../../node_modules/@mui/styled-engine'),
+      '@emotion/use-insertion-effect-with-fallbacks': path.resolve(__dirname, '../../node_modules/@emotion/use-insertion-effect-with-fallbacks'),
+      '@emotion/react': path.resolve(__dirname, '../../node_modules/@emotion/react'),
+      '@emotion/styled': path.resolve(__dirname, '../../node_modules/@emotion/styled'),
+      '@emotion/cache': path.resolve(__dirname, '../../node_modules/@emotion/cache')
+    }
+  },
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+    '__EMOTION_INSERTION_EFFECT__': true
   }
 }); 

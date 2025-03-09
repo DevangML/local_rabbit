@@ -1,6 +1,18 @@
 import React, { Suspense } from "react";
 import { StaticRouter } from "react-router-dom/server";
 import { Routes, Route } from "react-router-dom";
+import createCache from '@emotion/cache';
+import { CacheProvider } from '@emotion/react';
+import createEmotionServer from '@emotion/server/create-instance';
+
+// Create a server-side emotion cache with a namespace
+const cache = createCache({ 
+  key: 'css',
+  prepend: true // This ensures styles are prepended to the <head> for SSR
+});
+
+// Create emotion server
+const { extractCriticalToChunks, constructStyleTagsFromChunks } = createEmotionServer(cache);
 
 // Simple loading fallback
 const LoadingFallback = () => (
@@ -64,24 +76,26 @@ const React19FeaturesPlaceholder = () => (
 // SSR-specific App component with Suspense
 function SSRApp() {
   return (
-    <div style={{ padding: '20px' }}>
-      <Routes>
-        <Route path="/" element={<Products />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/docs" element={<Documentation />} />
-        <Route path="/react19" element={<React19FeaturesPlaceholder />} />
-        <Route path="*" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <div>
-              <h1>404 - Not Found</h1>
-              <p>The requested page could not be found.</p>
-            </div>
-          </Suspense>
-        } />
-      </Routes>
-    </div>
+    <CacheProvider value={cache}>
+      <div style={{ padding: '20px' }}>
+        <Routes>
+          <Route path="/" element={<Products />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/docs" element={<Documentation />} />
+          <Route path="/react19" element={<React19FeaturesPlaceholder />} />
+          <Route path="*" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <div>
+                <h1>404 - Not Found</h1>
+                <p>The requested page could not be found.</p>
+              </div>
+            </Suspense>
+          } />
+        </Routes>
+      </div>
+    </CacheProvider>
   );
 }
 
@@ -94,18 +108,35 @@ export function renderPage(url: string) {
   );
 }
 
-// Create empty emotion server exports to maintain compatibility
-export const cache = null;
-export const extractCriticalToChunks = () => ({ html: '', styles: [] });
-export const constructStyleTagsFromChunks = () => '';
+// Export emotion cache and functions for server rendering
+export { cache, extractCriticalToChunks, constructStyleTagsFromChunks };
 
-// Export a function for streaming rendering
+// Export a function for streaming rendering that returns a React element
+// not a rendering function or promise
 export function renderToStream(url: string) {
-  return renderPage(url);
+  try {
+    return (
+      <StaticRouter location={url}>
+        <SSRApp />
+      </StaticRouter>
+    );
+  } catch (error) {
+    console.error('Error in renderToStream:', error);
+    // Return a simplified fallback component in case of error
+    return (
+      <StaticRouter location={url}>
+        <div>Rendering error occurred. Check server logs.</div>
+      </StaticRouter>
+    );
+  }
 }
 
-// Keep the default export for backward compatibility
+// Keep the default export for backward compatibility but ensure it returns a React element
 export default function render(props: any) {
   const { url } = props;
-  return renderPage(url);
+  return (
+    <StaticRouter location={url}>
+      <SSRApp />
+    </StaticRouter>
+  );
 } 

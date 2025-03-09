@@ -53,8 +53,9 @@ const Documentation = () => (
 // Lazy load components
 const Home = lazy(() => import("./pages/Home"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-// Lazy load React19Features to avoid direct import issues
-const React19Features = lazy(() => import("./components/React19Features").then(module => ({ default: module.React19Features })));
+
+// Import React19Features directly for better SSR compatibility
+import { React19Features } from "./components/React19Features";
 
 // Create routes configuration
 const routes = [

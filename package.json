@@ -7,11 +7,11 @@
     "packages/*"
   ],
   "scripts": {
-    "build:client": "cd packages/client && vite build",
-    "build:client:ssr": "cd packages/client && vite build --ssr src/entry-server.tsx --outDir dist/server",
+    "build:client": "cd packages/client && yarn run vite build",
+    "build:client:ssr": "cd packages/client && yarn run vite build --ssr src/entry-server.tsx --outDir dist/server",
     "build:server": "cd packages/server && yarn build",
     "build": "yarn build:client && yarn build:client:ssr && yarn build:server",
-    "dev:client": "cd packages/client && vite build --watch",
+    "dev:client": "cd packages/client && yarn run vite build --watch",
     "dev:server": "cd packages/server && tsx watch src/server.ts",
     "dev": "concurrently \"yarn dev:client\" \"yarn dev:server\"",
     "start": "cd packages/server && yarn start",
@@ -48,15 +48,19 @@
     "yarn": ">=1.22.0"
   },
   "dependencies": {
+    "@emotion/cache": "^11.14.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@google/generative-ai": "^0.24.0",
+    "@mui/styled-engine": "^6.4.6",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "morgan": "^1.10.0",
     "prismjs": "^1.29.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-markdown": "^10.0.1",
     "remark-gfm": "^4.0.1",
-    "simple-git": "^3.27.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "simple-git": "^3.27.0"
   }
 }

@@ -309,20 +309,55 @@ const ssrHandler: RequestHandler = async (req, res) => {
           bootstrapScripts: ['/assets/index.js'],
           onShellReady() {
             // The content above all Suspense boundaries is ready
+            res.statusCode = 200;
             res.write(htmlStart);
             pipe(res);
+            
+            // Ensure we write the end HTML after the pipe has started
+            // This helps prevent the variable reference error by ensuring
+            // all React components are properly hydrated
+            setTimeout(() => {
+              if (!res.writableEnded) {
+                res.write(htmlEnd);
+              }
+            }, 100);
           },
           onAllReady() {
             // If you don't want streaming, you can use this instead of onShellReady
             // All the content is now ready, including Suspense boundaries
-            res.write(htmlEnd);
+            // Don't write to the response here as it might cause "write after end" errors
+            // Instead, ensure htmlEnd is written only if the response is still writable
+            if (!res.writableEnded) {
+              res.write(htmlEnd);
+            }
           },
           onError(error) {
+            // Log the error
             console.error('Streaming SSR error:', error);
-            // If something errors before the shell is ready, fall back to client rendering
+            
+            // If headers haven't been sent yet, we can send an error response
             if (!res.headersSent) {
               res.statusCode = 500;
-              res.send('Internal Server Error');
+              res.setHeader('Content-Type', 'text/html');
+              res.end(`<!DOCTYPE html>
+                <html>
+                  <head>
+                    <title>Error</title>
+                  </head>
+                  <body>
+                    <h1>Something went wrong</h1>
+                    <p>The server encountered an error.</p>
+                    <script>
+                      window.__INITIAL_STATE__ = ${JSON.stringify(initialState)};
+                    </script>
+                    <script type="module" src="/assets/index.js"></script>
+                  </body>
+                </html>`);
+            } else {
+              // If headers were sent, just end the response
+              if (!res.writableEnded) {
+                res.end(htmlEnd);
+              }
             }
           }
         });
