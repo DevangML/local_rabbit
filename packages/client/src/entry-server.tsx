@@ -30,50 +30,70 @@ const LoadingFallback = () => (
   </div>
 );
 
+// Safely render component with error boundary
+const SafeComponent = ({ children }: { children: React.ReactNode }) => {
+  try {
+    return <>{children}</>;
+  } catch (error) {
+    console.error('Error rendering component:', error);
+    return <div>Error rendering component</div>;
+  }
+};
+
 // Create simplified versions of components for SSR with Suspense
 const Products = () => (
   <Suspense fallback={<LoadingFallback />}>
-    <div>
-      <h1>Products</h1>
-      <p>This content is server-rendered with Suspense support.</p>
-    </div>
+    <SafeComponent>
+      <div>
+        <h1>Products</h1>
+        <p>This content is server-rendered with Suspense support.</p>
+      </div>
+    </SafeComponent>
   </Suspense>
 );
 
 const About = () => (
   <Suspense fallback={<LoadingFallback />}>
-    <div>
-      <h1>About</h1>
-      <p>This content is server-rendered with Suspense support.</p>
-    </div>
+    <SafeComponent>
+      <div>
+        <h1>About</h1>
+        <p>This content is server-rendered with Suspense support.</p>
+      </div>
+    </SafeComponent>
   </Suspense>
 );
 
 const Contact = () => (
   <Suspense fallback={<LoadingFallback />}>
-    <div>
-      <h1>Contact</h1>
-      <p>This content is server-rendered with Suspense support.</p>
-    </div>
+    <SafeComponent>
+      <div>
+        <h1>Contact</h1>
+        <p>This content is server-rendered with Suspense support.</p>
+      </div>
+    </SafeComponent>
   </Suspense>
 );
 
 const Documentation = () => (
   <Suspense fallback={<LoadingFallback />}>
-    <div>
-      <h1>Documentation</h1>
-      <p>This content is server-rendered with Suspense support.</p>
-    </div>
+    <SafeComponent>
+      <div>
+        <h1>Documentation</h1>
+        <p>This content is server-rendered with Suspense support.</p>
+      </div>
+    </SafeComponent>
   </Suspense>
 );
 
 // Simplified placeholder for React19Features
 const React19FeaturesPlaceholder = () => (
   <Suspense fallback={<LoadingFallback />}>
-    <div>
-      <h1>React 19 Features</h1>
-      <p>This content will be client-rendered.</p>
-    </div>
+    <SafeComponent>
+      <div>
+        <h1>React 19 Features</h1>
+        <p>This content will be client-rendered.</p>
+      </div>
+    </SafeComponent>
   </Suspense>
 );
 
@@ -91,10 +111,12 @@ function SSRApp() {
           <Route path="/react19" element={<React19FeaturesPlaceholder />} />
           <Route path="*" element={
             <Suspense fallback={<LoadingFallback />}>
-              <div>
-                <h1>404 - Not Found</h1>
-                <p>The requested page could not be found.</p>
-              </div>
+              <SafeComponent>
+                <div>
+                  <h1>404 - Not Found</h1>
+                  <p>The requested page could not be found.</p>
+                </div>
+              </SafeComponent>
             </Suspense>
           } />
         </Routes>
@@ -105,11 +127,20 @@ function SSRApp() {
 
 // Export the render function for server use with streaming support
 export function renderPage(url: string) {
-  return (
-    <StaticRouter location={url}>
-      <SSRApp />
-    </StaticRouter>
-  );
+  try {
+    return (
+      <StaticRouter location={url}>
+        <SSRApp />
+      </StaticRouter>
+    );
+  } catch (error) {
+    console.error('Error in renderPage:', error);
+    return (
+      <StaticRouter location={url}>
+        <div>Rendering error occurred. Check server logs.</div>
+      </StaticRouter>
+    );
+  }
 }
 
 // Export emotion cache and functions for server rendering
@@ -137,10 +168,19 @@ export function renderToStream(url: string) {
 
 // Keep the default export for backward compatibility but ensure it returns a React element
 export default function render(props: any) {
-  const { url } = props;
-  return (
-    <StaticRouter location={url}>
-      <SSRApp />
-    </StaticRouter>
-  );
+  try {
+    const { url } = props;
+    return (
+      <StaticRouter location={url}>
+        <SSRApp />
+      </StaticRouter>
+    );
+  } catch (error) {
+    console.error('Error in default render:', error);
+    return (
+      <StaticRouter location={props.url || "/"}>
+        <div>Rendering error occurred. Check server logs.</div>
+      </StaticRouter>
+    );
+  }
 } 

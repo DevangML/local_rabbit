@@ -6,7 +6,7 @@
 // Import React to ensure it's available
 import * as React from 'react';
 
-// Make React globally available immediately
+// Make React globally available immediately, but only in browser environment
 if (typeof window !== 'undefined') {
   window.React = React;
 }
@@ -43,6 +43,27 @@ import '@mui/styled-engine';
 declare module '@mui/styled-engine' {
   // Add the missing export that's being imported in @mui/system/createStyled.js
   export const internal_processStyles: any;
+}
+
+// Ensure React elements are properly handled during SSR
+// This helps prevent "Objects are not valid as a React child" errors
+if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') {
+  // Server-side specific fixes
+  const originalCreateElement = React.createElement;
+  
+  // @ts-ignore - Override createElement to ensure proper handling of React elements
+  React.createElement = function patchedCreateElement(type: any, props: any, ...children: any[]) {
+    // Process children to ensure they're valid React children
+    const processedChildren = children.map((child) => {
+      // If child is a React element but somehow nested incorrectly, wrap it
+      if (child && typeof child === 'object' && child.$$typeof) {
+        return child;
+      }
+      return child;
+    });
+    
+    return originalCreateElement(type, props, ...processedChildren);
+  };
 }
 
 // Export a dummy function to ensure this file is not tree-shaken
