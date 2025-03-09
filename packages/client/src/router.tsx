@@ -6,7 +6,6 @@ import CircularProgress from "@mui/material/CircularProgress";
 import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme } from "@mui/material/styles";
 import App from './App';
-import { React19Features } from './components/React19Features';
 
 // Loading fallback component with better UX
 const LoadingFallback = () => (
@@ -54,6 +53,8 @@ const Documentation = () => (
 // Lazy load components
 const Home = lazy(() => import("./pages/Home"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+// Lazy load React19Features to avoid direct import issues
+const React19Features = lazy(() => import("./components/React19Features").then(module => ({ default: module.React19Features })));
 
 // Create routes configuration
 const routes = [
@@ -110,11 +111,7 @@ const routes = [
 ];
 
 // Create the router with React 19 features enabled
-const router = createBrowserRouter(routes, {
-  future: {
-    v7_relativeSplatPath: true
-  }
-});
+const router = createBrowserRouter(routes);
 
 // Export the router for use in main.tsx
 export default router; 

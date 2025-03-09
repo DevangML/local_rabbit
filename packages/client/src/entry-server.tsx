@@ -1,42 +1,17 @@
 import React, { Suspense } from "react";
 import { StaticRouter } from "react-router-dom/server";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
 import { Routes, Route } from "react-router-dom";
-import createCache from '@emotion/cache';
-import { CacheProvider } from '@emotion/react';
-import createEmotionServer from '@emotion/server/create-instance';
-import CircularProgress from "@mui/material/CircularProgress";
-import Box from "@mui/material/Box";
 
-// Create the Emotion cache for SSR
-const cache = createCache({
-  key: 'css',
-  prepend: true
-});
-
-// Create the Emotion server
-const { extractCriticalToChunks, constructStyleTagsFromChunks } = createEmotionServer(cache);
-
-// Create a minimal theme for SSR
-const ssrTheme = createTheme({
-  palette: {
-    mode: 'light',
-  },
-});
-
-// Loading fallback component with better UX
+// Simple loading fallback
 const LoadingFallback = () => (
-  <Box 
-    sx={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      height: '100px' 
-    }}
-  >
-    <CircularProgress />
-  </Box>
+  <div style={{ 
+    display: 'flex', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    height: '100px' 
+  }}>
+    <div>Loading...</div>
+  </div>
 );
 
 // Create simplified versions of components for SSR with Suspense
@@ -89,29 +64,24 @@ const React19FeaturesPlaceholder = () => (
 // SSR-specific App component with Suspense
 function SSRApp() {
   return (
-    <CacheProvider value={cache}>
-      <ThemeProvider theme={ssrTheme}>
-        <CssBaseline />
-        <div style={{ padding: '20px' }}>
-          <Routes>
-            <Route path="/" element={<Products />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/docs" element={<Documentation />} />
-            <Route path="/react19" element={<React19FeaturesPlaceholder />} />
-            <Route path="*" element={
-              <Suspense fallback={<LoadingFallback />}>
-                <div>
-                  <h1>404 - Not Found</h1>
-                  <p>The requested page could not be found.</p>
-                </div>
-              </Suspense>
-            } />
-          </Routes>
-        </div>
-      </ThemeProvider>
-    </CacheProvider>
+    <div style={{ padding: '20px' }}>
+      <Routes>
+        <Route path="/" element={<Products />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/docs" element={<Documentation />} />
+        <Route path="/react19" element={<React19FeaturesPlaceholder />} />
+        <Route path="*" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <div>
+              <h1>404 - Not Found</h1>
+              <p>The requested page could not be found.</p>
+            </div>
+          </Suspense>
+        } />
+      </Routes>
+    </div>
   );
 }
 
@@ -124,8 +94,10 @@ export function renderPage(url: string) {
   );
 }
 
-// Export the emotion cache and server utilities
-export { cache, extractCriticalToChunks, constructStyleTagsFromChunks };
+// Create empty emotion server exports to maintain compatibility
+export const cache = null;
+export const extractCriticalToChunks = () => ({ html: '', styles: [] });
+export const constructStyleTagsFromChunks = () => '';
 
 // Export a function for streaming rendering
 export function renderToStream(url: string) {

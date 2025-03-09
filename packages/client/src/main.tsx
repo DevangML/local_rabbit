@@ -42,7 +42,7 @@ const updateSW = registerSW({
 
 // Add error event listener for module loading issues
 window.addEventListener("error", (event) => {
-        if (event.message.includes("Failed to load module script")) {
+        if (event.message && event.message.includes("Failed to load module script")) {
         console.warn("Module loading error detected, attempting reload...");
         window.location.reload();
         }
@@ -64,7 +64,7 @@ if (!root) {
 }
 
 // Create the app with React 19 features
-const App: React.FC = () => (
+const App = () => (
   <React.StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -75,8 +75,15 @@ const App: React.FC = () => (
 
 // Check if we're hydrating from server-rendered content
 if (root.innerHTML.trim().length > 0 && window.__INITIAL_STATE__) {
+        try {
         // Use hydrateRoot for SSR hydration
         hydrateRoot(root, <App />);
+        console.log("Hydrated successfully from server-rendered content");
+        } catch (error) {
+        console.error("Hydration failed, falling back to client rendering:", error);
+        const appRoot = createRoot(root);
+        appRoot.render(<App />);
+        }
 } else {
         // Use createRoot for client-side rendering with Concurrent Mode
         const appRoot = createRoot(root);
