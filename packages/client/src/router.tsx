@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import React, { Suspense, lazy } from 'react';
 import { ThemeProvider } from "@mui/material/styles";
 import Box from "@mui/material/Box";
@@ -6,10 +6,6 @@ import CircularProgress from "@mui/material/CircularProgress";
 import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme } from "@mui/material/styles";
 import App from './App';
-
-// Import components directly first to check if they need to be converted to default exports
-import { FeatureDemo } from "./components/FeatureDemo";
-import { React19Features } from "./components/React19Features";
 
 // Loading fallback component with better UX
 const LoadingFallback = () => (
@@ -24,12 +20,6 @@ const LoadingFallback = () => (
     <CircularProgress />
   </Box>
 );
-
-// Lazy load all components for code splitting
-const FeatureDemo = lazy(() => import("./components/FeatureDemo"));
-const React19Features = lazy(() => import("./components/React19Features").then(module => ({ default: module.React19Features })));
-const Home = lazy(() => import("./pages/Home"));
-const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Create placeholder components for pages that might not exist yet
 const Products = () => (
@@ -60,7 +50,9 @@ const Documentation = () => (
   </div>
 );
 
-const theme = createTheme();
+// Lazy load components
+const Home = lazy(() => import("./pages/Home"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Create routes configuration
 const routes = [
@@ -70,11 +62,7 @@ const routes = [
     children: [
       {
         index: true,
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <FeatureDemo />
-          </Suspense>
-        )
+        element: <div>Welcome to the home page</div>
       },
       {
         path: 'home',
@@ -86,43 +74,23 @@ const routes = [
       },
       {
         path: 'react19',
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <React19Features />
-          </Suspense>
-        )
+        element: <div>React 19 Features</div>
       },
       {
         path: 'products',
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <Products />
-          </Suspense>
-        )
+        element: <Products />
       },
       {
         path: 'about',
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <About />
-          </Suspense>
-        )
+        element: <About />
       },
       {
         path: 'contact',
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <Contact />
-          </Suspense>
-        )
+        element: <Contact />
       },
       {
         path: 'docs',
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <Documentation />
-          </Suspense>
-        )
+        element: <Documentation />
       },
       {
         path: '*',
@@ -143,14 +111,5 @@ const router = createBrowserRouter(routes, {
   }
 });
 
-// Main Router component
-function Router() {
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <RouterProvider router={router} />
-    </ThemeProvider>
-  );
-}
-
-export default Router; 
+// Export the router for use in main.tsx
+export default router; 

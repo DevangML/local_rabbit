@@ -7,8 +7,15 @@
 /* global window, document, console */
 import React from "react";
 import { hydrateRoot, createRoot } from "react-dom/client";
-import Router from "./router";
+import { RouterProvider } from "react-router-dom";
+import router from "./router";
 import { registerSW } from "virtual:pwa-register";
+import { ThemeProvider } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
+import { createTheme } from "@mui/material/styles";
+
+// Create a theme
+const theme = createTheme();
 
 // Register service worker with improved error handling and reload behavior
 const updateSW = registerSW({
@@ -56,23 +63,24 @@ if (!root) {
         throw new Error("Root element not found");
 }
 
+// Create the app with React 19 features
+const App = () => (
+  <React.StrictMode>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <RouterProvider router={router} />
+    </ThemeProvider>
+  </React.StrictMode>
+);
+
 // Check if we're hydrating from server-rendered content
 if (root.innerHTML.trim().length > 0 && window.__INITIAL_STATE__) {
         // Use hydrateRoot for SSR hydration
-        hydrateRoot(
-                root,
-                <React.StrictMode>
-                <Router />
-                </React.StrictMode>
-        );
+        hydrateRoot(root, <App />);
 } else {
         // Use createRoot for client-side rendering with Concurrent Mode
         const appRoot = createRoot(root);
-        appRoot.render(
-                <React.StrictMode>
-                <Router />
-                </React.StrictMode>
-        );
+        appRoot.render(<App />);
 }
 
 // Remove the server-injected state after hydration

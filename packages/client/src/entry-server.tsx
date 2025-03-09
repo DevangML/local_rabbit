@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { StaticRouter } from "react-router-dom/server";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -6,6 +6,8 @@ import { Routes, Route } from "react-router-dom";
 import createCache from '@emotion/cache';
 import { CacheProvider } from '@emotion/react';
 import createEmotionServer from '@emotion/server/create-instance';
+import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
 
 // Create the Emotion cache for SSR
 const cache = createCache({
@@ -23,36 +25,58 @@ const ssrTheme = createTheme({
   },
 });
 
-// Create simplified versions of components for SSR
+// Loading fallback component with better UX
+const LoadingFallback = () => (
+  <Box 
+    sx={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100px' 
+    }}
+  >
+    <CircularProgress />
+  </Box>
+);
+
+// Create simplified versions of components for SSR with Suspense
 const Products = () => (
-  <div>
-    <h1>Products</h1>
-    <p>This content is server-rendered.</p>
-  </div>
+  <Suspense fallback={<LoadingFallback />}>
+    <div>
+      <h1>Products</h1>
+      <p>This content is server-rendered with Suspense support.</p>
+    </div>
+  </Suspense>
 );
 
 const About = () => (
-  <div>
-    <h1>About</h1>
-    <p>This content is server-rendered.</p>
-  </div>
+  <Suspense fallback={<LoadingFallback />}>
+    <div>
+      <h1>About</h1>
+      <p>This content is server-rendered with Suspense support.</p>
+    </div>
+  </Suspense>
 );
 
 const Contact = () => (
-  <div>
-    <h1>Contact</h1>
-    <p>This content is server-rendered.</p>
-  </div>
+  <Suspense fallback={<LoadingFallback />}>
+    <div>
+      <h1>Contact</h1>
+      <p>This content is server-rendered with Suspense support.</p>
+    </div>
+  </Suspense>
 );
 
 const Documentation = () => (
-  <div>
-    <h1>Documentation</h1>
-    <p>This content is server-rendered.</p>
-  </div>
+  <Suspense fallback={<LoadingFallback />}>
+    <div>
+      <h1>Documentation</h1>
+      <p>This content is server-rendered with Suspense support.</p>
+    </div>
+  </Suspense>
 );
 
-// SSR-specific App component
+// SSR-specific App component with Suspense
 function SSRApp() {
   return (
     <React.StrictMode>
@@ -67,10 +91,12 @@ function SSRApp() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/docs" element={<Documentation />} />
               <Route path="*" element={
-                <div>
-                  <h1>404 - Not Found</h1>
-                  <p>The requested page could not be found.</p>
-                </div>
+                <Suspense fallback={<LoadingFallback />}>
+                  <div>
+                    <h1>404 - Not Found</h1>
+                    <p>The requested page could not be found.</p>
+                  </div>
+                </Suspense>
               } />
             </Routes>
           </div>
