@@ -13,6 +13,55 @@ import { renderToString, renderToPipeableStream } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server.js';
 import { cpus } from 'os';
 
+// Setup browser globals for SSR
+class Element {
+  attributes: Record<string, any> = {};
+  style: Record<string, any> = {};
+  childNodes: any[] = [];
+  
+  setAttribute(name: string, value: any) {
+    this.attributes[name] = value;
+  }
+  
+  getAttribute(name: string) {
+    return this.attributes[name];
+  }
+  
+  appendChild(child: any) {
+    this.childNodes.push(child);
+    return child;
+  }
+  
+  cloneNode() {
+    return new Element();
+  }
+}
+
+// Only set globals if they don't exist
+if (typeof global.document === 'undefined') {
+  (global as any).document = {
+    head: new Element(),
+    body: new Element(),
+    createElement: (tag: string) => new Element(),
+    createTextNode: (text: string) => ({ text }),
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    getElementById: () => null,
+    documentElement: new Element()
+  };
+
+  (global as any).window = {
+    document: (global as any).document,
+    location: { pathname: '/' },
+    navigator: { userAgent: 'node' },
+    addEventListener: () => {}
+  };
+
+  (global as any).navigator = {
+    userAgent: 'node'
+  };
+}
+
 // Define types for the Emotion server functions
 type EmotionCriticalToChunks = (html: React.ReactElement) => Array<{ key: string; ids: Array<string>; css: string }>;
 type EmotionConstructStyleTags = (chunks: Array<{ key: string; ids: Array<string>; css: string }>) => string;
@@ -48,57 +97,42 @@ if (!isDev) {
       if (fs.existsSync(ssrEntryPath)) {
         console.log('Found SSR entry at:', ssrEntryPath);
         // @ts-ignore - This file will be generated at build time
-        const entryServer = await import(ssrEntryPath) as EntryServer;
+        const entryServer = await import(ssrEntryPath);
         renderPage = entryServer.renderPage;
-        renderToStream = entryServer.renderToStream || entryServer.renderPage;
+        renderToStream = entryServer.renderToStream || renderPage;
         extractCriticalToChunks = entryServer.extractCriticalToChunks;
         constructStyleTagsFromChunks = entryServer.constructStyleTagsFromChunks;
-        console.log('Successfully loaded SSR from client workspace build');
       } else {
-        console.warn('SSR entry file not found at:', ssrEntryPath);
+        console.error('SSR entry file not found at:', ssrEntryPath);
         throw new Error('SSR entry file not found');
       }
-    } catch (primaryError) {
-      console.warn('Primary SSR load failed:', primaryError);
+    } catch (error) {
+      console.error('Primary SSR load failed:', error);
       
-      // If that fails, try an alternative path
-      const altPath = join(__dirname, '../../../dist/server/entry-server.js');
+      // Try the alternative path (from monorepo root build)
+      const rootDistPath = join(__dirname, '../../../dist');
+      const altSsrEntryPath = join(rootDistPath, 'server/entry-server.js');
+      
       try {
-        if (fs.existsSync(altPath)) {
-          console.log('Found SSR entry at alternate path:', altPath);
-          // @ts-ignore - Try alternative path
-          const entryServer = await import(altPath) as EntryServer;
+        if (fs.existsSync(altSsrEntryPath)) {
+          console.log('Found alternative SSR entry at:', altSsrEntryPath);
+          // @ts-ignore - This file will be generated at build time
+          const entryServer = await import(altSsrEntryPath);
           renderPage = entryServer.renderPage;
-          renderToStream = entryServer.renderToStream || entryServer.renderPage;
+          renderToStream = entryServer.renderToStream || renderPage;
           extractCriticalToChunks = entryServer.extractCriticalToChunks;
           constructStyleTagsFromChunks = entryServer.constructStyleTagsFromChunks;
-          console.log('Successfully loaded SSR from alternative path');
         } else {
-          console.warn('Alternative SSR entry file not found at:', altPath);
-          throw new Error('Alternative SSR entry file not found');
+          console.error('Alternative SSR entry file not found at:', altSsrEntryPath);
+          throw new Error('Alternative SSR entry');
         }
-      } catch (secondaryError) {
-        console.warn('Secondary SSR load failed:', secondaryError);
-        
-        // If still failing, try one more path
-        try {
-          const urlPath = new URL('../client/dist/server/entry-server.js', import.meta.url).href;
-          // @ts-ignore - Try one more path
-          const entryServer = await import(urlPath) as EntryServer;
-          renderPage = entryServer.renderPage;
-          renderToStream = entryServer.renderToStream || entryServer.renderPage;
-          extractCriticalToChunks = entryServer.extractCriticalToChunks;
-          constructStyleTagsFromChunks = entryServer.constructStyleTagsFromChunks;
-          console.log('Successfully loaded SSR from resolved URL path');
-        } catch (tertiaryError) {
-          console.warn('Could not import entry-server.js. SSR will be disabled.', primaryError);
-          console.warn('Alternative paths also failed:', secondaryError);
-          console.warn('URL path also failed:', tertiaryError);
-        }
+      } catch (secondError) {
+        console.error('Secondary SSR load failed:', secondError);
+        console.warn('Running without SSR support');
       }
     }
   } catch (error) {
-    console.warn('All attempts to load entry-server.js failed. SSR will be disabled.', error);
+    console.error('Failed to load SSR module:', error);
   }
 }
 

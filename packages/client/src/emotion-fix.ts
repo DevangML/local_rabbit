@@ -6,8 +6,12 @@
 // Import React to ensure it's available
 import * as React from 'react';
 
+// Detect server-side rendering environment
+export const isServer = typeof window === 'undefined';
+export const isBrowser = !isServer;
+
 // Make React globally available immediately, but only in browser environment
-if (typeof window !== 'undefined') {
+if (isBrowser) {
   window.React = React;
 }
 
@@ -21,7 +25,7 @@ declare global {
 
 // Polyfill React's useInsertionEffect for Emotion
 // This needs to be done before any Emotion imports
-if (typeof window !== 'undefined') {
+if (isBrowser) {
   // Fix for "Cannot access 'Wo' before initialization" error
   // This ensures that the useInsertionEffect is properly initialized
   window.__EMOTION_INSERTION_EFFECT__ = true;
@@ -31,8 +35,8 @@ if (typeof window !== 'undefined') {
 // This avoids modifying the React import directly
 export const useInsertionEffectPolyfill = 
   React.useInsertionEffect || 
-  React.useLayoutEffect || 
-  React.useEffect || 
+  // On the server, useLayoutEffect causes a warning, so we use useEffect instead
+  (isServer ? React.useEffect : React.useLayoutEffect) || 
   ((fn: () => void) => fn());
 
 // Import the module to reference it before augmentation

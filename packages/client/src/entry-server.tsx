@@ -1,7 +1,7 @@
 // Import the emotion fix before any other imports
 // This fixes Emotion initialization issues and MUI styled-engine compatibility
 import './emotion-fix';
-import { safeRender } from './emotion-fix';
+import { SafeRender, isServer } from './emotion-fix';
 
 import React, { Suspense } from "react";
 import { StaticRouter } from "react-router-dom/server";
@@ -11,9 +11,12 @@ import { CacheProvider } from '@emotion/react';
 import createEmotionServer from '@emotion/server/create-instance';
 
 // Create a server-side emotion cache with a namespace
+// For SSR, we need to handle the absence of document
 const cache = createCache({ 
   key: 'css',
-  prepend: true // This ensures styles are prepended to the <head> for SSR
+  prepend: true, // This ensures styles are prepended to the <head> for SSR
+  // Don't specify insertionPoint in SSR environment to avoid document references
+  ...(!isServer ? { insertionPoint: document.head } : {})
 });
 
 // Create emotion server
@@ -54,7 +57,7 @@ class ErrorBoundary extends React.Component<
       return <div>Something went wrong. Please try again later.</div>;
     }
 
-    return this.props.children;
+    return <SafeRender>{this.props.children}</SafeRender>;
   }
 }
 
