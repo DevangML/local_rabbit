@@ -6,13 +6,30 @@ import CircularProgress from "@mui/material/CircularProgress";
 import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme } from "@mui/material/styles";
 import App from './App';
+
+// Import components directly first to check if they need to be converted to default exports
 import { FeatureDemo } from "./components/FeatureDemo";
 import { React19Features } from "./components/React19Features";
 
-const theme = createTheme();
+// Loading fallback component with better UX
+const LoadingFallback = () => (
+  <Box 
+    sx={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh' 
+    }}
+  >
+    <CircularProgress />
+  </Box>
+);
 
-// Lazy load components
+// Lazy load all components for code splitting
+const FeatureDemo = lazy(() => import("./components/FeatureDemo"));
+const React19Features = lazy(() => import("./components/React19Features").then(module => ({ default: module.React19Features })));
 const Home = lazy(() => import("./pages/Home"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Create placeholder components for pages that might not exist yet
 const Products = () => (
@@ -43,61 +60,97 @@ const Documentation = () => (
   </div>
 );
 
-// Create a router with future flags enabled
-export const router = createBrowserRouter([
+const theme = createTheme();
+
+// Create routes configuration
+const routes = [
   {
     path: '/',
     element: <App />,
     children: [
       {
         index: true,
-        element: <FeatureDemo />
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <FeatureDemo />
+          </Suspense>
+        )
       },
       {
         path: 'home',
         element: (
-          <Suspense fallback={<CircularProgress />}>
+          <Suspense fallback={<LoadingFallback />}>
             <Home />
           </Suspense>
         )
       },
       {
         path: 'react19',
-        element: <React19Features />
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <React19Features />
+          </Suspense>
+        )
       },
       {
         path: 'products',
-        element: <Products />
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <Products />
+          </Suspense>
+        )
       },
       {
         path: 'about',
-        element: <About />
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <About />
+          </Suspense>
+        )
       },
       {
         path: 'contact',
-        element: <Contact />
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <Contact />
+          </Suspense>
+        )
       },
       {
         path: 'docs',
-        element: <Documentation />
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <Documentation />
+          </Suspense>
+        )
       },
       {
         path: '*',
         element: (
-          <div>
-            <h1>404 - Not Found</h1>
-            <p>The requested page could not be found.</p>
-          </div>
+          <Suspense fallback={<LoadingFallback />}>
+            <NotFound />
+          </Suspense>
         )
       }
     ]
   }
-], {
+];
+
+// Create the router with React 19 features enabled
+const router = createBrowserRouter(routes, {
   future: {
     v7_relativeSplatPath: true
   }
 });
 
-export default function Router() {
-  return <RouterProvider router={router} />;
-} 
+// Main Router component
+function Router() {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <RouterProvider router={router} />
+    </ThemeProvider>
+  );
+}
+
+export default Router; 

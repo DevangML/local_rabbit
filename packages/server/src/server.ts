@@ -11,6 +11,7 @@ import dotenv from 'dotenv';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server.js';
+import { cpus } from 'os';
 
 // Define types for the Emotion server functions
 type EmotionCriticalToChunks = (html: React.ReactElement) => Array<{ key: string; ids: Array<string>; css: string }>;
@@ -110,27 +111,70 @@ express.static.mime.define({
   'text/javascript': ['js', 'mjs', 'jsx', 'ts', 'tsx']
 });
 
-// Middleware
-app.use(cors());
-app.use(helmet({
-  contentSecurityPolicy: false
-}));
-app.use(compression() as unknown as RequestHandler);
-app.use(morgan('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// PERFORMANCE BEST PRACTICES
 
-// Serve static files
+// 1. Use gzip compression
+app.use(compression({
+  // Compress all responses over 1KB
+  threshold: 1024,
+  // Don't compress responses with this request header
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  }
+}) as unknown as RequestHandler);
+
+// 2. Use helmet for security headers
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  hsts: {
+    maxAge: 31536000, // 1 year in seconds
+    includeSubDomains: true,
+    preload: true
+  }
+}));
+
+// 3. Configure CORS properly
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.ALLOWED_ORIGINS?.split(',') || false
+    : '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400 // 24 hours
+}));
+
+// 4. Use efficient logging
+app.use(morgan(isDev ? 'dev' : 'combined', {
+  skip: (req, res) => res.statusCode < 400 && process.env.NODE_ENV === 'production'
+}));
+
+// 5. Proper JSON handling with limits
+app.use(express.json({ 
+  limit: '1mb' 
+}));
+app.use(express.urlencoded({ 
+  extended: true,
+  limit: '1mb'
+}));
+
+// 6. Set proper cache headers for static assets
 const clientDistPath = join(__dirname, '../../client/dist');
 if (fs.existsSync(clientDistPath)) {
-  // Serve service worker at root
+  // Serve service worker at root with no caching
   app.get('/sw.js', (req, res) => {
     res.setHeader('Service-Worker-Allowed', '/');
     res.setHeader('Cache-Control', 'no-cache');
     res.sendFile(join(clientDistPath, 'sw.js'));
   });
 
-  // Serve manifest.json
+  // Serve manifest.json with minimal caching
   app.get('/manifest.json', (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.sendFile(join(clientDistPath, 'manifest.json'));
@@ -148,7 +192,7 @@ if (fs.existsSync(clientDistPath)) {
   }) as unknown as RequestHandler);
 }
 
-// Add error handling for static files
+// 7. Add error handling for static files
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   if (err) {
     console.error('Static file error:', err);
@@ -158,7 +202,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   }
 });
 
-// Handle SSR
+// 8. Implement streaming SSR with React 19
 const ssrHandler: RequestHandler = async (req, res) => {
   try {
     // Initial state that will be hydrated on the client
@@ -249,25 +293,73 @@ const ssrHandler: RequestHandler = async (req, res) => {
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta name="description" content="Local Rabbit Application" />
+          <meta name="description" content="Local Rabbit Application (CSR Fallback)" />
           <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
           <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
           <link rel="manifest" href="/manifest.json" />
-          <title>Local Rabbit</title>
+          <title>Local Rabbit (CSR Fallback)</title>
         </head>
         <body>
           <div id="root"></div>
+          <script>
+            window.__INITIAL_STATE__ = ${JSON.stringify({ url: req.url, env: process.env.NODE_ENV })};
+            console.error("SSR failed, falling back to client-side rendering");
+          </script>
           <script type="module" src="${isDev ? '/src/main.tsx' : '/assets/main.js'}"></script>
         </body>
       </html>
     `;
+    
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Cache-Control', 'no-store, must-revalidate');
     res.status(500).send(template);
   }
 };
 
-// Handle all routes
+// 9. Add a health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', uptime: process.uptime() });
+});
+
+// 10. Add a route for all paths to use SSR
 app.get('*', ssrHandler);
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on http://localhost:${PORT}`);
-}); 
+// 11. Start the server with proper error handling
+const server = app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
+
+// 12. Implement graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Attempt to close the server gracefully
+  server.close(() => {
+    console.log('HTTP server closed due to uncaught exception');
+    process.exit(1);
+  });
+  
+  // If server doesn't close in 5 seconds, force exit
+  setTimeout(() => {
+    console.error('Forcing exit after uncaught exception');
+    process.exit(1);
+  }, 5000);
+});
+
+export default app; 

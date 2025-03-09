@@ -6,7 +6,7 @@
 /* global window */
 /* global window, document, console */
 import React from "react";
-import { hydrateRoot } from "react-dom/client";
+import { hydrateRoot, createRoot } from "react-dom/client";
 import Router from "./router";
 import { registerSW } from "virtual:pwa-register";
 
@@ -56,12 +56,24 @@ if (!root) {
         throw new Error("Root element not found");
 }
 
-hydrateRoot(
-        root,
-        <React.StrictMode>
-        <Router />
-        </React.StrictMode>
-);
+// Check if we're hydrating from server-rendered content
+if (root.innerHTML.trim().length > 0 && window.__INITIAL_STATE__) {
+        // Use hydrateRoot for SSR hydration
+        hydrateRoot(
+                root,
+                <React.StrictMode>
+                <Router />
+                </React.StrictMode>
+        );
+} else {
+        // Use createRoot for client-side rendering with Concurrent Mode
+        const appRoot = createRoot(root);
+        appRoot.render(
+                <React.StrictMode>
+                <Router />
+                </React.StrictMode>
+        );
+}
 
 // Remove the server-injected state after hydration
 if (window.__INITIAL_STATE__) {

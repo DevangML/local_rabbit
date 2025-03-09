@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useTransition } from 'react';
-import { Box, Typography, Button, TextField, Paper, List, ListItem, ListItemText, Divider, CircularProgress } from '@mui/material';
+import React, { useState, useEffect, useTransition, Suspense } from 'react';
+import { Box, Typography, Button, TextField, Paper, List, ListItem, ListItemText, Divider, CircularProgress, Card, CardContent } from '@mui/material';
 
 interface Todo {
   id: number;
@@ -7,8 +7,8 @@ interface Todo {
   completed: boolean;
 }
 
-// Polyfill for useOptimistic if not available
-const useOptimisticPolyfill = <T,U>(state: T, updateFn: (state: T, update: U) => T) => {
+// Polyfill for useOptimistic if not available in React 19
+const useOptimistic = <T,U>(state: T, updateFn: (state: T, update: U) => T) => {
   const [optimisticState, setOptimisticState] = useState<T>(state);
   
   // Update optimistic state when actual state changes
@@ -24,19 +24,88 @@ const useOptimisticPolyfill = <T,U>(state: T, updateFn: (state: T, update: U) =>
   return [optimisticState, addOptimisticUpdate] as const;
 };
 
-export const React19Features: React.FC = () => {
-  // Initial todos
-  const [todos, setTodos] = useState<Todo[]>([
-    { id: 1, text: 'Learn React 19', completed: false },
-    { id: 2, text: 'Try useOptimistic', completed: false },
-    { id: 3, text: 'Implement Actions', completed: false },
-  ]);
+// Simulate a data fetching resource
+const createResource = <T,>(promise: Promise<T>) => {
+  let status: 'pending' | 'success' | 'error' = 'pending';
+  let result: T;
+  let error: Error;
+  
+  const suspender = promise.then(
+    (data) => {
+      status = 'success';
+      result = data;
+    },
+    (e) => {
+      status = 'error';
+      error = e;
+    }
+  );
+  
+  return {
+    read() {
+      if (status === 'pending') {
+        throw suspender;
+      } else if (status === 'error') {
+        throw error;
+      } else {
+        return result;
+      }
+    }
+  };
+};
+
+// Simulate fetching data
+const fetchTodos = () => 
+  new Promise<Todo[]>(resolve => 
+    setTimeout(() => 
+      resolve([
+        { id: 1, text: 'Learn React 19 Concurrent Mode', completed: false },
+        { id: 2, text: 'Implement Suspense for data fetching', completed: false },
+        { id: 3, text: 'Use the useOptimistic hook', completed: false },
+      ]), 
+      1500
+    )
+  );
+
+// Create a resource for initial todos
+const initialTodosResource = createResource(fetchTodos());
+
+// Lazy-loaded component that demonstrates Suspense
+const SuspensefulCounter = () => {
+  const [count, setCount] = useState(0);
+  
+  return (
+    <Card sx={{ mt: 3, p: 2 }}>
+      <CardContent>
+        <Typography variant="h6" gutterBottom>
+          Suspense-Ready Counter
+        </Typography>
+        <Typography variant="body1">Count: {count}</Typography>
+        <Button 
+          variant="contained" 
+          onClick={() => setCount(c => c + 1)}
+          sx={{ mt: 2 }}
+        >
+          Increment
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Component that uses Suspense for data fetching
+const TodoList = () => {
+  // Read data from our resource - this will suspend if data is not ready
+  const initialTodos = initialTodosResource.read();
+  
+  // State for todos
+  const [todos, setTodos] = useState<Todo[]>(initialTodos);
   
   // New todo input
   const [newTodo, setNewTodo] = useState('');
   
-  // Use our polyfill for useOptimistic
-  const [optimisticTodos, addOptimisticTodo] = useOptimisticPolyfill(
+  // Use our useOptimistic hook (either native or polyfill)
+  const [optimisticTodos, addOptimisticTodo] = useOptimistic(
     todos,
     (state, newTodo: Todo) => [...state, newTodo]
   );
@@ -93,15 +162,7 @@ export const React19Features: React.FC = () => {
   };
   
   return (
-    <Box sx={{ maxWidth: 600, mx: 'auto', p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        React 19 Features Demo
-      </Typography>
-      
-      <Typography variant="body1" paragraph>
-        This component demonstrates React 19 features like useOptimistic (polyfilled) and improved useTransition.
-      </Typography>
-      
+    <>
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Typography variant="h6" gutterBottom>
           Add New Todo
@@ -179,6 +240,39 @@ export const React19Features: React.FC = () => {
           )}
         </List>
       </Paper>
+    </>
+  );
+};
+
+// Main component that demonstrates React 19 features
+export const React19Features: React.FC = () => {
+  return (
+    <Box sx={{ maxWidth: 600, mx: 'auto', p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        React 19 Features Demo
+      </Typography>
+      
+      <Typography variant="body1" paragraph>
+        This component demonstrates React 19 features including Concurrent Mode, Suspense for data fetching, and useOptimistic.
+      </Typography>
+      
+      {/* Suspense for data fetching */}
+      <Suspense fallback={
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress />
+        </Box>
+      }>
+        <TodoList />
+      </Suspense>
+      
+      {/* Suspense for code splitting */}
+      <Suspense fallback={
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress />
+        </Box>
+      }>
+        <SuspensefulCounter />
+      </Suspense>
       
       <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
         <Typography variant="h6" gutterBottom>
@@ -188,22 +282,29 @@ export const React19Features: React.FC = () => {
         <List>
           <ListItem>
             <ListItemText 
-              primary="useOptimistic (polyfilled)" 
+              primary="useOptimistic" 
               secondary="For optimistic UI updates before server response"
             />
           </ListItem>
           <Divider />
           <ListItem>
             <ListItemText 
-              primary="Improved useTransition" 
-              secondary="For smoother UI during state updates"
+              primary="Suspense for Data Fetching" 
+              secondary="Declarative loading states while data loads"
             />
           </ListItem>
           <Divider />
           <ListItem>
             <ListItemText 
-              primary="React Actions (concept)" 
-              secondary="Simulated async operations with optimistic updates"
+              primary="Concurrent Mode" 
+              secondary="Non-blocking rendering with useTransition"
+            />
+          </ListItem>
+          <Divider />
+          <ListItem>
+            <ListItemText 
+              primary="Streaming Suspense" 
+              secondary="Progressive loading of UI components"
             />
           </ListItem>
         </List>
