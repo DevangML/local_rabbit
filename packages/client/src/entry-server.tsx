@@ -1,6 +1,7 @@
 // Import the emotion fix before any other imports
 // This fixes Emotion initialization issues and MUI styled-engine compatibility
 import './emotion-fix';
+import { safeRender } from './emotion-fix';
 
 import React, { Suspense } from "react";
 import { StaticRouter } from "react-router-dom/server";
@@ -30,70 +31,87 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Safely render component with error boundary
-const SafeComponent = ({ children }: { children: React.ReactNode }) => {
-  try {
-    return <>{children}</>;
-  } catch (error) {
-    console.error('Error rendering component:', error);
-    return <div>Error rendering component</div>;
+// Error boundary component for SSR
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
   }
-};
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error('Error in component:', error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <div>Something went wrong. Please try again later.</div>;
+    }
+
+    return this.props.children;
+  }
+}
 
 // Create simplified versions of components for SSR with Suspense
 const Products = () => (
   <Suspense fallback={<LoadingFallback />}>
-    <SafeComponent>
+    <ErrorBoundary>
       <div>
         <h1>Products</h1>
         <p>This content is server-rendered with Suspense support.</p>
       </div>
-    </SafeComponent>
+    </ErrorBoundary>
   </Suspense>
 );
 
 const About = () => (
   <Suspense fallback={<LoadingFallback />}>
-    <SafeComponent>
+    <ErrorBoundary>
       <div>
         <h1>About</h1>
         <p>This content is server-rendered with Suspense support.</p>
       </div>
-    </SafeComponent>
+    </ErrorBoundary>
   </Suspense>
 );
 
 const Contact = () => (
   <Suspense fallback={<LoadingFallback />}>
-    <SafeComponent>
+    <ErrorBoundary>
       <div>
         <h1>Contact</h1>
         <p>This content is server-rendered with Suspense support.</p>
       </div>
-    </SafeComponent>
+    </ErrorBoundary>
   </Suspense>
 );
 
 const Documentation = () => (
   <Suspense fallback={<LoadingFallback />}>
-    <SafeComponent>
+    <ErrorBoundary>
       <div>
         <h1>Documentation</h1>
         <p>This content is server-rendered with Suspense support.</p>
       </div>
-    </SafeComponent>
+    </ErrorBoundary>
   </Suspense>
 );
 
 // Simplified placeholder for React19Features
 const React19FeaturesPlaceholder = () => (
   <Suspense fallback={<LoadingFallback />}>
-    <SafeComponent>
+    <ErrorBoundary>
       <div>
         <h1>React 19 Features</h1>
         <p>This content will be client-rendered.</p>
       </div>
-    </SafeComponent>
+    </ErrorBoundary>
   </Suspense>
 );
 
@@ -101,26 +119,28 @@ const React19FeaturesPlaceholder = () => (
 function SSRApp() {
   return (
     <CacheProvider value={cache}>
-      <div style={{ padding: '20px' }}>
-        <Routes>
-          <Route path="/" element={<Products />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/docs" element={<Documentation />} />
-          <Route path="/react19" element={<React19FeaturesPlaceholder />} />
-          <Route path="*" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <SafeComponent>
-                <div>
-                  <h1>404 - Not Found</h1>
-                  <p>The requested page could not be found.</p>
-                </div>
-              </SafeComponent>
-            </Suspense>
-          } />
-        </Routes>
-      </div>
+      <ErrorBoundary>
+        <div style={{ padding: '20px' }}>
+          <Routes>
+            <Route path="/" element={<Products />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/docs" element={<Documentation />} />
+            <Route path="/react19" element={<React19FeaturesPlaceholder />} />
+            <Route path="*" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <ErrorBoundary>
+                  <div>
+                    <h1>404 - Not Found</h1>
+                    <p>The requested page could not be found.</p>
+                  </div>
+                </ErrorBoundary>
+              </Suspense>
+            } />
+          </Routes>
+        </div>
+      </ErrorBoundary>
     </CacheProvider>
   );
 }

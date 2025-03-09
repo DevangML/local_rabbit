@@ -45,25 +45,35 @@ declare module '@mui/styled-engine' {
   export const internal_processStyles: any;
 }
 
-// Ensure React elements are properly handled during SSR
-// This helps prevent "Objects are not valid as a React child" errors
-if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') {
-  // Server-side specific fixes
-  const originalCreateElement = React.createElement;
+// Create a safe wrapper for React elements to prevent "Objects are not valid as a React child" errors
+// Instead of modifying React.createElement (which is read-only in ESM), we provide a utility function
+export function safeChild(child: any): any {
+  if (child === null || child === undefined) {
+    return null;
+  }
   
-  // @ts-ignore - Override createElement to ensure proper handling of React elements
-  React.createElement = function patchedCreateElement(type: any, props: any, ...children: any[]) {
-    // Process children to ensure they're valid React children
-    const processedChildren = children.map((child) => {
-      // If child is a React element but somehow nested incorrectly, wrap it
-      if (child && typeof child === 'object' && child.$$typeof) {
-        return child;
-      }
-      return child;
-    });
-    
-    return originalCreateElement(type, props, ...processedChildren);
-  };
+  // If it's a React element or primitive type, return as is
+  if (
+    typeof child !== 'object' || 
+    child === null || 
+    typeof child === 'string' || 
+    typeof child === 'number' || 
+    typeof child === 'boolean' ||
+    (child && typeof child === 'object' && ('$$typeof' in child))
+  ) {
+    return child;
+  }
+  
+  // Convert other objects to string to prevent the "Objects are not valid as a React child" error
+  return String(child);
+}
+
+// Export a utility to safely render children
+export function safeRender(children: React.ReactNode): React.ReactNode {
+  if (Array.isArray(children)) {
+    return children.map(safeChild);
+  }
+  return safeChild(children);
 }
 
 // Export a dummy function to ensure this file is not tree-shaken
