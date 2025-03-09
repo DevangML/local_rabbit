@@ -1,23 +1,19 @@
 const express = require('express');
-const repositoryRoutes = require('./repositoryRoutes');
-const diffRoutes = require('./diffRoutes');
-const codeReviewRoutes = require('../../routes/codeReviewRoutes');
-
 const router = express.Router();
 
-// Register routes
-router.use('/api', repositoryRoutes);
-router.use('/api', diffRoutes);
-router.use('/api/code-review', codeReviewRoutes);
+// Import other routes
+const repositoryRoutes = require('./repositoryRoutes');
+const diffRoutes = require('./diffRoutes');
+const serverActionsRoutes = require('./serverActionsRoutes');
 
-// Health check route
-/**
- * Health check endpoint
- * @param {import('express').Request} req - Express request
- * @param {import('express').Response} res - Express response
- */
-router.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+// Use routes
+router.use('/api/repository', repositoryRoutes);
+router.use('/api/diff', diffRoutes);
+router.use('/api/actions', serverActionsRoutes);
+
+// Basic health check endpoint
+router.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 module.exports = router;
