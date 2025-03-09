@@ -20,6 +20,10 @@ declare global {
   interface Window {
     __EMOTION_INSERTION_EFFECT__?: boolean;
     React?: any; // Add React to the Window interface
+    // Add webpack require for our runtime patching
+    __webpack_require__?: {
+      c: Record<string, { exports: any }>;
+    };
   }
 }
 
@@ -48,6 +52,39 @@ import '@mui/styled-engine';
 declare module '@mui/styled-engine' {
   // Add the missing export that's being imported in @mui/system/createStyled.js
   export const internal_processStyles: any;
+}
+
+// Export our own implementation of useEnhancedEffect for MUI to use
+export const muiUseEnhancedEffect = isServer ? React.useEffect : React.useLayoutEffect;
+
+// Create a patch to replace MUI's useEnhancedEffect with our implementation
+if (typeof window !== 'undefined') {
+  // Only run this in the browser to avoid SSR issues
+  try {
+    // Create a global function that mimics the useEnhancedEffect hook
+    // This creates a safer approach than patching webpack modules
+    (window as any).MUI_useEnhancedEffect = muiUseEnhancedEffect;
+    
+    // Try to define a module to handle any import to useEnhancedEffect
+    if (window.__webpack_require__) {
+      try {
+        const requireCache = window.__webpack_require__.c;
+        // Look for the MUI useEnhancedEffect module in the cache
+        Object.keys(requireCache).forEach(moduleId => {
+          if (moduleId.includes('useEnhancedEffect')) {
+            // Replace the exports with our implementation
+            requireCache[moduleId].exports = {
+              default: muiUseEnhancedEffect
+            };
+          }
+        });
+      } catch (e) {
+        console.warn('Failed to patch webpack cache for useEnhancedEffect:', e);
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to patch MUI useEnhancedEffect:', e);
+  }
 }
 
 // Create a safe wrapper for React elements to prevent "Objects are not valid as a React child" errors

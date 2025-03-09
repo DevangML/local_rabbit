@@ -1,3 +1,6 @@
+// Import React hooks initialization first
+import './mui-patches/react-hooks-init';
+
 // Import the emotion fix before any other imports
 // This fixes Emotion initialization issues and MUI styled-engine compatibility
 import './emotion-fix';
@@ -121,30 +124,32 @@ const React19FeaturesPlaceholder = () => (
 // SSR-specific App component with Suspense
 function SSRApp() {
   return (
-    <CacheProvider value={cache}>
-      <ErrorBoundary>
-        <div style={{ padding: '20px' }}>
-          <Routes>
-            <Route path="/" element={<Products />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/docs" element={<Documentation />} />
-            <Route path="/react19" element={<React19FeaturesPlaceholder />} />
-            <Route path="*" element={
-              <Suspense fallback={<LoadingFallback />}>
-                <ErrorBoundary>
-                  <div>
-                    <h1>404 - Not Found</h1>
-                    <p>The requested page could not be found.</p>
-                  </div>
-                </ErrorBoundary>
-              </Suspense>
-            } />
-          </Routes>
-        </div>
-      </ErrorBoundary>
-    </CacheProvider>
+    <SafeRender>
+      <CacheProvider value={cache}>
+        <ErrorBoundary>
+          <div style={{ padding: '20px' }}>
+            <Routes>
+              <Route path="/" element={<Products />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/docs" element={<Documentation />} />
+              <Route path="/react19" element={<React19FeaturesPlaceholder />} />
+              <Route path="*" element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <ErrorBoundary>
+                    <div>
+                      <h1>404 - Not Found</h1>
+                      <p>The requested page could not be found.</p>
+                    </div>
+                  </ErrorBoundary>
+                </Suspense>
+              } />
+            </Routes>
+          </div>
+        </ErrorBoundary>
+      </CacheProvider>
+    </SafeRender>
   );
 }
 
@@ -152,16 +157,20 @@ function SSRApp() {
 export function renderPage(url: string) {
   try {
     return (
-      <StaticRouter location={url}>
-        <SSRApp />
-      </StaticRouter>
+      <SafeRender>
+        <StaticRouter location={url}>
+          <SSRApp />
+        </StaticRouter>
+      </SafeRender>
     );
   } catch (error) {
     console.error('Error in renderPage:', error);
     return (
-      <StaticRouter location={url}>
-        <div>Rendering error occurred. Check server logs.</div>
-      </StaticRouter>
+      <SafeRender>
+        <StaticRouter location={url}>
+          <div>Rendering error occurred. Check server logs.</div>
+        </StaticRouter>
+      </SafeRender>
     );
   }
 }
@@ -174,17 +183,21 @@ export { cache, extractCriticalToChunks, constructStyleTagsFromChunks };
 export function renderToStream(url: string) {
   try {
     return (
-      <StaticRouter location={url}>
-        <SSRApp />
-      </StaticRouter>
+      <SafeRender>
+        <StaticRouter location={url}>
+          <SSRApp />
+        </StaticRouter>
+      </SafeRender>
     );
   } catch (error) {
     console.error('Error in renderToStream:', error);
     // Return a simplified fallback component in case of error
     return (
-      <StaticRouter location={url}>
-        <div>Rendering error occurred. Check server logs.</div>
-      </StaticRouter>
+      <SafeRender>
+        <StaticRouter location={url}>
+          <div>Rendering error occurred. Check server logs.</div>
+        </StaticRouter>
+      </SafeRender>
     );
   }
 }
@@ -194,16 +207,20 @@ export default function render(props: any) {
   try {
     const { url } = props;
     return (
-      <StaticRouter location={url}>
-        <SSRApp />
-      </StaticRouter>
+      <SafeRender>
+        <StaticRouter location={url}>
+          <SSRApp />
+        </StaticRouter>
+      </SafeRender>
     );
   } catch (error) {
     console.error('Error in default render:', error);
     return (
-      <StaticRouter location={props.url || "/"}>
-        <div>Rendering error occurred. Check server logs.</div>
-      </StaticRouter>
+      <SafeRender>
+        <StaticRouter location={props.url || "/"}>
+          <div>Rendering error occurred. Check server logs.</div>
+        </StaticRouter>
+      </SafeRender>
     );
   }
 } 

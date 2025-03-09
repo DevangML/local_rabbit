@@ -227,7 +227,8 @@ export default defineConfig({
       '@emotion/use-insertion-effect-with-fallbacks': path.resolve(__dirname, './src/mui-patches/emotion/use-insertion-effect-with-fallbacks.js'),
       '@emotion/react': path.resolve(__dirname, '../../node_modules/@emotion/react'),
       '@emotion/styled': path.resolve(__dirname, '../../node_modules/@emotion/styled'),
-      '@emotion/cache': path.resolve(__dirname, '../../node_modules/@emotion/cache')
+      '@emotion/cache': path.resolve(__dirname, '../../node_modules/@emotion/cache'),
+      '@mui/utils/useEnhancedEffect': path.resolve(__dirname, 'src/mui-patches/useEnhancedEffect.js')
     }
   },
   define: {
