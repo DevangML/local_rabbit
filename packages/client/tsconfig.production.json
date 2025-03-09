@@ -21,8 +21,9 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "typeRoots": [
+      "../node_modules/@types",
+      "../../node_modules/@types",
       "./node_modules/@types",
-      "./node_modules/@jest/types",
       "./src/types"
     ],
     "types": [
@@ -38,6 +39,7 @@
     "src/**/*.tsx",
     "src/**/*.js",
     "src/**/*.jsx",
-    "src/**/*.d.ts"
+    "src/**/*.d.ts",
+    "src/types/react-types.d.ts"
   ]
 }
