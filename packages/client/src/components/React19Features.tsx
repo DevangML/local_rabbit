@@ -7,7 +7,7 @@ interface Todo {
   completed: boolean;
 }
 
-// Polyfill for useOptimistic if not available in React 19
+// Polyfill for useOptimistic if not available in React 18
 const useOptimistic = <T,U>(state: T, updateFn: (state: T, update: U) => T) => {
   const [optimisticState, setOptimisticState] = useState<T>(state);
   
@@ -24,7 +24,7 @@ const useOptimistic = <T,U>(state: T, updateFn: (state: T, update: U) => T) => {
   return [optimisticState, addOptimisticUpdate] as const;
 };
 
-// Simulate a data fetching resource
+// Safe resource creation pattern for React 18 and below
 const createResource = <T,>(promise: Promise<T>) => {
   let status: 'pending' | 'success' | 'error' = 'pending';
   let result: T;
@@ -54,7 +54,7 @@ const createResource = <T,>(promise: Promise<T>) => {
   };
 };
 
-// Simulate fetching data
+// Simulate a data fetching resource
 const fetchTodos = () => 
   new Promise<Todo[]>(resolve => 
     setTimeout(() => 
@@ -244,16 +244,15 @@ const TodoList = () => {
   );
 };
 
-// Main component that demonstrates React 19 features
+// Main component that demonstrates React 18 features
 export const React19Features: React.FC = () => {
   return (
-    <Box sx={{ maxWidth: 600, mx: 'auto', p: 3 }}>
+    <Box sx={{ padding: 3, maxWidth: 800, margin: '0 auto' }}>
       <Typography variant="h4" gutterBottom>
-        React 19 Features Demo
+        React 18 Features Demo
       </Typography>
-      
       <Typography variant="body1" paragraph>
-        This component demonstrates React 19 features including Concurrent Mode, Suspense for data fetching, and useOptimistic.
+        This component demonstrates features that are compatible with React 18.
       </Typography>
       
       {/* Suspense for data fetching */}
