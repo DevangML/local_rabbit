@@ -11,6 +11,27 @@ interface PerformanceMetrics {
   timestamp: number;
 }
 
+// Custom Profiler wrapper component to handle type issues
+const CustomProfiler: React.FC<{
+  id: string;
+  children: React.ReactNode;
+  onRender: (
+    id: string,
+    phase: "mount" | "update" | "nested-update",
+    actualDuration: number,
+    baseDuration: number,
+    startTime: number,
+    commitTime: number,
+    interactions: Set<{ name: string; timestamp: number }>
+  ) => void;
+}> = ({ id, children, onRender }) => {
+  return (
+    <Profiler id={id} onRender={onRender as any}>
+      {children}
+    </Profiler>
+  );
+};
+
 // Component that demonstrates Performance Testing with Concurrent Mode
 export const PerformanceTesting: React.FC = () => {
   // State for performance testing
@@ -58,31 +79,34 @@ export const PerformanceTesting: React.FC = () => {
   };
   
   // Handle Profiler onRender callback
-  const handleProfilerRender = useCallback((
-    id: string,
-    phase: 'mount' | 'update',
-    actualDuration: number,
-    baseDuration: number,
-    startTime: number,
-    commitTime: number,
-    interactions: Set<{ name: string; timestamp: number }>
-  ) => {
-    const interactionType = phase;
-    
-    const newMetric: PerformanceMetrics = {
-      id,
-      renderTime: actualDuration,
-      commitTime,
-      interactionType,
-      timestamp: Date.now()
-    };
-    
-    setMetrics(prev => [...prev, newMetric]);
-    
-    // Send metrics to server
-    axios.post('/api/actions/metrics', { metrics: newMetric })
-      .catch(error => console.error('Error sending metrics:', error));
-  }, []);
+  const handleProfilerRender = useCallback(
+    (
+      id: string,
+      phase: "mount" | "update" | "nested-update",
+      actualDuration: number,
+      baseDuration: number,
+      startTime: number,
+      commitTime: number,
+      interactions: Set<{ name: string; timestamp: number }>
+    ) => {
+      const interactionType = phase;
+      
+      const newMetric: PerformanceMetrics = {
+        id,
+        renderTime: actualDuration,
+        commitTime,
+        interactionType,
+        timestamp: Date.now()
+      };
+      
+      setMetrics(prev => [...prev, newMetric]);
+      
+      // Send metrics to server
+      axios.post('/api/actions/metrics', { metrics: newMetric })
+        .catch(error => console.error('Error sending metrics:', error));
+    },
+    []
+  );
   
   // Clear metrics
   const clearMetrics = () => {
@@ -223,7 +247,7 @@ export const PerformanceTesting: React.FC = () => {
         </Paper>
       )}
       
-      <Profiler id="ItemList" onRender={handleProfilerRender}>
+      <CustomProfiler id="ItemList" onRender={handleProfilerRender}>
         <Paper elevation={3} sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
             Item List ({filteredItems.length} items)
@@ -250,7 +274,7 @@ export const PerformanceTesting: React.FC = () => {
             </Grid>
           </Box>
         </Paper>
-      </Profiler>
+      </CustomProfiler>
       
       <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
         <Typography variant="h6" gutterBottom>

@@ -8,7 +8,6 @@ import { CacheProvider } from '@emotion/react';
 import createEmotionServer from '@emotion/server/create-instance';
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
-import { React19Features } from './components/React19Features';
 
 // Create the Emotion cache for SSR
 const cache = createCache({
@@ -77,38 +76,42 @@ const Documentation = () => (
   </Suspense>
 );
 
+// Simplified placeholder for React19Features
+const React19FeaturesPlaceholder = () => (
+  <Suspense fallback={<LoadingFallback />}>
+    <div>
+      <h1>React 19 Features</h1>
+      <p>This content will be client-rendered.</p>
+    </div>
+  </Suspense>
+);
+
 // SSR-specific App component with Suspense
 function SSRApp() {
   return (
-    <React.StrictMode>
-      <CacheProvider value={cache}>
-        <ThemeProvider theme={ssrTheme}>
-          <CssBaseline />
-          <div style={{ padding: '20px' }}>
-            <Routes>
-              <Route path="/" element={<Products />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/docs" element={<Documentation />} />
-              <Route path="/react19" element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <React19Features />
-                </Suspense>
-              } />
-              <Route path="*" element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <div>
-                    <h1>404 - Not Found</h1>
-                    <p>The requested page could not be found.</p>
-                  </div>
-                </Suspense>
-              } />
-            </Routes>
-          </div>
-        </ThemeProvider>
-      </CacheProvider>
-    </React.StrictMode>
+    <CacheProvider value={cache}>
+      <ThemeProvider theme={ssrTheme}>
+        <CssBaseline />
+        <div style={{ padding: '20px' }}>
+          <Routes>
+            <Route path="/" element={<Products />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/docs" element={<Documentation />} />
+            <Route path="/react19" element={<React19FeaturesPlaceholder />} />
+            <Route path="*" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <div>
+                  <h1>404 - Not Found</h1>
+                  <p>The requested page could not be found.</p>
+                </div>
+              </Suspense>
+            } />
+          </Routes>
+        </div>
+      </ThemeProvider>
+    </CacheProvider>
   );
 }
 
@@ -131,19 +134,6 @@ export function renderToStream(url: string) {
 
 // Keep the default export for backward compatibility
 export default function render(props: any) {
-  // Use a safer way to access import.meta.env that works with TypeScript
-  const { url, isDev = false } = props;
-  
-  // Try to determine if we're in dev mode
-  let isDevMode = isDev;
-  try {
-    // @ts-ignore - This is a Vite-specific property that TypeScript might not recognize
-    if (typeof import.meta !== 'undefined' && import.meta.env && typeof import.meta.env.DEV === 'boolean') {
-      isDevMode = import.meta.env.DEV;
-    }
-  } catch (e) {
-    // Ignore errors, fall back to the provided isDev value
-  }
-  
+  const { url } = props;
   return renderPage(url);
 } 

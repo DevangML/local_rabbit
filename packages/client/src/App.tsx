@@ -13,7 +13,7 @@ import { FeatureDemo } from "./components/FeatureDemo";
 // Lazy load home component
 const Home = lazy(() => import("./pages/Home"));
 
-export default function App(): JSX.Element {
+export default function App(): React.ReactElement {
         return (
             <Box sx={ { 
                 display: "flex",
