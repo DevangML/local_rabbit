@@ -136,7 +136,7 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
       cacheInstance.clear();
 
       // Use relative URL to let Vite proxy handle the request
-      const response = await fetch(`/api/git/repository/set`, {
+      const response = await fetch(`/api/code-review/select-repository`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -182,7 +182,7 @@ const ProjectSelector = ({ onProjectSelect, selectedBranches, onBranchesChange, 
       cacheInstance.clear();
 
       // Use relative URL to let Vite proxy handle the request
-      const response = await fetch(`/api/git/repository/set`, {
+      const response = await fetch(`/api/code-review/select-repository`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

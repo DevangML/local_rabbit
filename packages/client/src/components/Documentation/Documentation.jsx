@@ -126,7 +126,7 @@ const Documentation = () => {
         </Typography>
 
         <Grid container spacing={4}>
-          { /* Documentation Navigation */}
+          {/* Documentation Navigation */}
           <Grid item xs={12} md={3}>
             <Paper
               elevation={0}
@@ -187,7 +187,7 @@ const Documentation = () => {
             </Paper>
           </Grid>
 
-          { /* Documentation Content */}
+          {/* Documentation Content */}
           <Grid item xs={12} md={9}>
             <Paper
               elevation={0}

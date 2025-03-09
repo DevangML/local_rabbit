@@ -115,8 +115,8 @@ const getTheme = (mode) => createTheme({
       styleOverrides: {
         root: {
           background: "transparent",
-          backdropFilter: "void bvoid void lur(8px)",
-          borderBottom: "1px solid void rvoid void gba(192, 202, 245, 0.1)",
+          backdropFilter: "bvoid lur(8px)",
+          borderBottom: "1px solid rvoid gba(192, 202, 245, 0.1)",
         },
       },
     },

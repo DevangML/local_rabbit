@@ -7,8 +7,7 @@
 /* global window, document, console */
 import React from "react";
 import { hydrateRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
-import App from "./App";
+import Router from "./router";
 import { registerSW } from "virtual:pwa-register";
 
 // Register service worker with improved error handling and reload behavior
@@ -60,9 +59,7 @@ if (!root) {
 hydrateRoot(
         root,
         <React.StrictMode>
-        <BrowserRouter>
-        <App />
-        </BrowserRouter>
+        <Router />
         </React.StrictMode>
 );
 

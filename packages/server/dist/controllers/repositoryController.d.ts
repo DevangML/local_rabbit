@@ -9,5 +9,5 @@ export type GitBranches = {
     all: string[];
 };
 export type GitServiceResult = {
-    all?: string[] | undefined;
+    all?: string[];
 };

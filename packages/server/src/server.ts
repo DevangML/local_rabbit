@@ -12,20 +12,87 @@ import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server.js';
 
+// Define types for the Emotion server functions
+type EmotionCriticalToChunks = (html: React.ReactElement) => Array<{ key: string; ids: Array<string>; css: string }>;
+type EmotionConstructStyleTags = (chunks: Array<{ key: string; ids: Array<string>; css: string }>) => string;
+
+// Define type for entry server module
+type EntryServer = {
+  renderPage: (url: string) => React.ReactElement;
+  extractCriticalToChunks: EmotionCriticalToChunks;
+  constructStyleTagsFromChunks: EmotionConstructStyleTags;
+};
+
+// Get the current directory
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 // Conditionally import the server-side rendering function
 // This way we can run the server in development without the client build
 const isDev = process.env.NODE_ENV === 'development';
 let renderPage: (url: string) => React.ReactElement | null = () => null;
+let extractCriticalToChunks: EmotionCriticalToChunks | null = null;
+let constructStyleTagsFromChunks: EmotionConstructStyleTags | null = null;
 
 // In production, import the entry-server module
 // In development, use a dummy renderer
 if (!isDev) {
   try {
-    // @ts-ignore - This file will be generated at build time
-    const entryServer = await import('../../client/dist/server/entry-server.js');
-    renderPage = entryServer.renderPage;
+    // First try the new path (from client workspace build)
+    const clientDistPath = join(__dirname, '../../client/dist');
+    const ssrEntryPath = join(clientDistPath, 'server/entry-server.js');
+    
+    try {
+      if (fs.existsSync(ssrEntryPath)) {
+        console.log('Found SSR entry at:', ssrEntryPath);
+        // @ts-ignore - This file will be generated at build time
+        const entryServer = await import(ssrEntryPath) as EntryServer;
+        renderPage = entryServer.renderPage;
+        extractCriticalToChunks = entryServer.extractCriticalToChunks;
+        constructStyleTagsFromChunks = entryServer.constructStyleTagsFromChunks;
+        console.log('Successfully loaded SSR from client workspace build');
+      } else {
+        console.warn('SSR entry file not found at:', ssrEntryPath);
+        throw new Error('SSR entry file not found');
+      }
+    } catch (primaryError) {
+      console.warn('Primary SSR load failed:', primaryError);
+      
+      // If that fails, try an alternative path
+      const altPath = join(__dirname, '../../../dist/server/entry-server.js');
+      try {
+        if (fs.existsSync(altPath)) {
+          console.log('Found SSR entry at alternate path:', altPath);
+          // @ts-ignore - Try alternative path
+          const entryServer = await import(altPath) as EntryServer;
+          renderPage = entryServer.renderPage;
+          extractCriticalToChunks = entryServer.extractCriticalToChunks;
+          constructStyleTagsFromChunks = entryServer.constructStyleTagsFromChunks;
+          console.log('Successfully loaded SSR from alternative path');
+        } else {
+          console.warn('Alternative SSR entry file not found at:', altPath);
+          throw new Error('Alternative SSR entry file not found');
+        }
+      } catch (secondaryError) {
+        console.warn('Secondary SSR load failed:', secondaryError);
+        
+        // If still failing, try one more path
+        try {
+          const urlPath = new URL('../client/dist/server/entry-server.js', import.meta.url).href;
+          // @ts-ignore - Try one more path
+          const entryServer = await import(urlPath) as EntryServer;
+          renderPage = entryServer.renderPage;
+          extractCriticalToChunks = entryServer.extractCriticalToChunks;
+          constructStyleTagsFromChunks = entryServer.constructStyleTagsFromChunks;
+          console.log('Successfully loaded SSR from resolved URL path');
+        } catch (tertiaryError) {
+          console.warn('Could not import entry-server.js. SSR will be disabled.', primaryError);
+          console.warn('Alternative paths also failed:', secondaryError);
+          console.warn('URL path also failed:', tertiaryError);
+        }
+      }
+    }
   } catch (error) {
-    console.warn('Could not import entry-server.js. SSR will be disabled.', error);
+    console.warn('All attempts to load entry-server.js failed. SSR will be disabled.', error);
   }
 }
 
@@ -34,7 +101,6 @@ dotenv.config({
   path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
 });
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
 
@@ -137,9 +203,16 @@ const ssrHandler: RequestHandler = async (req, res) => {
     }
 
     // Production mode with SSR enabled
-    const html = renderToString(
-      renderPage(req.url)
-    );
+    const app = renderPage(req.url);
+    if (!app || !extractCriticalToChunks || !constructStyleTagsFromChunks) {
+      throw new Error('SSR components not properly initialized');
+    }
+
+    const html = renderToString(app);
+
+    // Extract critical CSS
+    const emotionChunks = extractCriticalToChunks(app);
+    const emotionTags = constructStyleTagsFromChunks(emotionChunks);
 
     const template = `
       <!DOCTYPE html>
@@ -151,6 +224,7 @@ const ssrHandler: RequestHandler = async (req, res) => {
           <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
           <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
           <link rel="manifest" href="/manifest.json" />
+          ${emotionTags}
           <title>Local Rabbit</title>
         </head>
         <body>

@@ -9,3 +9,8 @@ node_modules/
 .DS_Store
 
 .early.coverage
+
+packages/client/dist/
+packages/server/dist/
+packages/client/dev-dist/
+packages/server/dev-dist/

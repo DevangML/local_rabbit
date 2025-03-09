@@ -7,6 +7,7 @@
     "dev": "nodemon --ext ts,json --watch src --exec \"node dev.mjs\"",
     "prebuild": "rimraf dist && yarn workspace @local-rabbit/client build",
     "build": "rimraf dist && yarn workspace @local-rabbit/client build && tsc --skipLibCheck || true && babel src --out-dir dist --extensions '.ts,.tsx' --copy-files",
+    "build:prod": "rimraf dist && yarn workspace @local-rabbit/client build:prod && node scripts/pre-build-prod.js",
     "start": "node dist/server.js",
     "clean": "rimraf dist",
     "lint": "eslint . --ext .ts,.js || true",

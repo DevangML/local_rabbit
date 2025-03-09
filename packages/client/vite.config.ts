@@ -1,19 +1,36 @@
 import { defineConfig } from 'vite';
-import type { PluginOption } from 'vite';
+import type { PluginOption, SSROptions, UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
-import ViteComlink from 'vite-plugin-comlink';
+import { comlink } from 'vite-plugin-comlink';
 import WebfontDownload from 'vite-plugin-webfont-dl';
 import optimizer from 'vite-plugin-optimizer';
 import { robots } from 'vite-plugin-robots';
 import VConsole from 'vite-plugin-vconsole';
 import path from 'path';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    react(),
-    ViteComlink(),
+    react({
+      babel: {
+        plugins: [
+          ['@babel/plugin-transform-runtime', { regenerator: true }],
+          ['@emotion/babel-plugin', { sourceMap: true, autoLabel: 'dev-only' }]
+        ],
+        presets: [
+          ['@babel/preset-react', {
+            runtime: 'automatic',
+            development: process.env.NODE_ENV !== 'production',
+            importSource: '@emotion/react'
+          }]
+        ]
+      },
+      jsxRuntime: 'automatic',
+      jsxImportSource: '@emotion/react'
+    }),
+    comlink(),
     WebfontDownload([
       'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
       'https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap'
@@ -41,19 +58,13 @@ export default defineConfig({
       }
     }),
     VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
         name: 'Local Rabbit',
-        short_name: 'Local Rabbit',
-        start_url: '/',
-        display: 'standalone',
-        background_color: '#ffffff',
-        theme_color: '#000000',
+        short_name: 'LocalRabbit',
+        theme_color: '#ffffff',
         icons: [
-          {
-            src: '/pwa-64x64.png',
-            sizes: '64x64',
-            type: 'image/png'
-          },
           {
             src: '/pwa-192x192.png',
             sizes: '192x192',
@@ -63,55 +74,35 @@ export default defineConfig({
             src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png'
-          },
-          {
-            src: '/maskable-icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable'
           }
         ]
       },
-      devOptions: {
-        enabled: true,
-        type: 'module',
-        navigateFallback: 'index.html'
-      },
-      includeAssets: ['**/*'],
-      registerType: 'prompt',
-      strategies: 'generateSW',
-      injectRegister: 'auto',
       workbox: {
-        globPatterns: ['**/*.{js,css,ico,png,svg}'],
-        globIgnores: ['**/index.html'],
-        cleanupOutdatedCaches: true,
-        sourcemap: true,
-        navigateFallback: 'index.html',
+        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024, // 8MB
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/api\./i,
-            handler: 'NetworkFirst',
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
             options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 10,
+              cacheName: 'google-fonts-cache',
               expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
               },
               cacheableResponse: {
                 statuses: [0, 200]
               }
             }
-          },
-          {
-            urlPattern: /\/index\.html$/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'html-cache'
-            }
           }
         ]
       }
+    }),
+    visualizer({
+      filename: '.stats/stats.html',
+      gzipSize: true,
+      brotliSize: true,
+      template: 'treemap'
     })
   ] as PluginOption[],
   server: {
@@ -121,20 +112,100 @@ export default defineConfig({
       'Service-Worker-Allowed': '/',
       'Cross-Origin-Embedder-Policy': 'require-corp',
       'Cross-Origin-Opener-Policy': 'same-origin'
-    }
+    },
+    open: true,
+    cors: true
   },
   build: {
+    target: 'esnext',
+    minify: 'esbuild',
+    cssMinify: true,
     sourcemap: true,
-    rollupOptions: {
+    rollupOptions: process.env.SSR ? {
+      input: './src/entry-server.tsx',
       output: {
-        manualChunks: undefined
+        format: 'esm'
+      },
+      external: [
+        'react',
+        'react-dom',
+        'react/jsx-runtime',
+        'react/jsx-dev-runtime',
+        '@emotion/server',
+        '@emotion/server/create-instance',
+        '@emotion/cache',
+        '@emotion/react',
+        '@emotion/styled'
+      ]
+    } : {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('@emotion')) return 'emotion-vendor';
+            if (id.includes('react')) return 'react-vendor';
+            if (id.includes('@mui')) return 'mui-vendor';
+            return 'vendor';
+          }
+        }
       }
     },
-    target: 'esnext',
-    minify: 'esbuild'
+    chunkSizeWarningLimit: 800,
+    assetsInlineLimit: 4096,
+    modulePreload: {
+      polyfill: true
+    },
+    reportCompressedSize: true,
+    cssCodeSplit: true,
+    ssr: process.env.SSR ? './src/entry-server.tsx' : undefined
+  },
+  ssr: {
+    noExternal: [
+      'react',
+      'react-dom',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime',
+      '@emotion',
+      '@emotion/react',
+      '@emotion/styled',
+      '@emotion/cache',
+      '@emotion/server',
+      '@emotion/utils',
+      '@emotion/serialize',
+      '@emotion/use-insertion-effect-with-fallbacks',
+      '@mui/material',
+      '@mui/icons-material',
+      '@mui/utils',
+      '@mui/base',
+      '@mui/system',
+      '@mui/styles',
+      '@mui/private-theming'
+    ],
+    target: 'node',
+    optimizeDeps: {
+      include: [
+        '@emotion/react',
+        '@emotion/styled',
+        '@emotion/cache',
+        '@emotion/server'
+      ]
+    }
   },
   optimizeDeps: {
-    include: ['comlink'],
-    exclude: []
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@mui/material',
+      '@mui/icons-material',
+      '@emotion/react',
+      '@emotion/styled',
+      'three',
+      '@react-three/fiber',
+      '@react-three/drei',
+      '@reduxjs/toolkit',
+      '@tanstack/react-query',
+      'axios',
+      'framer-motion'
+    ]
   }
 }); 

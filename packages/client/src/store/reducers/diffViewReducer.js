@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const diffViewSlice = void createSlice({
+const diffViewSlice = createSlice({
     name: "diffView",
     initialState: {
       activeView: "diff",

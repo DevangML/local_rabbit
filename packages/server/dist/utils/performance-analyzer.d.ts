@@ -28,7 +28,7 @@ declare class PerformanceAnalyzer {
      * @param {string} operation - The operation name
      * @returns {Object|null} The metrics for the operation
      */
-    getMetrics(operation: string): Object | null;
+    getMetrics(operation: string): any | null;
     getStats(): Record<string, {
         count: number;
         totalTime: number;
@@ -37,7 +37,7 @@ declare class PerformanceAnalyzer {
     /**
      * @param {string} [operation] - The operation to reset, or all if not specified
      */
-    reset(operation?: string | undefined): void;
+    reset(operation?: string): void;
 }
 declare namespace PerformanceAnalyzer {
     export { runTest, compareImplementations, runAllTests, PerformanceItem, TestResult };
@@ -81,15 +81,15 @@ type PerformanceItem = {
     /**
      * - Optional score
      */
-    score?: number | undefined;
+    score?: number;
     /**
      * - Optional id
      */
-    id?: number | undefined;
+    id?: number;
     /**
      * - Whether the item is active
      */
-    active?: boolean | undefined;
+    active?: boolean;
     /**
      * - Any other properties
      */

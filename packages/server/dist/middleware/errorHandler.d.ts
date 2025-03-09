@@ -23,23 +23,23 @@ type ExtendedError = {
     /**
      * - Error message
      */
-    message?: string | undefined;
+    message?: string;
     /**
      * - HTTP status code
      */
-    status?: number | undefined;
+    status?: number;
     /**
      * - Alternative HTTP status code
      */
-    statusCode?: number | undefined;
+    statusCode?: number;
     /**
      * - Error stack trace
      */
-    stack?: string | undefined;
+    stack?: string;
     /**
      * - Line number where error occurred
      */
-    lineNumber?: number | undefined;
+    lineNumber?: number;
     /**
      * - Additional error details
      */

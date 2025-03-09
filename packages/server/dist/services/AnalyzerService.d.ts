@@ -54,7 +54,7 @@ declare class AnalyzerService {
      * @param {FileChange[]} files - Array of analyzed file objects
      * @returns {Object} - Summary object
      */
-    static generateSummary(files: FileChange[]): Object;
+    static generateSummary(files: FileChange[]): any;
     /**
      * Create a new AnalyzerService instance
      * @param {string} repoPath - Path to the repository
@@ -62,7 +62,7 @@ declare class AnalyzerService {
      */
     constructor(repoPath?: string, geminiService?: GeminiService | null);
     repoPath: string;
-    geminiService: GeminiService | null;
+    geminiService: GeminiService;
     /**
      * Set the repository path
      * @param {string} repoPath - Path to the repository
@@ -74,13 +74,13 @@ declare class AnalyzerService {
      * @param {string} prompt - Custom prompt for analysis
      * @returns {Promise<Object>} - Analyzed diff data
      */
-    analyzeDiff(diffOutput: string, prompt?: string): Promise<Object>;
+    analyzeDiff(diffOutput: string, prompt?: string): Promise<any>;
     /**
      * Analyze a file's changes
      * @param {FileChange} file - File object
      * @returns {Promise<Object>} - Analysis results
      */
-    analyzeFile(file: FileChange): Promise<Object>;
+    analyzeFile(file: FileChange): Promise<any>;
 }
 declare namespace AnalyzerService {
     export { FileChange, ComplexityResult, GeminiService };
@@ -114,8 +114,8 @@ type FileChange = {
      * - Analysis results
      */
     analysis?: {
-        impactLevel?: "high" | "medium" | "low" | "unknown" | undefined;
-    } | undefined;
+        impactLevel?: 'high' | 'medium' | 'low' | 'unknown';
+    };
 };
 type ComplexityResult = {
     /**

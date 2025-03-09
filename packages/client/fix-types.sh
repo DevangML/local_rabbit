@@ -190,4 +190,49 @@ npx tsc --noEmit || true
 
 # Done!
 echo -e "${GREEN}Done!${NC}"
-echo "If any type errors remain, you may need to fix them manually." 
+echo "If any type errors remain, you may need to fix them manually."
+
+# Ensure the types directory exists
+mkdir -p src/types
+
+# Check if the type declaration files exist, create them if they don't
+if [ ! -f "src/types/react-router-dom.d.ts" ]; then
+  echo "Creating React Router DOM type declaration file..."
+  cat > src/types/react-router-dom.d.ts << 'EOF'
+import * as React from 'react';
+import { 
+  RouteProps as OriginalRouteProps, 
+  RoutesProps as OriginalRoutesProps,
+  Route as OriginalRoute,
+  Routes as OriginalRoutes
+} from 'react-router-dom';
+
+declare module 'react-router-dom' {
+  // Override the Route component type
+  export const Route: React.FC<OriginalRouteProps>;
+  
+  // Override the Routes component type
+  export const Routes: React.FC<OriginalRoutesProps>;
+}
+EOF
+fi
+
+if [ ! -f "src/types/emotion-react.d.ts" ]; then
+  echo "Creating Emotion React type declaration file..."
+  cat > src/types/emotion-react.d.ts << 'EOF'
+import * as React from 'react';
+import { EmotionCache } from '@emotion/cache';
+import { Provider as OriginalProvider } from '@emotion/react';
+
+declare module '@emotion/react' {
+  // Override the CacheProvider component type
+  export const CacheProvider: React.FC<{
+    value: EmotionCache;
+    children?: React.ReactNode;
+  }>;
+}
+EOF
+fi
+
+echo "Type declaration files have been created/updated."
+echo "You can now run the build command." 

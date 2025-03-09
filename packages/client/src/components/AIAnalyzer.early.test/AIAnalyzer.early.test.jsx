@@ -16,7 +16,7 @@ void describe("AIAnalyzer Component", () => {
           {
             newStart: 1,
             lines: [
-              { type: "addition", content: "console.warn(\"Hello World\");" },
+              { type: "addition", content: 'console.warn("Hello World");' },
               { type: "addition", content: "setState({ }); setState({ });" },
             ],
           },
@@ -30,9 +30,9 @@ void describe("AIAnalyzer Component", () => {
   };
 
   // Happy Path Tests
-  void describe("Happy Path Tests", () => {
-    void test("should render the component with initial state", () => {
-      void render(
+  describe("Happy Path Tests", () => {
+    test("should render the component with initial state", () => {
+      render(
         <AIAnalyzer
           diffData={mockDiffData}
           fromBranch="main"
@@ -46,8 +46,8 @@ void describe("AIAnalyzer Component", () => {
       ).toBeInTheDocument();
     });
 
-    void test("should display analysis results after running analysis", async () => {
-      void render(
+    test("should display analysis results after running analysis", async () => {
+      render(
         <AIAnalyzer
           diffData={mockDiffData}
           fromBranch="main"
@@ -66,9 +66,9 @@ void describe("AIAnalyzer Component", () => {
   });
 
   // Edge Case Tests
-  void describe("Edge Case Tests", () => {
-    void test("should handle empty diff data gracefully", async () => {
-      void render(
+  describe("Edge Case Tests", () => {
+    test("should handle empty diff data gracefully", async () => {
+      render(
         <AIAnalyzer
           diffData={emptyDiffData}
           fromBranch="main"
@@ -83,7 +83,7 @@ void describe("AIAnalyzer Component", () => {
       );
     });
 
-    void test("should handle non-text files gracefully", async () => {
+    test("should handle non-text files gracefully", async () => {
       const nonTextDiffData = {
         files: [
           {
@@ -98,7 +98,7 @@ void describe("AIAnalyzer Component", () => {
         ],
       };
 
-      void render(
+      render(
         <AIAnalyzer
           diffData={nonTextDiffData}
           fromBranch="main"

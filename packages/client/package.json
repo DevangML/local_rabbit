@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:prod": "node scripts/pre-build-prod.js && vite build && cross-env SSR=true vite build --ssr src/entry-server.tsx --outDir dist/server",
     "build:ssr": "vite build --ssr src/entry-server.tsx --outDir dist/server",
     "serve": "vite preview",
     "lint": "eslint src --ext .ts,.tsx,.js,.jsx --rule 'no-undef: off' --rule 'no-console: off' --rule 'react/no-array-index-key: off'",
@@ -17,7 +18,9 @@
     "fix:code-quality": "./fix-code-quality.sh"
   },
   "dependencies": {
+    "@emotion/babel-plugin": "^11.13.5",
     "@emotion/react": "^11.11.3",
+    "@emotion/server": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@local-rabbit/shared": "^1.0.0",
     "@mui/icons-material": "^5.15.10",
@@ -35,6 +38,7 @@
     "vite-plugin-pwa": "^0.21.1"
   },
   "devDependencies": {
+    "@babel/plugin-transform-runtime": "^7.26.9",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.11.19",
     "@types/react": "^18.2.55",
@@ -45,11 +49,14 @@
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.17",
     "comlink": "^4.4.2",
+    "cross-env": "^7.0.3",
     "eslint": "^9.21.0",
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "jest": "^29.7.0",
     "postcss": "^8.4.35",
+    "rollup-plugin-visualizer": "^5.14.0",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.2.2",

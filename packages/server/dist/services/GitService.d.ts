@@ -26,7 +26,7 @@ declare class GitService {
      * Get all branches in the repository
      * @returns {Promise<Object>} - Object containing branch information
      */
-    getBranches(): Promise<Object>;
+    getBranches(): Promise<any>;
     /**
      * Get the current branch
      * @returns {Promise<string>} - Current branch name
@@ -68,11 +68,11 @@ declare class GitService {
      * @param {number} [maxCount=100] - Maximum number of commits to retrieve
      * @returns {Promise<Object>} - Commit history
      */
-    getCommitHistory(branch: string, maxCount?: number | undefined): Promise<Object>;
+    getCommitHistory(branch: string, maxCount?: number): Promise<any>;
     /**
      * Get the status of the repository
      * @returns {Promise<Object>} - Repository status
      */
-    getStatus(): Promise<Object>;
+    getStatus(): Promise<any>;
 }
 import path = require("path");

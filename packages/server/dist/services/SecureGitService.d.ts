@@ -17,8 +17,8 @@ declare class SecureGitService {
     static searchDirectory(dir: string, repos: Array<{
         path: string;
         name: string;
-    }>, depth?: number | undefined): Promise<void>;
-    currentRepoPath: string | null;
+    }>, depth?: number): Promise<void>;
+    currentRepoPath: string;
     allowedDirectories: string[];
     /**
      * Set the current repository path
@@ -26,7 +26,7 @@ declare class SecureGitService {
      * @returns {boolean} - Whether the path was set successfully
      */
     setRepositoryPath(repoPath: string): boolean;
-    getRepositoryPath(): string | null;
+    getRepositoryPath(): string;
     /**
      * Check if a path is allowed
      * @param {string} pathToCheck - Path to check

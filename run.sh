@@ -598,15 +598,23 @@ start_app() {
         print_step "Building for production..."
         
         # Build client for production
-        (cd packages/client && yarn build) || {
+        (cd packages/client && yarn build:prod) || {
             print_error "Client build failed"
-            return 1
+            echo "Attempting fallback build with standard settings..."
+            (cd packages/client && yarn build) || {
+                print_error "Client build failed even with fallback settings"
+                return 1
+            }
         }
         
         # Build server
-        (cd packages/server && yarn build) || {
+        (cd packages/server && yarn build:prod) || {
             print_error "Server build failed"
-            return 1
+            echo "Attempting fallback build with standard settings..."
+            (cd packages/server && yarn build) || {
+                print_error "Server build failed even with fallback settings"
+                return 1
+            }
         }
         
         print_step "Starting production server..."

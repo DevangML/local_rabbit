@@ -75,7 +75,7 @@ const Contact = () => {
         </Typography>
 
         <Grid container spacing={4}>
-          { /* Contact Information */}
+          {/* Contact Information */}
           <Grid item xs={12} md={4}>
             <Stack spacing={3}>
               {contactInfo.map((info) => (
@@ -102,7 +102,7 @@ const Contact = () => {
             </Stack>
           </Grid>
 
-          { /* Contact Form */}
+          {/* Contact Form */}
           <Grid item xs={12} md={8}>
             <Paper
               elevation={0}

@@ -66,7 +66,7 @@ export = CodeReviewService;
  * Responsible for analyzing code differences and providing AI-powered code reviews
  */
 declare class CodeReviewService {
-    apiKey: string | undefined;
+    apiKey: string;
     baseUrl: string;
     maxRetries: number;
     maxTokensPerRequest: number;
@@ -186,19 +186,19 @@ type ReviewIssue = {
     /**
      * - Optional line number
      */
-    line?: number | undefined;
+    line?: number;
     /**
      * - Optional column number
      */
-    column?: number | undefined;
+    column?: number;
     /**
      * - Optional code snippet
      */
-    code?: string | undefined;
+    code?: string;
     /**
      * - Optional file path
      */
-    file?: string | undefined;
+    file?: string;
 };
 type FileReviewData = {
     /**
@@ -212,23 +212,23 @@ type FileReviewData = {
     /**
      * - The diff hunks
      */
-    hunks?: FileDiffHunk[] | undefined;
+    hunks?: FileDiffHunk[];
     /**
      * - The file content
      */
-    content?: string | undefined;
+    content?: string;
     /**
      * - The issues found
      */
-    issues?: ReviewIssue[] | undefined;
+    issues?: ReviewIssue[];
     /**
      * - The suggestions
      */
-    suggestions?: string[] | undefined;
+    suggestions?: string[];
     /**
      * - The review content
      */
-    review?: string | undefined;
+    review?: string;
 };
 type IssuesBySeverity = {
     /**
@@ -293,7 +293,7 @@ type ReviewResponse = {
     /**
      * - The review summary
      */
-    summary: Object;
+    summary: any;
     /**
      * - The reviewed files
      */

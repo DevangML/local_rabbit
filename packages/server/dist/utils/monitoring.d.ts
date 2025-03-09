@@ -42,11 +42,11 @@ declare class MonitoringUtils {
         /**
          * - System metrics
          */
-        metrics: Object;
+        metrics: any;
         /**
          * - List of health issues
          */
-        issues?: string[] | undefined;
+        issues?: string[];
     }>;
 }
 declare namespace MonitoringUtils {
@@ -80,5 +80,5 @@ type SystemMetrics = {
     /**
      * - Process metrics
      */
-    process?: Object | undefined;
+    process?: any;
 };

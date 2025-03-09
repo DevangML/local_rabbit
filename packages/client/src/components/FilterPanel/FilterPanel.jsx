@@ -57,7 +57,8 @@ const FilterPanel = ({ filters, onFilterChange }) => {
           <div className="checkbox-group">
             {filter.options.map((option) => {
               const isChecked =
-                activeFilters[filter.id]?.includes(option.value) || Boolean(false);
+                activeFilters[filter.id]?.includes(option.value) ||
+                Boolean(false);
               return (
                 <label key={option.value} className="checkbox-label">
                   <input

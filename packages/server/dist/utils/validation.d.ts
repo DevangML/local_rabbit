@@ -56,21 +56,21 @@ type GitConfig = {
     /**
      * - Allowed directories for git operations
      */
-    allowedDirs?: string[] | undefined;
+    allowedDirs?: string[];
 };
 type RequestBody = {
     /**
      * - Repository path
      */
-    path?: string | undefined;
+    path?: string;
     /**
      * - Source branch name
      */
-    fromBranch?: string | undefined;
+    fromBranch?: string;
     /**
      * - Target branch name
      */
-    toBranch?: string | undefined;
+    toBranch?: string;
 };
 type Request = {
     /**

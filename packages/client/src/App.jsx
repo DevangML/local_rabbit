@@ -14,7 +14,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 // import AppRoutes from "./routes";
 // import config from "./config";
 import { lightTheme as customLightTheme, darkTheme as customDarkTheme } from "./theme";
-import { CircularProgress, Box } from "@mui/material";
+import { CircularProgress, Box, Typography } from "@mui/material";
 import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./components/Layout/MainLayout";
 // We'll implement our own theme context directly in this file
@@ -169,18 +169,20 @@ const AppThemeContext = createContext();
 
 const AppThemeProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Check localStorage or system preference for theme
-    const savedTheme = localStorage?.getItem("theme");
-    return savedTheme
-      ? savedTheme === "dark"
-      : window?.matchMedia?.("(prefers-color-scheme: dark)")?.matches || false;
+    // Only access localStorage on the client side
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage?.getItem("theme");
+      return savedTheme
+        ? savedTheme === "dark"
+        : window?.matchMedia?.("(prefers-color-scheme: dark)")?.matches || false;
+    }
+    return false; // Default to light theme for SSR
   });
 
   useEffect(() => {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem("theme", isDarkMode ? "dark" : "light");
-    }
-    if (typeof document !== 'undefined') {
+    // Only run on the client side
+    if (typeof window !== 'undefined') {
+      localStorage?.setItem("theme", isDarkMode ? "dark" : "light");
       document.documentElement.setAttribute("data-theme", isDarkMode ? "dark" : "light");
       document.documentElement.style.colorScheme = isDarkMode ? "dark" : "light";
     }
@@ -190,7 +192,6 @@ const AppThemeProvider = ({ children }) => {
     setIsDarkMode((prev) => !prev);
   };
 
-  // Pass both the state values and the Material UI theme
   const value = {
     isDarkMode,
     toggleTheme,
@@ -216,27 +217,48 @@ const useAppTheme = () => {
   return context;
 };
 
-// Lazy load route components
-const Products = React.lazy(() => import("./components/Products/Products"));
-const About = React.lazy(() => import("./components/About/About"));
-const Contact = React.lazy(() => import("./components/Contact/Contact"));
-const Documentation = React.lazy(() => import("./components/Documentation/Documentation"));
-const DiffViewer = React.lazy(() => import("./components/DiffViewer/DiffViewerContainer"));
-const ImpactView = React.lazy(() => import("./components/ImpactView/ImpactView"));
-const QualityCheck = React.lazy(() => import("./components/QualityCheck/QualityCheck"));
-const AIAnalyzer = React.lazy(() => import("./components/AIAnalyzer/AIAnalyzer"));
+// Lazy load components only on the client side
+const lazyWithSSR = (importFn) => {
+  if (typeof window === 'undefined') {
+    return () => <LoadingFallback />;
+  }
+  return React.lazy(importFn);
+};
 
-// Loading component
+// Lazy load route components with SSR support
+const Products = lazyWithSSR(() => import(/* webpackChunkName: "products" */ "./components/Products/Products"));
+const About = lazyWithSSR(() => import(/* webpackChunkName: "about" */ "./components/About/About"));
+const Contact = lazyWithSSR(() => import(/* webpackChunkName: "contact" */ "./components/Contact/Contact"));
+const Documentation = lazyWithSSR(() => import(/* webpackChunkName: "docs" */ "./components/Documentation/Documentation"));
+const DiffViewer = lazyWithSSR(() => import(/* webpackChunkName: "analysis-tools" */ "./components/DiffViewer/DiffViewerContainer"));
+const ImpactView = lazyWithSSR(() => import(/* webpackChunkName: "analysis-tools" */ "./components/ImpactView/ImpactView"));
+const QualityCheck = lazyWithSSR(() => import(/* webpackChunkName: "analysis-tools" */ "./components/QualityCheck/QualityCheck"));
+const AIAnalyzer = lazyWithSSR(() => import(/* webpackChunkName: "analysis-tools" */ "./components/AIAnalyzer/AIAnalyzer"));
+
+// Prefetch components only on the client side
+const prefetchComponent = (importFn) => {
+  if (typeof window === 'undefined') return () => { };
+  return () => {
+    importFn().catch(console.error);
+  };
+};
+
+// Enhanced loading component with better UX
 const LoadingFallback = () => (
   <Box
     sx={{
       display: "flex",
+      flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
-      minHeight: "200px"
+      minHeight: "200px",
+      gap: 2
     }}
   >
     <CircularProgress />
+    <Typography variant="body2" color="text.secondary">
+      Loading...
+    </Typography>
   </Box>
 );
 
@@ -247,6 +269,12 @@ const AppContent = () => {
   const [toBranch, setToBranch] = useState("");
   const [branches, setBranches] = useState([]);
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
+
+  // Prefetch on mount for frequently accessed routes
+  useEffect(() => {
+    prefetchComponent(() => import("./components/Products/Products"))();
+    prefetchComponent(() => import("./components/DiffViewer/DiffViewerContainer"))();
+  }, []);
 
   const handleRepoPathChange = async (path) => {
     setRepoPath(path);
@@ -264,7 +292,7 @@ const AppContent = () => {
 
       // For testing/development only: mock data if API call fails
       try {
-        const response = await fetch("/api/git/repository/set", {
+        const response = await fetch("/api/code-review/select-repository", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -273,6 +301,7 @@ const AppContent = () => {
         });
 
         console.warn("Response status:", response.status);
+        console.warn("Response headers:", Object.fromEntries([...response.headers]));
 
         // Check if the response is empty before trying to parse it
         const responseText = await response.text();
@@ -280,12 +309,19 @@ const AppContent = () => {
           throw new Error("Empty response from server");
         }
 
+        // Check content type to handle HTML responses
+        const contentType = response.headers.get("content-type") || "";
+        if (contentType.includes("text/html")) {
+          console.error("Received HTML response instead of JSON:", responseText.substring(0, 200) + "...");
+          throw new Error("Server returned HTML instead of JSON. The server might be down or misconfigured.");
+        }
+
         // Try to parse the JSON response
         let responseData;
         try {
           responseData = JSON.parse(responseText);
         } catch (parseError) {
-          console.error("Failed to parse response as JSON:", responseText);
+          console.error("Failed to parse response as JSON:", responseText.substring(0, 200) + "...");
           throw new Error(`Invalid JSON response: ${parseError.message}`);
         }
 
@@ -319,18 +355,21 @@ const AppContent = () => {
         // Show a user-friendly error message in the console
         console.warn(`Could not fetch branches from the repository. Using mock data instead. Error: ${apiError.message}`);
       }
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+      setBranches([]);
     } finally {
       setIsLoadingBranches(false);
     }
   };
 
   const commonProps = {
+    branches,
     fromBranch,
     toBranch,
-    branches,
     onFromBranchChange: setFromBranch,
     onToBranchChange: setToBranch,
-    isLoadingBranches,
+    isLoadingBranches
   };
 
   return (

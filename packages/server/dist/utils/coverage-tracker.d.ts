@@ -15,7 +15,7 @@ declare class CoverageTracker {
     trackCoverage(testResults: {
         coverageMap: {
             getCoverageSummary: Function;
-            data: Object;
+            data: any;
         };
     }): Promise<void>;
     saveCoverageData(): Promise<void>;
@@ -30,13 +30,13 @@ declare class CoverageTracker {
             file: string;
             coverage: any;
         }[];
-    } | null;
+    };
     /**
      * Get coverage data for a specific file
      * @param {string} filePath - Path to the file
      * @returns {Object|null} - Coverage data for the file or null if not found
      */
-    getFileCoverage(filePath: string): Object | null;
+    getFileCoverage(filePath: string): any | null;
     getOverallCoverage(): any;
     getCoverageHistory(): {
         timestamp: any;

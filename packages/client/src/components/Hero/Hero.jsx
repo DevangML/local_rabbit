@@ -139,7 +139,7 @@ const Hero = () => {
                 overflow: "hidden",
               }}
             >
-              { /* Terminal Preview Component would go here */}
+              {/* Terminal Preview Component would go here */}
             </Box>
           </Grid>
         </Grid>

@@ -50,13 +50,16 @@ const DiffViewerContainer = ({
 
     try {
       // First ensure repository is set on the server
-      const setRepoResponse = await fetch("/api/git/repository/set", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const setRepoResponse = await fetch(
+        "/api/code-review/select-repository",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ path: repoPath }),
         },
-        body: JSON.stringify({ path: repoPath }),
-      });
+      );
 
       if (!setRepoResponse.ok) {
         const errorData = await setRepoResponse.json();

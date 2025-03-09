@@ -31,7 +31,7 @@ const About = () => {
     <Box sx={{ py: 6 }}>
       <Container maxWidth="lg">
         <Stack spacing={6}>
-          { /* Mission Section */}
+          {/* Mission Section */}
           <Box>
             <Typography variant="h3" gutterBottom align="center" sx={{ mb: 4 }}>
               Our Mission
@@ -48,7 +48,7 @@ const About = () => {
             </Typography>
           </Box>
 
-          { /* Values Section */}
+          {/* Values Section */}
           <Box>
             <Typography variant="h4" gutterBottom sx={{ mb: 4 }}>
               Our Values
@@ -90,7 +90,7 @@ const About = () => {
             </Grid>
           </Box>
 
-          { /* Team Section */}
+          {/* Team Section */}
           <Box>
             <Typography variant="h4" gutterBottom sx={{ mb: 4 }}>
               Our Team

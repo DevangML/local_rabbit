@@ -8,9 +8,9 @@
  * @returns {Function} Memoized function
  */
 export function memoizeWithTTL(fn: Function, options?: {
-    maxAge?: number | undefined;
-    maxSize?: number | undefined;
-    resolver?: Function | undefined;
+    maxAge?: number;
+    maxSize?: number;
+    resolver?: Function;
 }): Function;
 /**
  * Run tasks in parallel with concurrency control
@@ -22,8 +22,8 @@ export function memoizeWithTTL(fn: Function, options?: {
  * @returns {Promise<Array<any>>} Results array
  */
 export function parallelizeTask(items: Array<any>, task: Function, options?: {
-    concurrency?: number | undefined;
-    stopOnError?: boolean | undefined;
+    concurrency?: number;
+    stopOnError?: boolean;
 }): Promise<Array<any>>;
 /**
  * Throttle a function to limit its execution rate
@@ -31,14 +31,14 @@ export function parallelizeTask(items: Array<any>, task: Function, options?: {
  * @param {number} [wait=1000] - Throttle wait time in milliseconds
  * @returns {Function} Throttled function
  */
-export function throttleFunction(fn: Function, wait?: number | undefined): Function;
+export function throttleFunction(fn: Function, wait?: number): Function;
 /**
  * Debounce a function to delay its execution
  * @param {Function} fn - Function to debounce
  * @param {number} [wait=300] - Debounce wait time in milliseconds
  * @returns {Function} Debounced function
  */
-export function debounceFunction(fn: Function, wait?: number | undefined): Function;
+export function debounceFunction(fn: Function, wait?: number): Function;
 /**
  * Batch process an array of items
  * @param {Array<any>} items - Array of items to process
@@ -46,7 +46,7 @@ export function debounceFunction(fn: Function, wait?: number | undefined): Funct
  * @param {number} [batchSize=100] - Size of each batch
  * @returns {Promise<Array<any>>} Combined results
  */
-export function batchProcess(items: Array<any>, processFn: Function, batchSize?: number | undefined): Promise<Array<any>>;
+export function batchProcess(items: Array<any>, processFn: Function, batchSize?: number): Promise<Array<any>>;
 import _ = require("lodash");
 import async = require("async");
 export { _, async };
