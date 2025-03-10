@@ -223,12 +223,23 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@mui/styled-engine': path.resolve(__dirname, './src/mui-patches/styled-engine.js'),
+      '@mui/styled-engine': path.resolve(__dirname, 'src/mui-patches/mui-styled-engine.js'),
+      '@mui/styled-engine/': path.resolve(__dirname, 'src/mui-patches/mui-styled-engine.js'),
       '@emotion/use-insertion-effect-with-fallbacks': path.resolve(__dirname, './src/mui-patches/emotion/use-insertion-effect-with-fallbacks.js'),
       '@emotion/react': path.resolve(__dirname, '../../node_modules/@emotion/react'),
       '@emotion/styled': path.resolve(__dirname, '../../node_modules/@emotion/styled'),
       '@emotion/cache': path.resolve(__dirname, '../../node_modules/@emotion/cache'),
-      '@mui/utils/useEnhancedEffect': path.resolve(__dirname, 'src/mui-patches/useEnhancedEffect.js')
+      '@mui/utils/useEnhancedEffect': path.resolve(__dirname, 'src/mui-patches/useEnhancedEffect.js'),
+      '@mui/utils/useEnhancedEffect/useEnhancedEffect': path.resolve(__dirname, 'src/mui-patches/useEnhancedEffect.js'),
+      '@mui/utils/useEnhancedEffect/index': path.resolve(__dirname, 'src/mui-patches/useEnhancedEffect.js'),
+      '@mui/material/utils/useEnhancedEffect': path.resolve(__dirname, 'src/mui-patches/useEnhancedEffect.js'),
+      '@mui/base/utils/useEnhancedEffect': path.resolve(__dirname, 'src/mui-patches/useEnhancedEffect.js'),
+      '@mui/system/useEnhancedEffect': path.resolve(__dirname, 'src/mui-patches/useEnhancedEffect.js'),
+      '@mui/private-theming/useEnhancedEffect': path.resolve(__dirname, 'src/mui-patches/useEnhancedEffect.js'),
+      '@mui/styled-engine/StyledEngineProvider': path.resolve(__dirname, 'src/mui-patches/StyledEngineProvider.js'),
+      '@mui/system/ThemeProvider': path.resolve(__dirname, 'src/mui-patches/ThemeProvider.js'),
+      '@mui/material/styles/ThemeProvider': path.resolve(__dirname, 'src/mui-patches/ThemeProvider.js'),
+      '@mui/private-theming/ThemeProvider': path.resolve(__dirname, 'src/mui-patches/ThemeProvider.js')
     }
   },
   define: {

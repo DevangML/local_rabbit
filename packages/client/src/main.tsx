@@ -6,8 +6,11 @@
 /* global window */
 /* global window, document, console */
 
-// Import React hooks initialization first
-import './mui-patches/react-hooks-init';
+// Import our comprehensive MUI patches first
+import './mui-patches/index';
+
+// Import React hooks initialization is no longer needed as it's handled by the patches
+// import './mui-patches/react-hooks-init';
 
 // Import the emotion fix before any other imports
 // This fixes Emotion initialization issues and MUI styled-engine compatibility

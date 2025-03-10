@@ -35,13 +35,25 @@ if (isBrowser) {
   window.__EMOTION_INSERTION_EFFECT__ = true;
 }
 
+// Define a safe way to access React hooks that handles when they might be undefined
+const getSafeReactHook = (hookName: string) => {
+  // First check if React is available
+  if (!React) {
+    // Return a no-op function if React isn't available
+    return (fn: () => void) => { fn(); return () => {}; };
+  }
+  
+  // Then safely access the hook
+  return (React as any)[hookName] || ((fn: () => void) => { fn(); return () => {}; });
+};
+
 // Define our own useInsertionEffect hook that falls back to useLayoutEffect or useEffect
 // This avoids modifying the React import directly
 export const useInsertionEffectPolyfill = 
-  React.useInsertionEffect || 
+  (React.useInsertionEffect || 
   // On the server, useLayoutEffect causes a warning, so we use useEffect instead
-  (isServer ? React.useEffect : React.useLayoutEffect) || 
-  ((fn: () => void) => fn());
+  (isServer ? getSafeReactHook('useEffect') : getSafeReactHook('useLayoutEffect')) || 
+  ((fn: () => void) => fn()));
 
 // Import the module to reference it before augmentation
 import '@mui/styled-engine';
@@ -55,7 +67,7 @@ declare module '@mui/styled-engine' {
 }
 
 // Export our own implementation of useEnhancedEffect for MUI to use
-export const muiUseEnhancedEffect = isServer ? React.useEffect : React.useLayoutEffect;
+export const muiUseEnhancedEffect = isServer ? getSafeReactHook('useEffect') : getSafeReactHook('useLayoutEffect');
 
 // Create a patch to replace MUI's useEnhancedEffect with our implementation
 if (typeof window !== 'undefined') {
@@ -93,33 +105,63 @@ export function safeChild(child: any): any {
     return null;
   }
   
-  // If it's a React element or primitive type, return as is
-  if (
-    typeof child !== 'object' || 
-    child === null || 
-    typeof child === 'string' || 
-    typeof child === 'number' || 
-    typeof child === 'boolean' ||
-    (child && typeof child === 'object' && ('$$typeof' in child))
-  ) {
+  // If it's a plain string, number or boolean, it's safe to render
+  if (typeof child === 'string' || typeof child === 'number' || typeof child === 'boolean') {
     return child;
   }
+
+  // Check if it's a valid React element (has $$typeof property)
+  if (child && typeof child === 'object' && ('$$typeof' in child)) {
+    try {
+      // In SSR context, we need to be more careful with React elements
+      if (typeof window === 'undefined' && child.type && typeof child.type === 'function') {
+        // For component elements in SSR, return a placeholder instead of the actual element
+        // This helps avoid the "Objects are not valid as React child" error
+        return null;
+      }
+      return child; // Valid React elements are returned as is in browser context
+    } catch (e) {
+      console.warn('Error processing React element:', e);
+      return null;
+    }
+  }
   
-  // Convert other objects to string to prevent the "Objects are not valid as a React child" error
-  return String(child);
+  // Handle arrays by recursively processing each item
+  if (Array.isArray(child)) {
+    return child.map(safeChild);
+  }
+  
+  // For any other object, convert to string to prevent React errors
+  try {
+    return String(child);
+  } catch (e) {
+    console.warn('Failed to stringify object in SafeRender:', e);
+    return '';
+  }
 }
 
 // Export a utility to safely render children
 export function safeRender(children: React.ReactNode): React.ReactNode {
+  if (children === null || children === undefined) {
+    return null;
+  }
+  
   if (Array.isArray(children)) {
     return children.map(safeChild);
   }
+  
   return safeChild(children);
 }
 
 // Create a wrapper component that safely renders its children
 export const SafeRender: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return React.createElement(React.Fragment, null, safeRender(children));
+  try {
+    const safeChildren = safeRender(children);
+    return React.createElement(React.Fragment, null, safeChildren);
+  } catch (e) {
+    console.error('Error in SafeRender:', e);
+    return React.createElement(React.Fragment, null, 'Error rendering content');
+  }
 };
 
 // Export a dummy function to ensure this file is not tree-shaken

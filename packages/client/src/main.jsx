@@ -8,21 +8,6 @@ import ReactDOM from "react-dom/client"
 import { BrowserRouter } from "react-router-dom"
 import App from "./App.jsx"
 import "./index.css"
-import { registerSW } from "virtual:pwa-register"
-
-// Register service worker with improved error handling
-const updateSW = registerSW({
-    onNeedRefresh() {
-        // Auto-update without asking in this implementation
-        updateSW(true);
-    },
-    onOfflineReady() {
-        console.log("App ready to work offline");
-    },
-    onRegisteredSW(swUrl, registration) {
-        console.log("Service worker registered");
-    }
-});
 
 // Check if we're in development and show SSR notice if needed
 // But ensure the React application still renders
