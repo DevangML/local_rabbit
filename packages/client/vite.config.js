@@ -40,8 +40,8 @@ export default defineConfig(({ mode, command }) => {
   return {
     plugins: [
       react({
-        // This is the key configuration to handle JSX in .js files
-        include: "**/*.{jsx,js,tsx,ts}",
+        // Only include JavaScript files
+        include: "**/*.{jsx,js}",
       }),
     ],
     resolve: {
@@ -52,7 +52,7 @@ export default defineConfig(({ mode, command }) => {
         assert: 'assert',
         util: 'util'
       },
-      extensions: ['.js', '.jsx', '.ts', '.tsx']
+      extensions: ['.js', '.jsx'] // Only process JavaScript files
     },
     server: {
       // Use available port from env or default to common development port
@@ -78,9 +78,8 @@ export default defineConfig(({ mode, command }) => {
         },
         // Add SSR specific build configuration
         input: {
-          index: path.resolve(__dirname, 'index.html'),
-          // Add entry-server.js as an entry point for SSR build
-          'entry-server': path.resolve(__dirname, 'src/entry-server.tsx')
+          // Only build the entry-server.js file
+          'entry-server': path.resolve(__dirname, 'src/entry-server.jsx')
         },
         output: {
           // Ensure the entry-server.js file is placed in the correct location
@@ -92,7 +91,8 @@ export default defineConfig(({ mode, command }) => {
         }
       },
       outDir: 'dist',
-      emptyOutDir: true,
+      // Don't clean the entire directory to preserve other files
+      emptyOutDir: false,
       // Generate source maps for better debugging
       sourcemap: true,
     },
@@ -106,9 +106,7 @@ export default defineConfig(({ mode, command }) => {
         // Configure esbuild to handle JSX in .js files
         loader: {
           '.js': 'jsx',
-          '.jsx': 'jsx',
-          '.ts': 'tsx',
-          '.tsx': 'tsx'
+          '.jsx': 'jsx'
         },
       }
     },

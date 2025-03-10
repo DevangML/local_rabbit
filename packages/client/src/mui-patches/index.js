@@ -7,7 +7,7 @@
 
 // Re-export all of our patches for convenience
 export { default as useEnhancedEffect } from './useEnhancedEffect';
-export { default as StyledEngineProvider } from './StyledEngineProvider';
+export { default as StyledEngineProvider } from './StyledEngineProviderImpl';
 export { default as ThemeProvider } from './ThemeProvider.jsx';
 export * from './mui-styled-engine';
 

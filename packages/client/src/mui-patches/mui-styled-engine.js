@@ -7,9 +7,10 @@
 
 // Import only what we need directly
 import { useEffect, createContext } from 'react';
+import * as React from 'react';
 
-// Import our StyledEngineProvider from proper module
-import { StyledEngineProvider } from './StyledEngineProvider';
+// Import a simplified StyledEngineProvider
+import { StyledEngineProvider } from './StyledEngineProvider.jsx';
 
 // Create safe hooks that don't cause errors
 const useInsertionEffect = useEffect;

@@ -14,8 +14,8 @@ import './mui-patches/index';
 
 // Import the emotion fix before any other imports
 // This fixes Emotion initialization issues and MUI styled-engine compatibility
-import './emotion-fix';
-import { SafeRender, isServer } from './emotion-fix';
+import './emotion-fix.js';
+import { SafeRender, isServer } from './emotion-fix.js';
 
 // Make React available globally
 import * as React from 'react';
