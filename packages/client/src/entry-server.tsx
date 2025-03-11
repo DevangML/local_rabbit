@@ -34,13 +34,14 @@ import { Routes, Route } from "react-router-dom";
 import createCache from '@emotion/cache';
 import { CacheProvider } from '@emotion/react';
 import createEmotionServer from '@emotion/server/create-instance';
-import { ThemeProvider } from '@mui/material/styles';
+// Fix the import for MUI styles using the recommended approach
+import stylesModule from '@mui/material/styles';
+const { createTheme, ThemeProvider } = stylesModule;
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 
 // Import components needed for SSR
 import { Navigation } from './components/Navigation.jsx';
-import { createTheme } from '@mui/material/styles';
 
 // Create a theme instance for server rendering
 const theme = createTheme();
