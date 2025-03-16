@@ -3,7 +3,10 @@
  * This file patches the require.extensions to intercept specific modules and provide patched versions
  */
 
-const Module = require('module');
+import { createRequire } from 'module';
+import Module from 'module';
+
+const require = createRequire(import.meta.url);
 const originalRequire = Module.prototype.require;
 
 // Safe implementation of useEnhancedEffect
@@ -59,7 +62,7 @@ function installHook() {
 installHook();
 
 // Export the hook for other modules to use
-module.exports = {
+export {
   installHook,
   safeUseEnhancedEffect
 }; 

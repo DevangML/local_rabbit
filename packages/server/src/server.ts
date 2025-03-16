@@ -521,14 +521,53 @@ if (fs.existsSync(join(__dirname, 'routes/api.js'))) {
 }
 
 // 2. Special handling for client source files in development
+// Generic handler for all JSX files in src
+app.get('/src/**/*.jsx', (req, res, next) => {
+  // Extract the path to the JSX file from the request URL
+  const relativePath = req.path.substring('/src/'.length);
+  const clientSrcPath = join(__dirname, '../../client/src', relativePath);
+  
+  if (fs.existsSync(clientSrcPath)) {
+    // Set proper JS MIME type and disable caching for development
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    
+    // Read and send the file directly
+    try {
+      const content = fs.readFileSync(clientSrcPath, 'utf8');
+      return res.send(content);
+    } catch (error) {
+      console.error(`Error reading file ${relativePath}:`, error);
+      return res.status(500).send('// Error loading JavaScript file');
+    }
+  } else {
+    // If file doesn't exist, move to next middleware
+    next();
+  }
+});
+
+// Specific handler for main.jsx to ensure it works correctly
 app.get('/src/main.jsx', (req, res) => {
   // Special handling for this problematic route
   const clientSrcPath = join(__dirname, '../../client/src/main.jsx');
   if (fs.existsSync(clientSrcPath)) {
-    res.setHeader('Content-Type', 'application/javascript');
-    res.sendFile(clientSrcPath);
+    // Set proper JS MIME type and disable caching for development
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
+    // Read and send the file directly instead of using sendFile
+    try {
+      const content = fs.readFileSync(clientSrcPath, 'utf8');
+      return res.send(content);
+    } catch (error) {
+      console.error('Error reading main.jsx:', error);
+      return res.status(500).send('// Error loading JavaScript file');
+    }
   } else {
-    res.status(404).send('File not found');
+    console.error('main.jsx file not found at path:', clientSrcPath);
+    return res.status(404).send('// File not found');
   }
 });
 
@@ -539,6 +578,31 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
   });
+});
+
+// Handle CSS files from src
+app.get('/src/**/*.css', (req, res, next) => {
+  // Extract the path to the CSS file from the request URL
+  const relativePath = req.path.substring('/src/'.length);
+  const clientSrcPath = join(__dirname, '../../client/src', relativePath);
+  
+  if (fs.existsSync(clientSrcPath)) {
+    // Set proper CSS MIME type and disable caching for development
+    res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    
+    // Read and send the file directly
+    try {
+      const content = fs.readFileSync(clientSrcPath, 'utf8');
+      return res.send(content);
+    } catch (error) {
+      console.error(`Error reading file ${relativePath}:`, error);
+      return res.status(500).send('/* Error loading CSS file */');
+    }
+  } else {
+    // If file doesn't exist, move to next middleware
+    next();
+  }
 });
 
 // 10. Add a route for all paths to use SSR
