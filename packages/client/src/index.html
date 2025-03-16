@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Local Rabbit</title>
+  <link rel="stylesheet" href="/src/index.css">
+
+  <!-- React and React-DOM from CDN for direct browser loading -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-router-dom@6/umd/react-router-dom.development.js"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <!-- Use the browser-compatible version instead of the JSX version -->
+  <script type="module" src="/src/main-browser.js"></script>
+
+  <!-- Fallback message if script fails to load -->
+  <script>
+    setTimeout(function () {
+      const rootEl = document.getElementById('root');
+      if (rootEl && rootEl.childNodes.length === 0) {
+        rootEl.innerHTML = '<div style="text-align: center; margin-top: 50px;"><h2>Application loading failed</h2><p>Please check console for errors.</p></div>';
+      }
+    }, 2000);
+  </script>
+</body>
+
+</html>

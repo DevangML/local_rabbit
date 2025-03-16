@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Main.jsx Test</title>
+  <!-- React and React-DOM from CDN for direct browser loading -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-router-dom@6/umd/react-router-dom.development.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .error {
+      background-color: #ffebee;
+      color: #c62828;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+    }
+
+    .success {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+    }
+
+    #root {
+      min-height: 200px;
+      border: 1px solid #ccc;
+      padding: 20px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Main.jsx Test Page</h1>
+    <p>This page attempts to load the browser-compatible JavaScript file directly</p>
+
+    <div id="error-container"></div>
+    <div id="root"></div>
+  </div>
+
+  <script>
+    // Error handler function
+    function handleErrors() {
+      const errorContainer = document.getElementById('error-container');
+
+      window.addEventListener('error', function (event) {
+        console.error('Script error:', event);
+
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error';
+        errorDiv.textContent = `Error loading script: ${event.message}\nAt: ${event.filename}:${event.lineno}:${event.colno}`;
+
+        errorContainer.appendChild(errorDiv);
+        event.preventDefault();
+      });
+
+      window.addEventListener('unhandledrejection', function (event) {
+        console.error('Promise rejection:', event.reason);
+
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error';
+        errorDiv.textContent = `Unhandled Promise Rejection: ${event.reason}`;
+
+        errorContainer.appendChild(errorDiv);
+      });
+    }
+
+    // Initialize error handling
+    handleErrors();
+
+    // Load the script
+    function loadScript() {
+      try {
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.src = '/src/main-browser.js'; // Use browser-compatible version
+        script.onerror = function (error) {
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'error';
+          errorDiv.textContent = `Failed to load script: ${error}`;
+          document.getElementById('error-container').appendChild(errorDiv);
+        };
+        script.onload = function () {
+          const successDiv = document.createElement('div');
+          successDiv.className = 'success';
+          successDiv.textContent = 'Script loaded successfully!';
+          document.getElementById('error-container').appendChild(successDiv);
+        };
+        document.body.appendChild(script);
+      } catch (e) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error';
+        errorDiv.textContent = `Exception loading script: ${e.message}`;
+        document.getElementById('error-container').appendChild(errorDiv);
+      }
+    }
+
+    // Load the script after a short delay
+    setTimeout(loadScript, 500);
+  </script>
+</body>
+
+</html>
