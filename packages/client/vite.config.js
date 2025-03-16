@@ -79,7 +79,7 @@ export default defineConfig(({ mode, command }) => {
         // Add SSR specific build configuration
         input: {
           // Only build the entry-server.js file
-          'entry-server': path.resolve(__dirname, 'src/entry-server.jsx')
+          'entry-server': path.resolve(__dirname, 'src/entry-server-custom.js')
         },
         output: {
           // Ensure the entry-server.js file is placed in the correct location

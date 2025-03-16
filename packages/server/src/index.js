@@ -1,17 +1,20 @@
-const fs = require('fs');
-const path = require('path');
-const logger = require('./utils/logger');
+// Server entry point
+import path from 'path';
+import fs from 'fs';
+import url from 'url';
+import logger from './utils/logger.js';
 
-// Ensure logs directory exists
-const logsDir = path.join(__dirname, '..', 'logs');
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
-}
+// Get current directory with ES modules
+const __filename = url.fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Test logging
-logger.info('Server starting...');
-logger.debug('Debug mode enabled');
-logger.warn('This is a test warning');
-logger.error('This is a test error');
+// Initialize logger
+logger.info(`Server starting in ${process.env.NODE_ENV || 'development'} mode`);
 // @ts-ignore - Custom success method defined in logger.js
 logger.success('Logger initialized successfully');
+
+// Start the server
+import('./server.js').catch(err => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});

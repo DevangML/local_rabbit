@@ -1,4 +1,6 @@
 import React from 'react';
+import { StaticRouter } from 'react-router-dom/server';
+import App from './App';
 
 // Simple component for SSR
 const SimpleSSR = () => {
@@ -12,15 +14,28 @@ const SimpleSSR = () => {
 
 // Export the render function for server use
 export function renderPage(url) {
-  return <SimpleSSR />;
+  try {
+    return (
+      <StaticRouter location={url}>
+        <App />
+      </StaticRouter>
+    );
+  } catch (error) {
+    console.error('Error in renderPage:', error);
+    return <SimpleSSR />;
+  }
 }
 
 // Export a function for non-streaming rendering
 export function renderToStream(url) {
-  return <SimpleSSR />;
+  return renderPage(url);
 }
+
+// Export placeholder functions for emotion integration
+export const extractCriticalToChunks = (html) => ({ html, styles: [] });
+export const constructStyleTagsFromChunks = (chunks) => '';
 
 // Export default render function
 export default function render(props) {
-  return <SimpleSSR />;
+  return renderPage(props?.url || '/');
 } 

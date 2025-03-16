@@ -98,37 +98,45 @@ if (!isDev) {
         console.log('Found SSR entry at:', ssrEntryPath);
         // @ts-ignore - This file will be generated at build time
         const entryServer = await import(ssrEntryPath);
-        renderPage = entryServer.renderPage;
-        renderToStream = entryServer.renderToStream || renderPage;
-        extractCriticalToChunks = entryServer.extractCriticalToChunks;
-        constructStyleTagsFromChunks = entryServer.constructStyleTagsFromChunks;
+        
+        renderPage = entryServer.renderPage || entryServer.default?.renderPage || (() => null);
+        renderToStream = entryServer.renderToStream || entryServer.default?.renderToStream || renderPage;
+        extractCriticalToChunks = entryServer.extractCriticalToChunks || entryServer.default?.extractCriticalToChunks || null;
+        constructStyleTagsFromChunks = entryServer.constructStyleTagsFromChunks || entryServer.default?.constructStyleTagsFromChunks || null;
       } else {
-        console.error('SSR entry file not found at:', ssrEntryPath);
-        throw new Error('SSR entry file not found');
-      }
-    } catch (error) {
-      console.error('Primary SSR load failed:', error);
-      
-      // Try the alternative path (from monorepo root build)
-      const rootDistPath = join(__dirname, '../../../dist');
-      const altSsrEntryPath = join(rootDistPath, 'server/entry-server.js');
-      
-      try {
-        if (fs.existsSync(altSsrEntryPath)) {
-          console.log('Found alternative SSR entry at:', altSsrEntryPath);
-          // @ts-ignore - This file will be generated at build time
-          const entryServer = await import(altSsrEntryPath);
-          renderPage = entryServer.renderPage;
-          renderToStream = entryServer.renderToStream || renderPage;
-          extractCriticalToChunks = entryServer.extractCriticalToChunks;
-          constructStyleTagsFromChunks = entryServer.constructStyleTagsFromChunks;
-        } else {
-          console.error('Alternative SSR entry file not found at:', altSsrEntryPath);
-          throw new Error('Alternative SSR entry');
+        console.warn('SSR entry not found at expected path:', ssrEntryPath);
+        
+        // Try to load the custom entry server file
+        const customEntryPath = join(__dirname, '../../client/src/entry-server-custom.js');
+        if (fs.existsSync(customEntryPath)) {
+          console.log('Found custom SSR entry at:', customEntryPath);
+          // @ts-ignore - This file is a custom fallback
+          const customEntry = await import(customEntryPath);
+          
+          renderPage = customEntry.renderPage || customEntry.default?.renderPage || (() => null);
+          renderToStream = customEntry.renderToStream || customEntry.default?.renderToStream || renderPage;
+          extractCriticalToChunks = customEntry.extractCriticalToChunks || customEntry.default?.extractCriticalToChunks || null;
+          constructStyleTagsFromChunks = customEntry.constructStyleTagsFromChunks || customEntry.default?.constructStyleTagsFromChunks || null;
         }
-      } catch (secondError) {
-        console.error('Secondary SSR load failed:', secondError);
-        console.warn('Running without SSR support');
+      }
+    } catch (importError) {
+      console.error('Error importing SSR entry:', importError);
+      
+      // Fallback to custom entry-server if available
+      try {
+        const customEntryPath = join(__dirname, '../../client/src/entry-server-custom.js');
+        if (fs.existsSync(customEntryPath)) {
+          console.log('Falling back to custom SSR entry at:', customEntryPath);
+          // @ts-ignore - This file is a custom fallback
+          const customEntry = await import(customEntryPath);
+          
+          renderPage = customEntry.renderPage || customEntry.default?.renderPage || (() => null);
+          renderToStream = customEntry.renderToStream || customEntry.default?.renderToStream || renderPage;
+          extractCriticalToChunks = customEntry.extractCriticalToChunks || customEntry.default?.extractCriticalToChunks || null;
+          constructStyleTagsFromChunks = customEntry.constructStyleTagsFromChunks || customEntry.default?.constructStyleTagsFromChunks || null;
+        }
+      } catch (fallbackError) {
+        console.error('Error loading fallback SSR entry:', fallbackError);
       }
     }
   } catch (error) {
@@ -338,63 +346,87 @@ const ssrHandler: RequestHandler = async (req, res) => {
         res.setHeader('Transfer-Encoding', 'chunked');
         res.setHeader('X-Content-Type-Options', 'nosniff');
         
-        // Create the stream
-        const { pipe } = renderToPipeableStream(appElement, {
-          bootstrapScripts: ['/assets/index.js'],
-          onShellReady() {
-            // The content above all Suspense boundaries is ready
-            res.statusCode = 200;
-            res.write(htmlStart);
-            pipe(res);
-            
-            // Ensure we write the end HTML after the pipe has started
-            // This helps prevent the variable reference error by ensuring
-            // all React components are properly hydrated
-            setTimeout(() => {
+        // Ensure we have a valid React element
+        try {
+          // Create the stream
+          const { pipe } = renderToPipeableStream(appElement, {
+            bootstrapScripts: ['/assets/index.js'],
+            onShellReady() {
+              // The content above all Suspense boundaries is ready
+              res.statusCode = 200;
+              res.write(htmlStart);
+              pipe(res);
+              
+              // Write the end HTML after the component stream with a slight delay
+              // to ensure proper order of rendering
+              setTimeout(() => {
+                if (!res.writableEnded) {
+                  res.write(htmlEnd);
+                }
+              }, 100);
+            },
+            onAllReady() {
+              // If you don't want streaming, you can use this instead of onShellReady
+              // All the content is now ready, including Suspense boundaries
+              // Don't write to the response here as it might cause "write after end" errors
+              // Instead, ensure htmlEnd is written only if the response is still writable
               if (!res.writableEnded) {
                 res.write(htmlEnd);
               }
-            }, 100);
-          },
-          onAllReady() {
-            // If you don't want streaming, you can use this instead of onShellReady
-            // All the content is now ready, including Suspense boundaries
-            // Don't write to the response here as it might cause "write after end" errors
-            // Instead, ensure htmlEnd is written only if the response is still writable
-            if (!res.writableEnded) {
-              res.write(htmlEnd);
-            }
-          },
-          onError(error) {
-            // Log the error
-            console.error('Streaming SSR error:', error);
-            
-            // If headers haven't been sent yet, we can send an error response
-            if (!res.headersSent) {
-              res.statusCode = 500;
-              res.setHeader('Content-Type', 'text/html');
-              res.end(`<!DOCTYPE html>
-                <html>
-                  <head>
-                    <title>Error</title>
-                  </head>
-                  <body>
-                    <h1>Something went wrong</h1>
-                    <p>The server encountered an error.</p>
-                    <script>
-                      window.__INITIAL_STATE__ = ${JSON.stringify(initialState)};
-                    </script>
-                    <script type="module" src="/assets/index.js"></script>
-                  </body>
-                </html>`);
-            } else {
-              // If headers were sent, just end the response
-              if (!res.writableEnded) {
-                res.end(htmlEnd);
+            },
+            onError(error) {
+              // Log the error
+              console.error('Streaming SSR error:', error);
+              
+              // If headers haven't been sent yet, we can send an error response
+              if (!res.headersSent) {
+                res.statusCode = 500;
+                res.setHeader('Content-Type', 'text/html');
+                res.end(`<!DOCTYPE html>
+                  <html>
+                    <head>
+                      <title>Error</title>
+                    </head>
+                    <body>
+                      <h1>Something went wrong</h1>
+                      <p>The server encountered an error.</p>
+                      <script>
+                        window.__INITIAL_STATE__ = ${JSON.stringify(initialState)};
+                      </script>
+                      <script type="module" src="/assets/index.js"></script>
+                    </body>
+                  </html>`);
+              } else {
+                // If headers were sent, just end the response
+                if (!res.writableEnded) {
+                  res.end(htmlEnd);
+                }
               }
             }
+          });
+        } catch (streamError) {
+          console.error('Error creating stream:', streamError);
+          
+          // Fall back to simple string rendering if streaming fails
+          if (!res.headersSent) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'text/html');
+            res.send(`<!DOCTYPE html>
+              <html>
+                <head>
+                  <title>Streaming Error</title>
+                </head>
+                <body>
+                  <h1>Streaming Error</h1>
+                  <p>There was an error streaming the application. Please try again later.</p>
+                  <script>
+                    window.__INITIAL_STATE__ = ${JSON.stringify(initialState)};
+                  </script>
+                  <script type="module" src="/assets/index.js"></script>
+                </body>
+              </html>`);
           }
-        });
+        }
         
         return;
       }
@@ -477,9 +509,36 @@ const ssrHandler: RequestHandler = async (req, res) => {
   }
 };
 
-// 9. Add a health check endpoint
+// Set up route handlers
+// 1. API routes - mounted at /api/*
+// If API routes exist, mount them here
+if (fs.existsSync(join(__dirname, 'routes/api.js'))) {
+  import(join(__dirname, 'routes/api.js')).then(api => {
+    app.use('/api', api.default);
+  }).catch(err => {
+    console.warn('API routes not available:', err);
+  });
+}
+
+// 2. Special handling for client source files in development
+app.get('/src/main.jsx', (req, res) => {
+  // Special handling for this problematic route
+  const clientSrcPath = join(__dirname, '../../client/src/main.jsx');
+  if (fs.existsSync(clientSrcPath)) {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(clientSrcPath);
+  } else {
+    res.status(404).send('File not found');
+  }
+});
+
+// 3. Health check endpoint - useful for monitoring
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', uptime: process.uptime() });
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
 });
 
 // 10. Add a route for all paths to use SSR

@@ -1,22 +1,26 @@
-const winston = require('winston');
-const { format } = winston;
-const path = require('path');
-const chalk = require('chalk');
-const _config = require('../config');
+import winston from 'winston';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import chalk from 'chalk';
+import config from '../config.js';
+
+// Define current directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Define log format
 // eslint-disable-next-line no-unused-vars
-const logFormat = format.combine(
-  format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  format.errors({ stack: true }),
-  format.splat(),
-  format.json(),
+const logFormat = winston.format.combine(
+  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  winston.format.errors({ stack: true }),
+  winston.format.splat(),
+  winston.format.json(),
 );
 
 // Custom formatter for console with enhanced colors using chalk
-const _consoleFormat = format.combine(
-  format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  format.printf(({
+const _consoleFormat = winston.format.combine(
+  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  winston.format.printf(({
     /** @type {string} */ level,
     /** @type {string} */ message,
     /** @type {string} */ timestamp,
@@ -61,7 +65,7 @@ const _consoleFormat = format.combine(
 );
 
 // Add a new format for machine-readable output
-const _machineFormat = format.printf(({
+const _machineFormat = winston.format.printf(({
   /** @type {string} */ level,
   /** @type {string} */ message,
   /** @type {string} */ _timestamp,
@@ -82,11 +86,11 @@ const _machineFormat = format.printf(({
 // Create the logger
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
-  format: format.combine(
-    format.timestamp(),
-    format.errors({ stack: true }),
-    format.splat(),
-    format.json(),
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.splat(),
+    winston.format.json(),
   ),
   transports: [
     new winston.transports.File({
@@ -101,9 +105,9 @@ const logger = winston.createLogger({
 
 if (process.env.NODE_ENV !== 'production') {
   logger.add(new winston.transports.Console({
-    format: format.combine(
-      format.colorize(),
-      format.simple(),
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.simple(),
     ),
   }));
 }
@@ -252,4 +256,5 @@ typedLogger.table = (data, meta = {}) => {
 };
 
 // Export the enhanced logger
-module.exports = enhanceLogger(logger);
+const enhancedLogger = enhanceLogger(logger);
+export default enhancedLogger;

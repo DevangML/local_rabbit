@@ -34,9 +34,9 @@ import { Routes, Route } from "react-router-dom";
 import createCache from '@emotion/cache';
 import { CacheProvider } from '@emotion/react';
 import createEmotionServer from '@emotion/server/create-instance';
-// Fix the import for MUI styles using the recommended approach
-import stylesModule from '@mui/material/styles';
-const { createTheme, ThemeProvider } = stylesModule;
+// Use require-style imports for MUI to avoid ESM issues in SSR
+import * as styles from '@mui/material/styles/index.js';
+const { createTheme, ThemeProvider } = styles;
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 
@@ -48,7 +48,7 @@ const theme = createTheme();
 
 // Create a server-side emotion cache with a namespace
 // For SSR, we need to handle the absence of document
-const cache = createCache({ 
+const cache = createCache({
   key: 'css',
   prepend: true, // This ensures styles are prepended to the <head> for SSR
   // Don't specify insertionPoint in SSR environment to avoid document references
@@ -61,11 +61,11 @@ const { extractCriticalToChunks, constructStyleTagsFromChunks } = createEmotionS
 // Simple loading fallback
 const LoadingFallback = () => (
   <SafeRender>
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      height: '100px' 
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100px'
     }}>
       <div>Loading...</div>
     </div>
@@ -268,29 +268,14 @@ export function renderToStream(url) {
   }
 }
 
-// Keep the default export for backward compatibility but ensure it returns a React element
-export default function render(props) {
-  try {
-    const { url } = props;
-    return (
-      <SafeRender>
-        <React.StrictMode>
-          <StaticRouter location={url}>
-            <SSRApp />
-          </StaticRouter>
-        </React.StrictMode>
-      </SafeRender>
-    );
-  } catch (error) {
-    console.error('Error in default render:', error);
-    return (
-      <SafeRender>
-        <div style={{ padding: '20px', border: '1px solid red', margin: '20px', background: '#fff8f8' }}>
-          <h2 style={{ color: 'red' }}>Rendering Error</h2>
-          <p>An error occurred while rendering this page. Please check the server logs for details.</p>
-          <p>{error instanceof Error ? error.message : String(error)}</p>
-        </div>
-      </SafeRender>
-    );
-  }
-} 
+// Make sure renderPage is included in the default export
+const serverExports = {
+  renderPage,
+  renderToStream,
+  cache,
+  extractCriticalToChunks,
+  constructStyleTagsFromChunks
+};
+
+// Export default that includes all named exports
+export default serverExports;

@@ -122,13 +122,22 @@ export default defineConfig({
     cssMinify: true,
     sourcemap: true,
     rollupOptions: process.env.SSR ? {
-      input: './src/entry-server.tsx',
+      input: {
+        'entry-server': './src/entry-server.tsx'
+      },
       output: {
-        format: 'esm'
+        format: 'esm',
+        dir: 'dist/server',
+        entryFileNames: '[name].js',
+        chunkFileNames: 'chunks/[name]-[hash].js',
+        exports: 'named',
+        preserveModules: true,
+        preserveModulesRoot: 'src'
       },
       external: [
         'react',
         'react-dom',
+        'react-dom/server',
         'react/jsx-runtime',
         'react/jsx-dev-runtime',
         '@emotion/server',
@@ -137,6 +146,9 @@ export default defineConfig({
         '@emotion/react',
         '@emotion/styled',
         '@emotion/use-insertion-effect-with-fallbacks',
+        '@mui/material',
+        '@mui/system',
+        '@mui/utils',
         '@mui/styled-engine',
         '@mui/styled-engine/StyledEngineProvider'
       ]
@@ -149,8 +161,7 @@ export default defineConfig({
             return 'vendor';
           }
         }
-      },
-      preserveEntrySignatures: 'strict'
+      }
     },
     chunkSizeWarningLimit: 800,
     assetsInlineLimit: 4096,
@@ -162,26 +173,7 @@ export default defineConfig({
     ssr: process.env.SSR ? './src/entry-server.tsx' : undefined
   },
   ssr: {
-    noExternal: [
-      'react',
-      'react-dom',
-      'react/jsx-runtime',
-      'react/jsx-dev-runtime',
-      '@emotion/react',
-      '@emotion/styled',
-      '@emotion/cache',
-      '@emotion/server',
-      '@emotion/utils',
-      '@emotion/serialize',
-      '@emotion/use-insertion-effect-with-fallbacks',
-      '@mui/material',
-      '@mui/icons-material',
-      '@mui/utils',
-      '@mui/base',
-      '@mui/system',
-      '@mui/styles',
-      '@mui/private-theming'
-    ],
+    noExternal: ['@emotion/*', '@mui/material/*', '@mui/system/*'],
     target: 'node',
     optimizeDeps: {
       include: [
@@ -189,8 +181,10 @@ export default defineConfig({
         '@emotion/styled',
         '@emotion/cache',
         '@emotion/server',
-        '@emotion/use-insertion-effect-with-fallbacks'
-      ]
+        '@emotion/use-insertion-effect-with-fallbacks',
+        '@mui/material',
+        '@mui/system'
+      ],
     }
   },
   optimizeDeps: {
@@ -246,4 +240,4 @@ export default defineConfig({
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
     '__EMOTION_INSERTION_EFFECT__': true
   }
-}); 
+});

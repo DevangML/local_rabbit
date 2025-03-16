@@ -7,7 +7,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import { theme } from "./theme";
-import { FeatureDemo } from "./components/FeatureDemo";
+import { FeatureDemo } from "./components/FeatureDemo/index";
 const Home = lazy(() => import("./pages/Home"));
 function Loading() {
       return (_jsx(Box, { display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", bgcolor: theme.palette.background.default, children: _jsx(CircularProgress, {}) }));

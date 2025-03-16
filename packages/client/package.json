@@ -3,11 +3,20 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/client/main.js",
+      "require": "./dist/server/entry-server.js"
+    },
+    "./entry-server": {
+      "require": "./dist/server/entry-server.js"
+    }
+  },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "build:prod": "node scripts/pre-build-prod.js && vite build && cross-env SSR=true vite build --ssr src/entry-server.tsx --outDir dist && node scripts/post-build-ssr.js",
-    "build:ssr": "vite build --ssr src/entry-server.tsx --outDir dist && node scripts/post-build-ssr.js",
+    "build": "vite build && vite build --ssr src/entry-server.jsx --outDir dist/server && npm run postbuild",
+    "build:prod": "node scripts/pre-build-prod.js && vite build && cross-env SSR=true vite build --ssr src/entry-server.tsx --outDir dist/server && node scripts/post-build-ssr.js",
+    "build:ssr": "vite build --ssr src/entry-server.tsx --outDir dist/server && node scripts/post-build-ssr.js",
     "serve": "vite preview",
     "lint": "eslint src --ext .ts,.tsx,.js,.jsx --rule 'no-undef: off' --rule 'no-console: off' --rule 'react/no-array-index-key: off'",
     "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix --rule 'no-undef: off' --rule 'no-console: off' --rule 'react/no-array-index-key: off'",
@@ -15,7 +24,8 @@
     "test": "jest",
     "generate-pwa-assets": "pwa-assets-generator",
     "fix:types": "./fix-types.sh",
-    "fix:code-quality": "./fix-code-quality.sh"
+    "fix:code-quality": "./fix-code-quality.sh",
+    "postbuild": "cp src/entry-server-custom.js dist/server/entry-server.js"
   },
   "dependencies": {
     "@emotion/babel-plugin": "^11.13.5",
