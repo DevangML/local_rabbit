@@ -38,7 +38,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-helmet-async": "^2.0.5",
-    "react-router-dom": "6.21.0",
+    "react-router-dom": "6.21.1",
     "three": "^0.161.0",
     "vite-plugin-pwa": "^0.21.1"
   },
@@ -73,8 +73,8 @@
   },
   "resolutions": {
     "@remix-run/router": "1.11.0",
-    "react-router": "6.21.0",
-    "react-router-dom": "6.21.0",
+    "react-router": "6.21.1",
+    "react-router-dom": "6.21.1",
     "@emotion/cache": "11.11.0",
     "@emotion/react": "11.11.0",
     "@emotion/server": "11.11.0",

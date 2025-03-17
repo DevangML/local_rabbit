@@ -7,6 +7,9 @@ import './mui-patches/index';
 // This fixes Emotion initialization issues and MUI styled-engine compatibility
 import './emotion-fix';
 
+// Import router patch to fix compatibility issues between different router versions
+import './utils/routerPatch';
+
 import React from "react";
 import { hydrateRoot, createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
