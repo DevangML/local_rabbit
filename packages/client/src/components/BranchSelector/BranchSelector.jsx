@@ -8,21 +8,11 @@ import {
   Select,
   MenuItem,
   CircularProgress,
-  SelectChangeEvent,
 } from '@mui/material';
 import { CompareArrows as CompareArrowsIcon } from '@mui/icons-material';
 import './BranchSelector.css';
 
-interface BranchSelectorProps {
-  branches?: string[];
-  fromBranch: string;
-  toBranch: string;
-  onFromBranchChange: (branch: string) => void;
-  onToBranchChange: (branch: string) => void;
-  isLoadingBranches: boolean;
-}
-
-const BranchSelector: React.FC<BranchSelectorProps> = ({
+const BranchSelector = ({
   branches = [],
   fromBranch,
   toBranch,
@@ -48,7 +38,7 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({
             id="from-branch-select"
             value={fromBranch}
             label="From Branch"
-            onChange={(e: SelectChangeEvent) => onFromBranchChange(e.target.value)}
+            onChange={(e) => onFromBranchChange(e.target.value)}
             disabled={branches.length === 0 || isLoadingBranches}
           >
             {branches.map((branch) => (
@@ -78,7 +68,7 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({
             id="to-branch-select"
             value={toBranch}
             label="To Branch"
-            onChange={(e: SelectChangeEvent) => onToBranchChange(e.target.value)}
+            onChange={(e) => onToBranchChange(e.target.value)}
             disabled={branches.length === 0 || isLoadingBranches}
           >
             {branches.map((branch) => (
@@ -109,4 +99,4 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({
   );
 };
 
-export default BranchSelector; 
+export default BranchSelector;

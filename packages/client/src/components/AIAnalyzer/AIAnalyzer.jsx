@@ -2,8 +2,7 @@
 /* global fetch */
 /* global console */
 /* global fetch */
-/* global console */
-/* global fetch */
+/* global fetch, console */
 import React, { useState } from "react";
 import {
   Box,
@@ -36,12 +35,17 @@ const AIAnalyzer = ({
   const [prompt, setPrompt] = useState("");
 
   const handleAnalyze = async () => {
-    if (!repoPath) {
+    if (repoPath === undefined || repoPath === "") {
       setError("Please select a repository first");
       return;
     }
 
-    if (!fromBranch || !toBranch) {
+    if (
+      fromBranch === undefined ||
+      fromBranch === "" ||
+      toBranch === undefined ||
+      toBranch === ""
+    ) {
       setError("Please select both branches to analyze");
       return;
     }
@@ -71,16 +75,31 @@ const AIAnalyzer = ({
       setAnalysis(data);
     } catch (err) {
       console.error("Error analyzing changes:", err);
-      setError(err.message);
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred",
+      );
     } finally {
       setIsAnalyzing(false);
     }
   };
 
+  const handleFromBranchChange = (event) => {
+    const selectedBranch = event.target.value;
+    onFromBranchChange(selectedBranch);
+  };
+
+  const handleToBranchChange = (event) => {
+    const selectedBranch = event.target.value;
+    onToBranchChange(selectedBranch);
+  };
+
   return (
     <Container maxWidth="xl">
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" sx={{ mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
+        <Typography
+          variant="h5"
+          sx={{ mb: 3, display: "flex", alignItems: "center", gap: 1 }}
+        >
           <AIIcon color="primary" />
           AI Analysis
         </Typography>
@@ -90,12 +109,12 @@ const AIAnalyzer = ({
             <Select
               value={fromBranch}
               label="From Branch"
-              onChange={(e) => onFromBranchChange(e.target.value)}
+              onChange={handleFromBranchChange}
               disabled={isLoadingBranches || !repoPath || branches.length === 0}
             >
-              {branches.map((branch) => (
-                <MenuItem key={branch} value={branch}>
-                  {branch}
+              {branches.map((branchName) => (
+                <MenuItem key={branchName} value={branchName}>
+                  {branchName}
                 </MenuItem>
               ))}
             </Select>
@@ -105,12 +124,12 @@ const AIAnalyzer = ({
             <Select
               value={toBranch}
               label="To Branch"
-              onChange={(e) => onToBranchChange(e.target.value)}
+              onChange={handleToBranchChange}
               disabled={isLoadingBranches || !repoPath || branches.length === 0}
             >
-              {branches.map((branch) => (
-                <MenuItem key={branch} value={branch}>
-                  {branch}
+              {branches.map((branchName) => (
+                <MenuItem key={branchName} value={branchName}>
+                  {branchName}
                 </MenuItem>
               ))}
             </Select>
@@ -127,11 +146,15 @@ const AIAnalyzer = ({
             rows={3}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Enter specific instructions for the AI analysis (e.g., 'Focus on security issues' or 'Explain the changes in simple terms')"
+            placeholder={
+              'Enter specific instructions for the AI analysis (e.g., "Focus on security issues" or "Explain the changes in simple terms")'
+            }
             disabled={isAnalyzing}
             fullWidth
             variant="outlined"
-            sx={{ backgroundColor: "background.paper" }}
+            InputProps={{
+              sx: { bgcolor: "background.paper" },
+            }}
           />
         </Box>
 
@@ -139,7 +162,13 @@ const AIAnalyzer = ({
           <Button
             variant="contained"
             onClick={handleAnalyze}
-            disabled={!repoPath || !fromBranch || !toBranch || Boolean(Boolean(isAnalyzing)) || Boolean(Boolean(isLoadingBranches))}
+            disabled={
+              !repoPath ||
+              fromBranch === "" ||
+              toBranch === "" ||
+              isAnalyzing ||
+              isLoadingBranches
+            }
             startIcon={<AIIcon />}
           >
             {isAnalyzing ? "Analyzing..." : "Analyze Changes"}
@@ -147,117 +176,80 @@ const AIAnalyzer = ({
         </Box>
       </Box>
 
-      {isLoadingBranches ? (
+      {isAnalyzing ? (
         <Box
           sx={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 2,
+            justifyContent: "center",
             py: 8,
           }}
         >
-          <CircularProgress />
-          <Typography color="text.secondary">
-            Loading branches...
-          </Typography>
-        </Box>
-      ) : !repoPath ? (
-        <Paper
-          sx={{
-            p: 3,
-            textAlign: "center",
-            color: "text.secondary",
-            border: "1px dashed",
-            borderColor: "divider",
-          }}
-        >
-          Please select a repository to begin
-        </Paper>
-      ) : isAnalyzing ? (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 2,
-            py: 8,
-          }}
-        >
-          <CircularProgress />
-          <Typography color="text.secondary">
-            Analyzing changes using AI...
+          <CircularProgress size={60} sx={{ mb: 3 }} />
+          <Typography variant="h6">Analyzing Code Changes</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            This may take a minute or two depending on the size of the changes
           </Typography>
         </Box>
       ) : error ? (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mt: 2 }}>
           {error}
         </Alert>
-      ) : !analysis ? (
-        <Paper
-          sx={{
-            p: 3,
-            textAlign: "center",
-            color: "text.secondary",
-            border: "1px dashed",
-            borderColor: "divider",
-          }}
-        >
-          Select branches and click Analyze to get AI-powered insights
-        </Paper>
-      ) : (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          { /* Analysis Results */}
-          <Paper sx={{ p: 3 }}>
+      ) : analysis ? (
+        <Box sx={{ mt: 4 }}>
+          <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" gutterBottom>
               Summary
             </Typography>
-            <Typography color="text.secondary">
+            <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
               {analysis.summary}
             </Typography>
           </Paper>
 
-          { /* Suggestions */}
-          {analysis.suggestions?.length > 0 && (
-            <Paper sx={{ p: 3 }}>
+          {analysis.suggestions && analysis.suggestions.length > 0 && (
+            <Paper sx={{ p: 3, mb: 3 }}>
               <Typography variant="h6" gutterBottom>
                 Suggestions
               </Typography>
-              <Box component="ul" sx={{ mt: 2, pl: 2 }}>
+              <ul style={{ paddingLeft: "1.5rem", marginTop: "0.5rem" }}>
                 {analysis.suggestions.map((suggestion, index) => (
-                  <Typography
-                    key={index}
-                    component="li"
-                    color="text.secondary"
-                    sx={{ mb: 1 }}
-                  >
-                    {suggestion}
-                  </Typography>
+                  <li key={index}>
+                    <Typography variant="body1">{suggestion}</Typography>
+                  </li>
                 ))}
-              </Box>
+              </ul>
             </Paper>
           )}
 
-          { /* Code Quality Insights */}
-          {analysis.codeQuality && (
+          {analysis.codeQuality && Object.keys(analysis.codeQuality).length > 0 && (
             <Paper sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
-                Code Quality Insights
+                Code Quality Analysis
               </Typography>
-              <Box sx={{ mt: 2 }}>
-                {Object.entries(analysis.codeQuality).map(([key, value]) => (
-                  <Box key={key} sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      {key}
-                    </Typography>
-                    <Typography color="text.secondary">
-                      {value}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
+              {Object.entries(analysis.codeQuality).map(([category, comment]) => (
+                <Box key={category} sx={{ mb: 2 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                    {category}
+                  </Typography>
+                  <Typography variant="body2">{comment}</Typography>
+                </Box>
+              ))}
             </Paper>
           )}
+        </Box>
+      ) : (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          {/* Analysis Results */}
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              AI Analysis
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Select branches and click "Analyze Changes" to get an AI-powered
+              analysis of the code differences.
+            </Typography>
+          </Paper>
         </Box>
       )}
     </Container>

@@ -6,37 +6,17 @@ import React, { useState, useEffect, useCallback } from "react";
 // Import from relative paths to avoid module resolution issues
 import { apiBaseUrl as API_BASE_URL } from "../../config";
 
-interface Metric {
-  id: string;
-  name: string;
-  value: number;
-  unit?: string;
-  baseline: number;
-  normalizedValue?: number;
-  timestamp?: number;
-}
-
-interface Report {
-  metrics: Metric[];
-}
-
-interface AnalysisReportProps {
-  fromBranch: string;
-  toBranch: string;
-  mode: "impact" | "quality";
-}
-
-const AnalysisReport: React.FC<AnalysisReportProps> = ({
+const AnalysisReport = ({
   fromBranch,
   toBranch,
   mode,
 }) => {
-  const [report, setReport] = useState<Report | null>(null);
+  const [report, setReport] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   // Process report data directly without using a worker
-  const processReportData = useCallback(async (data: Report) => {
+  const processReportData = useCallback(async (data) => {
     try {
       // Process the data directly
       const processedData = data.metrics

@@ -1,39 +1,72 @@
-import { createTheme } from '@mui/material/styles';
-import { lightTheme } from './theme/index';
+import { createTheme } from "@mui/material/styles";
 
-// Create a theme instance using MUI's createTheme with our lightTheme values
-export const theme = createTheme({
-  palette: {
-    primary: {
-      main: lightTheme.accent,
-      dark: lightTheme.accentHover,
-    },
-    secondary: {
-      main: '#f50057',
-    },
-    background: {
-      default: lightTheme.bgPrimary,
-      paper: lightTheme.surface,
-    },
-    text: {
-      primary: lightTheme.textPrimary,
-      secondary: lightTheme.textSecondary,
-    },
-    divider: lightTheme.border,
+export const lightTheme = {
+  bgPrimary: "#ffffff",
+  bgSecondary: "#f8f9fa",
+  textPrimary: "#1a1a1a",
+  textSecondary: "#6c757d",
+  primary: {
+    main: "#1976d2",
+  },
+  secondary: {
+    main: "#dc004e",
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: [
+      "-apple-system",
+      "BlinkMacSystemFont",
+      "Segoe UI",
+      "Roboto",
+      "Helvetica Neue",
+      "Arial",
+      "sans-serif",
+    ].join(","),
   },
-  components: {
-    MuiCssBaseline: {
-      styleOverrides: {
-        body: {
-          backgroundColor: lightTheme.bgPrimary,
-          color: lightTheme.textPrimary,
-        },
-      },
-    },
-  },
-});
+};
 
-export default theme; 
+export const darkTheme = {
+  bgPrimary: "#0d1117",
+  bgSecondary: "#161b22",
+  textPrimary: "#c9d1d9",
+  primary: {
+    main: "#90caf9",
+  },
+  secondary: {
+    main: "#f48fb1",
+  },
+  background: {
+    default: "#121212",
+    paper: "#1e1e1e",
+  },
+  typography: {
+    fontFamily: [
+      "-apple-system",
+      "BlinkMacSystemFont",
+      "Segoe UI",
+      "Roboto",
+      "Helvetica Neue",
+      "Arial",
+      "sans-serif",
+    ].join(","),
+  },
+};
+
+export const createAppTheme = (mode = 'light') => {
+  const themeColors = mode === 'light' ? lightTheme : darkTheme;
+
+  return createTheme({
+    palette: {
+      mode,
+      primary: {
+        main: themeColors.primary.main
+      },
+      secondary: {
+        main: themeColors.secondary.main
+      },
+      background: themeColors.background,
+    },
+    typography: {
+      fontFamily: themeColors.typography.fontFamily,
+    },
+  });
+};

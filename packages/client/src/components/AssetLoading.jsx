@@ -2,22 +2,9 @@ import React, { Suspense, use } from 'react';
 import { Box, Typography, Paper, Card, CardMedia, CardContent, Grid, Skeleton, Chip, Stack } from '@mui/material';
 import axios from 'axios';
 
-// Asset metadata interface
-interface AssetMetadata {
-  id: string;
-  name: string;
-  type: string;
-  size: number;
-  dimensions: {
-    width: number;
-    height: number;
-  };
-  createdAt: string;
-}
-
 // Create a resource for asset metadata
-const createAssetResource = (id: string) => {
-  const promise = axios.get<AssetMetadata>(`/api/actions/assets/${id}/metadata`)
+const createAssetResource = (id) => {
+  const promise = axios.get(`/api/actions/assets/${id}/metadata`)
     .then(response => response.data);
   
   return {
@@ -34,12 +21,12 @@ const sampleImages = [
 ];
 
 // Asset component that uses the use hook for data fetching
-const Asset: React.FC<{ id: string; imageUrl: string }> = ({ id, imageUrl }) => {
+const Asset = ({ id, imageUrl }) => {
   // Use the use hook to fetch asset metadata
   const metadata = createAssetResource(id).read();
   
   // Format file size
-  const formatFileSize = (bytes: number): string => {
+  const formatFileSize = (bytes) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -76,7 +63,7 @@ const Asset: React.FC<{ id: string; imageUrl: string }> = ({ id, imageUrl }) => 
 };
 
 // Fallback loading component
-const AssetSkeleton: React.FC = () => (
+const AssetSkeleton = () => (
   <Card sx={{ height: '100%' }}>
     <Skeleton variant="rectangular" height={200} />
     <CardContent>
@@ -89,7 +76,7 @@ const AssetSkeleton: React.FC = () => (
 );
 
 // Main component that demonstrates Asset Loading with use hook
-export const AssetLoading: React.FC = () => {
+export const AssetLoading = () => {
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
       <Typography variant="h4" gutterBottom>
@@ -158,4 +145,4 @@ export const AssetLoading: React.FC = () => {
       </Paper>
     </Box>
   );
-}; 
+};

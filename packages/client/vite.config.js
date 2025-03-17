@@ -1,127 +1,240 @@
-import { defineConfig, loadEnv } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
-import fs from 'fs'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';;
+import { comlink } from 'vite-plugin-comlink';nk';
+import WebfontDownload from 'vite-plugin-webfont-dl'; nt - dl';
+import optimizer from 'vite-plugin-optimizer';
+import { robots } from 'vite-plugin-robots';
+import VConsole from 'vite-plugin-vconsole';
+import path from 'path';
+import { visualizer } from 'rollup-plugin-visualizer';om 'rollup-plugin-visualizer';
 
-// Try to get server port from the server-info file
-const getServerPort = () => {
-  try {
-    // Check for server info file in the server directory
-    const serverInfoPath = path.resolve(__dirname, '../server/.server-info.json');
-
-    if (fs.existsSync(serverInfoPath)) {
-      const serverInfo = JSON.parse(fs.readFileSync(serverInfoPath, 'utf8'));
-
-      // Check if the data is fresh (less than 1 hour old)
-      const isDataFresh = Date.now() - serverInfo.timestamp < 3600000;
-
-      if (isDataFresh && serverInfo.port) {
-        console.log(`[VITE] Found server running on port ${serverInfo.port}`);
-        return serverInfo.port;
-      }
+// https://vitejs.dev/config/// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [
+    react({
+      babel: {: {
+      plugins: [s: [
+        ['@babel/plugin-transform-runtime', { regenerator: true }],/plugin-transform-runtime', { regenerator: true }],
+        ['@emotion/babel-plugin', { sourceMap: true, autoLabel: 'dev-only' }]v - only' }]
+      ],
+      presets: [esets: [
+        ['@babel/preset-react', {/ preset - react', {
+            runtime: 'automatic',
+          development: process.env.NODE_ENV !== 'production', env.NODE_ENV !== 'production',
+          importSource: '@emotion/react'
+          }]
+        ]
+},
+  jsxRuntime: 'automatic', xRuntime: 'automatic',
+  jsxImportSource: '@emotion/react'on / react'
+    }),
+comlink(), link(),
+  WebfontDownload([nload([
+    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap', googleapis.com / css2 ? family = Inter : wght@400; 500; 600; 700 & display=swap',
+'https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap'
+    ]),
+optimizer({
+  imizer({
+    exclude: ['node_modules/**'], ['node_modules/**'],
+  entries: ['./src/main.jsx'],
+  esbuild: {
+    minify: true, true,
+    target: 'es2020', 20',
+        jsxFactory: 'React.createElement', 'ts', '.tsx': 'tsx'
+  },
+  jsxFragment: 'React.Fragment',
+  jsx: 'react',
+}
+    }),
+  robots(),
+  VConsole({
+    ots(),
+    entry: path.resolve('src/main.tsx'),{
+    localEnabled: true, ath.resolve('src/main.tsx'),
+    enabled: process.env.NODE_ENV !== 'production',
+    config: {
+      v.NODE_ENV !== 'production',
+      maxLogNumber: 1000,
+      theme: 'dark'umber: 1000,
     }
-  } catch (err) {
-    console.warn('[VITE] Could not read server port from info file:', err.message);
-  }
-
-  return null; // Default to null if not found
-};
-
-export default defineConfig(({ mode, command }) => {
-  // Load env files
-  const env = loadEnv(mode, process.cwd(), '');
-
-  // Determine server port with fallbacks
-  const serverPort = getServerPort() || env.VITE_API_PORT || 3001;
-  const serverUrl = env.VITE_API_BASE_URL || `http://127.0.0.1:${serverPort}`;
-
-  console.log(`[VITE] Configuring API proxy to: ${serverUrl}`);
-
-  return {
-    plugins: [
-      react({
-        // Only include JavaScript files
-        include: "**/*.{jsx,js}",
-      }),
-    ],
-    resolve: {
-      alias: {
-        '@': path.resolve(__dirname, './src'),
-        crypto: 'crypto-browserify',
-        stream: 'stream-browserify',
-        assert: 'assert',
-        util: 'util'
+  }),
+  VitePWA({
+    registerType: 'autoUpdate', ePWA({
+      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'], rType: 'autoUpdate',
+    manifest: {
+      o', 'robots.txt', 'apple - touch - icon.png'],
+        name: 'Local Rabbit',
+      short_name: 'LocalRabbit', cal Rabbit',
+        theme_color: '#ffffff', bit',
+        icons: [
+        {
+          src: '/pwa-192x192.png',
+          sizes: '192x192', src: '/pwa-192x192.png',
+          type: 'image/png'
+        },
+        {
+          src: '/pwa-512x512.png',
+          sizes: '512x512', src: '/pwa-512x512.png',
+          type: 'image/png'
+        }
+      ]
       },
-      extensions: ['.js', '.jsx'] // Only process JavaScript files
-    },
+    workbox: {
+      maximumFileSizeToCacheInBytes: 8 * 1024 * 1024, // 8MBrkbox: {
+      globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'], ileSizeToCacheInBytes: 8 * 1024 * 1024, // 8MB
+      runtimeCaching: [,
+        {
+          urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+          handler: 'CacheFirst', urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+          options: {
+            cacheName: 'google-fonts-cache',
+            expiration: {
+              e: 'google-fonts-cache',
+              maxEntries: 10,
+              maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year 10,
+            }, 60 * 60 * 24 * 365 // 1 year
+              cacheableResponse: {
+              statuses: [0, 200]cheableResponse: {
+              }
+            }
+          }
+        ]
+    }
+  }),
+  visualizer({
+    filename: '.stats/stats.html', ualizer({
+      gzipSize: true, '.stats/stats.html',
+      brotliSize: true,
+      template: 'treemap'e,
+    })p'
+  ],
     server: {
-      // Use available port from env or default to common development port
-      port: parseInt(env.VITE_CLIENT_PORT || 3000),
-      strictPort: true, // Don't allow falling back to another port
-      host: '127.0.0.1', // Force IPv4
-      proxy: {
-        '/api': {
-          target: serverUrl,
-          changeOrigin: true,
-          secure: false,
-          ws: true, // Enable WebSocket proxy
-          xfwd: true, // Add x-forward headers
-        }
-      },
+      PluginOption[],
+      port: 3000,
+      strictPort: true,000,
+      headers: {
+        true,
+        'Service-Worker-Allowed': '/',
+        'Cross-Origin-Embedder-Policy': 'require-corp',- Worker - Allowed': '/',
+      'Cross-Origin-Opener-Policy': 'same-origin': 'require-corp',
     },
+    open: true,
+    cors: trueen: true,
+  },
     build: {
-      rollupOptions: {
-        onwarn(warning, warn) {
-          // Skip certain warnings
-          if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return
-          warn(warning)
-        },
-        // Add SSR specific build configuration
+    target: 'esnext', ild: {
+      minify: 'esbuild',: 'esnext',
+      cssMinify: true,,
+      sourcemap: true,
+      rollupOptions: process.env.SSR ? {
         input: {
-          // Only build the entry-server.js file
-          'entry-server': path.resolve(__dirname, 'src/entry-server-custom.js')
-        },
-        output: {
-          // Ensure the entry-server.js file is placed in the correct location
-          entryFileNames: (chunkInfo) => {
-            return chunkInfo.name === 'entry-server'
-              ? 'server/entry-server.js'
-              : 'assets/[name]-[hash].js';
-          },
+          rocess.env.SSR ? {
+            'entry-server': './src/entry-server.jsx'
+          },- server': './ src / entry - server.tsx'
+      output: {
+    format: 'esm', tput: {
+      dir: 'dist/server', 'esm',
+      entryFileNames: '[name].js', ver',
+        chunkFileNames: 'chunks/[name]-[hash].js', ame].js',
+        exports: 'named', e]- [hash].js',
+        preserveModules: true,
+    preserveModulesRoot: 'src'true,
+  }, src'
+      external: [
+    'react', ternal: [
+      'react-dom',
+      'react-dom/server', om',
+        'react/jsx-runtime', erver',
+        'react/jsx-dev-runtime', ,
+      '@emotion/server', me',
+        '@emotion/server/create-instance',
+      '@emotion/cache', reate - instance',
+        '@emotion/react',
+      '@emotion/styled',
+      '@emotion/use-insertion-effect-with-fallbacks', ,
+      '@mui/material', rtion - effect -with-fallbacks',
+'@mui/system',
+  '@mui/utils',
+  '@mui/styled-engine',
+  '@mui/styled-engine/StyledEngineProvider'engine',
+      ]tyledEngineProvider'
+    } : {
+  output: {
+    {
+      manualChunks: (id) => {
+        put: {
+          if (id.includes('node_modules')) {
+            hunks: (id) => {
+              if (id.includes('react')) return 'react-vendor';_modules')) {
+              if (id.includes('@mui') || id.includes('@emotion')) return 'mui-vendor'; 'react-vendor';
+              return 'vendor'; ')) return 'mui - vendor';
+            }
+          }
         }
       },
-      outDir: 'dist',
-      // Don't clean the entire directory to preserve other files
-      emptyOutDir: false,
-      // Generate source maps for better debugging
-      sourcemap: true,
-    },
-    optimizeDeps: {
-      exclude: ['react-syntax-highlighter'],
-      esbuildOptions: {
-        target: 'esnext',
-        supported: {
-          'top-level-await': true
+        chunkSizeWarningLimit: 800,
+          assetsInlineLimit: 4096, unkSizeWarningLimit: 800,
+            modulePreload: {
+        polyfill: true
+      },
+      reportCompressedSize: true,
+        cssCodeSplit: true, portCompressedSize: true,
+          ssr: process.env.SSR ? './src/entry-server.jsx' : undefined
+    }, R ? './src/entry-server.tsx' : undefined
+    ssr: {
+      noExternal: ['@emotion/*', '@mui/material/*', '@mui/system/*'], r: {
+        target: 'node', ternal: ['@emotion/*', '@mui/material/*', '@mui/system/*'],
+          optimizeDeps: {
+          include: [
+            '@emotion/react',
+            '@emotion/styled', n / react',
+        '@emotion/cache', ,
+            '@emotion/server',
+            '@emotion/use-insertion-effect-with-fallbacks', ,
+            '@mui/material', rtion - effect -with-fallbacks',
+          '@mui/system'
+      ],
+        }
+      },
+      optimizeDeps: {
+        include: [timizeDeps: {
+          'react',
+          'react-dom',
+          'react-router-dom', om',
+      '@mui/material', r- dom',
+      '@mui/icons-material',
+          '@emotion/react', rial',
+      '@emotion/styled',
+          '@emotion/cache', ,
+          '@emotion/use-insertion-effect-with-fallbacks',
+          '@mui/styled-engine', ertion - effect -with-fallbacks',
+        '@mui/styled-engine/StyledEngineProvider',
+          'three', tyledEngineProvider',
+        '@react-three/fiber',
+          '@react-three/drei', three / fiber',
+        '@reduxjs/toolkit',
+          '@tanstack/react-query',
+          'axios', ery',
+        'framer-motion'
+    ],motion'
+        esbuildOptions: {
+          define: {
+            buildOptions: {
+              global: 'globalThis'
+            } 'globalThis'
+          }
         },
-        // Configure esbuild to handle JSX in .js files
-        loader: {
-          '.js': 'jsx',
-          '.jsx': 'jsx'
-        },
-      }
-    },
-    esbuild: {
-      logOverride: { 'this-is-undefined-in-esm': 'silent' },
-      // Configure esbuild to handle JSX in .js files
-      loader: 'jsx',
-      jsxFactory: 'React.createElement',
-      jsxFragment: 'React.Fragment',
-      target: 'es2020'
-    },
-    define: {
-      'process.env': {}, // This ensures process.env is defined but empty
-      'import.meta.env.VITE_API_BASE_URL': JSON.stringify(serverUrl),
-      'import.meta.env.VITE_NODE_ENV': JSON.stringify(env.VITE_NODE_ENV || 'development')
-    },
-  }
-}) 
+        resolve: {
+          alias: {
+            solve: {
+              '@': path.resolve(__dirname, './src')
+            }, ath.resolve(__dirname, './src'),
+              extensions: ['.js', '.jsx', '.json']irname, 'src/mui-patches/mui-styled-engine.js'),
+          },,
+          define: {
+            hes / emotion / use - insertion - effect -with-fallbacks.js'),
+            'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+              '__EMOTION_INSERTION_EFFECT__': true),
+          }
+        });

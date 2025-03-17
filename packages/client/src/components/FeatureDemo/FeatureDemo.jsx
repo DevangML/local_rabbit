@@ -1,68 +1,40 @@
-import React from 'react';
-import { Box, Typography, Paper, List, ListItem, ListItemText, Divider, Button } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useCallback } from 'react';
+import { Box, Typography, Paper, Button, CircularProgress } from '@mui/material';
 
-const FeatureDemo = () => {
-  const navigate = useNavigate();
+export function FeatureDemo() {
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const handleCalculateClick = useCallback(async () => {
+    setIsCalculating(true);
+    try {
+      // Simulate heavy calculation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setResult(42);
+    } finally {
+      setIsCalculating(false);
+    }
+  }, []);
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Feature Demonstration
-      </Typography>
-
-      <Typography variant="body1" paragraph>
-        This page showcases various features available in the application.
-      </Typography>
-
+    <Box sx={{ maxWidth: 600, mx: "auto" }}>
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          React Features
+        <Typography variant="h4" gutterBottom>
+          Feature Demo
         </Typography>
-
-        <Typography variant="body1" paragraph>
-          Explore the capabilities of React including Server-Side Rendering.
-        </Typography>
-
         <Button
           variant="contained"
-          color="primary"
-          onClick={() => navigate('/home')}
+          onClick={handleCalculateClick}
+          disabled={isCalculating}
         >
-          Go to Home
+          {isCalculating ? <CircularProgress size={24} /> : 'Calculate'}
         </Button>
-      </Paper>
-
-      <Paper elevation={3} sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Available Features
-        </Typography>
-
-        <List>
-          <ListItem>
-            <ListItemText
-              primary="Server-Side Rendering"
-              secondary="Improved initial page load performance"
-            />
-          </ListItem>
-          <Divider />
-          <ListItem>
-            <ListItemText
-              primary="Component-Based Architecture"
-              secondary="Modular and reusable UI components"
-            />
-          </ListItem>
-          <Divider />
-          <ListItem>
-            <ListItemText
-              primary="Material UI Integration"
-              secondary="Beautiful, responsive design components"
-            />
-          </ListItem>
-        </List>
+        {result && (
+          <Typography sx={{ mt: 2 }}>
+            Result: {result}
+          </Typography>
+        )}
       </Paper>
     </Box>
   );
-};
-
-export default FeatureDemo; 
+}

@@ -1,41 +1,88 @@
-/* global document */
-/* global document */
-/* global document */
-/* global document */
 /* global window, document, console */
-import React from "react"
-import ReactDOM from "react-dom/client"
-import { BrowserRouter } from "react-router-dom"
-import App from "./App.js"
-import "./index.css"
 
-// Check if we're in development and show SSR notice if needed
-// But ensure the React application still renders
-const isDev = import.meta.env.DEV;
-if (isDev) {
-    console.log("Development Mode - SSR is disabled in dev mode");
+// Import our comprehensive MUI patches first
+import './mui-patches/index';
+
+// Import the emotion fix before any other imports
+// This fixes Emotion initialization issues and MUI styled-engine compatibility
+import './emotion-fix';
+
+import React from "react";
+import { hydrateRoot, createRoot } from "react-dom/client";
+import { RouterProvider } from "react-router-dom";
+import router from "./router";
+import { registerSW } from "virtual:pwa-register";
+import { ThemeProvider } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
+import { createTheme } from "@mui/material/styles";
+
+// Create a theme
+const theme = createTheme();
+
+// Register service worker with improved error handling and reload behavior
+const updateSW = registerSW({
+    onNeedRefresh() {
+        // Using a custom approach instead of window.confirm to comply with linting rules
+        // In a real application, this would be replaced with a proper UI notification
+        const shouldUpdate = true; // Auto-update without asking
+        if (shouldUpdate) {
+            updateSW(true);
+        }
+    },
+    onOfflineReady() {
+        console.warn("App ready to work offline");
+    },
+    onRegistered(registration) {
+        if (import.meta.env.DEV) {
+            console.warn("SW registered in dev mode:", registration);
+        }
+    },
+    onRegisterError(error) {
+        console.error("SW registration failed:", error);
+    }
+});
+
+// Add error event listener for module loading issues
+window.addEventListener("error", (event) => {
+    if (event.message && event.message.includes("Failed to load module script")) {
+        console.warn("Module loading error detected, attempting reload...");
+        window.location.reload();
+    }
+});
+
+const root = document.getElementById("root");
+if (!root) {
+    throw new Error("Root element not found");
 }
 
-// Add fallback loading indicator function
-const handleOnLoadFallback = () => {
-    const rootElement = document.getElementById("root");
-    const hasContent = rootElement && rootElement.childNodes.length > 0;
-    if (!hasContent) {
-        rootElement.innerHTML = "<div style='display:flex;justify-content:center;align-items:center;height:100vh;'><p>Loading application...</p></div>";
-    }
-
-    // Mark document as loaded
-    document.body.classList.add('app-loaded');
-};
-
-// Router setup for the entire application
-ReactDOM.createRoot(document.getElementById("root")).render(
+// Create the app with React 19 features
+const App = () => (
     <React.StrictMode>
-        <BrowserRouter>
-            <App />
-        </BrowserRouter>
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <RouterProvider router={router} fallbackElement={<div>Loading...</div>} />
+        </ThemeProvider>
     </React.StrictMode>
 );
 
-// Handle loading state
-window.addEventListener('load', handleOnLoadFallback);
+// Check if we're hydrating from server-rendered content
+if (root.innerHTML.trim().length > 0 && window.__INITIAL_STATE__) {
+    try {
+        // Use hydrateRoot for SSR hydration
+        hydrateRoot(root, <App />);
+        console.log("Hydrated successfully from server-rendered content");
+    } catch (error) {
+        console.error("Hydration failed, falling back to client rendering:", error);
+        const appRoot = createRoot(root);
+        appRoot.render(<App />);
+    }
+} else {
+    // Use createRoot for client-side rendering with Concurrent Mode
+    const appRoot = createRoot(root);
+    appRoot.render(<App />);
+}
+
+// Remove the server-injected state after hydration
+if (window.__INITIAL_STATE__) {
+    delete window.__INITIAL_STATE__;
+}
