@@ -119,9 +119,7 @@ export default defineConfig({
     cssMinify: true,
     sourcemap: true,
     rollupOptions: process.env.SSR ? {
-      input: {
-        'entry-server': './src/entry-server.jsx'
-      },
+      input: './src/entry-server.jsx', // Changed from object to direct path
       output: {
         format: 'esm',
         dir: 'dist/server',
@@ -171,6 +169,8 @@ export default defineConfig({
     ssr: {
       noExternal: ['@emotion/*', '@mui/material/*', '@mui/system/*'],
       target: 'node',
+      format: 'esm', // Add this line to ensure ESM output
+      entry: './src/entry-server.jsx', // Add explicit SSR entry point
       optimizeDeps: {
         include: [
           '@emotion/react',
