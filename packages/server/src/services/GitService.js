@@ -226,7 +226,6 @@ class GitService {
         const items = await fs.readdir(dir, { withFileTypes: true });
 
         if (items && items.length > 0) {
-          // @ts-ignore - fs.Dirent is the correct type but TypeScript doesn't recognize it
           const subdirs = items
             .filter((/** @type {{isDirectory: () => boolean}} */ item) => item.isDirectory())
             .map((/** @type {{isDirectory: () => boolean, name: string}} */ item) => path.join(dir, item.name));

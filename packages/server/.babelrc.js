@@ -6,7 +6,6 @@ export default {
       },
       modules: false
     }],
-    '@babel/preset-typescript',
     ['@babel/preset-react', {
       runtime: 'automatic',
       development: process.env.NODE_ENV === 'development',

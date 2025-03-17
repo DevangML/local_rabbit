@@ -9,7 +9,7 @@ export const useInsertionEffect = (effect) => {
   // In a browser environment, we'll try to use React's hooks if available
   if (typeof window !== 'undefined') {
     try {
-      // Try to access React from window (which should be set by emotion-fix.ts)
+      // Try to access React from window (which should be set by emotion-fix.js)
       const reactInstance = window.React;
 
       // If React is available with useInsertionEffect, use it

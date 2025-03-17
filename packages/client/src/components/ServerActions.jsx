@@ -2,16 +2,9 @@ import React, { useState, useTransition, use } from 'react';
 import { Box, Typography, Button, TextField, Paper, List, ListItem, ListItemText, Divider, CircularProgress } from '@mui/material';
 import axios from 'axios';
 
-interface Todo {
-  id: number;
-  text: string;
-  completed: boolean;
-  createdAt?: string;
-}
-
 // Create a resource for server actions
-const createServerAction = <T, P>(action: (params: P) => Promise<T>) => {
-  return (params: P) => {
+const createServerAction = (action) => {
+  return (params) => {
     const promise = action(params);
     return {
       use: () => use(promise)
@@ -20,24 +13,24 @@ const createServerAction = <T, P>(action: (params: P) => Promise<T>) => {
 };
 
 // Server actions
-const addTodoAction = createServerAction(async (text: string) => {
+const addTodoAction = createServerAction(async (text) => {
   const response = await axios.post('/api/actions/todos/add', { text });
   return response.data.todo;
 });
 
-const toggleTodoAction = createServerAction(async ({ id, completed }: { id: number, completed: boolean }) => {
+const toggleTodoAction = createServerAction(async ({ id, completed }) => {
   const response = await axios.put(`/api/actions/todos/${id}/toggle`, { completed });
   return response.data;
 });
 
-const deleteTodoAction = createServerAction(async (id: number) => {
+const deleteTodoAction = createServerAction(async (id) => {
   const response = await axios.delete(`/api/actions/todos/${id}`);
   return response.data;
 });
 
 // Component that demonstrates Server Actions
-export const ServerActions: React.FC = () => {
-  const [todos, setTodos] = useState<Todo[]>([]);
+export const ServerActions = () => {
+  const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState('');
   const [isPending, startTransition] = useTransition();
   
@@ -61,7 +54,7 @@ export const ServerActions: React.FC = () => {
   };
   
   // Toggle todo with server action
-  const handleToggleTodo = (id: number, completed: boolean) => {
+  const handleToggleTodo = (id, completed) => {
     startTransition(async () => {
       try {
         // Call the server action
@@ -79,7 +72,7 @@ export const ServerActions: React.FC = () => {
   };
   
   // Delete todo with server action
-  const handleDeleteTodo = (id: number) => {
+  const handleDeleteTodo = (id) => {
     startTransition(async () => {
       try {
         // Call the server action
@@ -200,26 +193,33 @@ export const ServerActions: React.FC = () => {
         <List>
           <ListItem>
             <ListItemText 
-              primary="Type Safety" 
-              secondary="Server and client code share the same types"
+              primary="Simplified Data Mutations" 
+              secondary="No need to create separate API endpoints for each mutation" 
             />
           </ListItem>
           <Divider />
           <ListItem>
             <ListItemText 
               primary="Progressive Enhancement" 
-              secondary="Works even without JavaScript enabled"
+              secondary="Works with or without JavaScript enabled on the client" 
             />
           </ListItem>
           <Divider />
           <ListItem>
             <ListItemText 
-              primary="Reduced Client-Server Boundary" 
-              secondary="Simplifies data mutations and form handling"
+              primary="Reduced Client-Server Code" 
+              secondary="Define your data mutation logic once, on the server" 
+            />
+          </ListItem>
+          <Divider />
+          <ListItem>
+            <ListItemText 
+              primary="Type Safety" 
+              secondary="End-to-end type safety between client and server" 
             />
           </ListItem>
         </List>
       </Paper>
     </Box>
   );
-}; 
+};

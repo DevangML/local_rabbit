@@ -142,9 +142,7 @@ class AnalyzerService {
     /** @type {{[key: string]: string}} */
     const fileTypes = {
       js: 'JavaScript',
-      ts: 'TypeScript',
       jsx: 'React',
-      tsx: 'React TypeScript',
       py: 'Python',
       java: 'Java',
       rb: 'Ruby',

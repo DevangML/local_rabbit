@@ -1,15 +1,9 @@
 import React, { useState, useEffect, useTransition, Suspense } from 'react';
 import { Box, Typography, Button, TextField, Paper, List, ListItem, ListItemText, Divider, CircularProgress, Card, CardContent } from '@mui/material';
 
-interface Todo {
-  id: number;
-  text: string;
-  completed: boolean;
-}
-
 // Polyfill for useOptimistic if not available in React 18
-const useOptimistic = <T,U>(state: T, updateFn: (state: T, update: U) => T) => {
-  const [optimisticState, setOptimisticState] = useState<T>(state);
+const useOptimistic = (state, updateFn) => {
+  const [optimisticState, setOptimisticState] = useState(state);
   
   // Update optimistic state when actual state changes
   useEffect(() => {
@@ -17,18 +11,18 @@ const useOptimistic = <T,U>(state: T, updateFn: (state: T, update: U) => T) => {
   }, [state]);
   
   // Function to apply optimistic update
-  const addOptimisticUpdate = (update: U) => {
+  const addOptimisticUpdate = (update) => {
     setOptimisticState(current => updateFn(current, update));
   };
   
-  return [optimisticState, addOptimisticUpdate] as const;
+  return [optimisticState, addOptimisticUpdate];
 };
 
 // Safe resource creation pattern for React 18 and below
-const createResource = <T,>(promise: Promise<T>) => {
-  let status: 'pending' | 'success' | 'error' = 'pending';
-  let result: T;
-  let error: Error;
+const createResource = (promise) => {
+  let status = 'pending';
+  let result;
+  let error;
   
   const suspender = promise.then(
     (data) => {
@@ -58,7 +52,7 @@ const createResource = <T,>(promise: Promise<T>) => {
 // Use immediately invoked function expression to avoid variable hoisting issues
 const initialTodosResource = (() => {
   const fetchTodos = () => 
-    new Promise<Todo[]>(resolve => 
+    new Promise(resolve => 
       setTimeout(() => 
         resolve([
           { id: 1, text: 'Learn React 19 Concurrent Mode', completed: false },
@@ -141,7 +135,7 @@ const TodoList = () => {
   const initialTodos = resource.read();
   
   // State for todos
-  const [todos, setTodos] = useState<Todo[]>(initialTodos);
+  const [todos, setTodos] = useState(initialTodos);
   
   // New todo input
   const [newTodo, setNewTodo] = useState('');
@@ -149,7 +143,7 @@ const TodoList = () => {
   // Use our useOptimistic hook (either native or polyfill)
   const [optimisticTodos, addOptimisticTodo] = useOptimistic(
     todos,
-    (state, newTodo: Todo) => [...state, newTodo]
+    (state, newTodo) => [...state, newTodo]
   );
   
   // useTransition for non-blocking updates
@@ -163,7 +157,7 @@ const TodoList = () => {
     if (!newTodo.trim()) return;
     
     // Create new todo
-    const todo: Todo = {
+    const todo = {
       id: Date.now(),
       text: newTodo,
       completed: false
@@ -183,7 +177,7 @@ const TodoList = () => {
   };
   
   // Toggle todo completion with transition
-  const toggleTodo = (id: number) => {
+  const toggleTodo = (id) => {
     startTransition(() => {
       setTodos(todos.map(todo => 
         todo.id === id ? { ...todo, completed: !todo.completed } : todo
@@ -192,65 +186,17 @@ const TodoList = () => {
   };
   
   // Delete todo with transition
-  const deleteTodo = (id: number) => {
+  const deleteTodo = (id) => {
     // Start transition for smoother UI
     startTransition(() => {
       // Simulate server request in a non-async way
       setTimeout(() => {
         // Update state
         setTodos(todos.filter(todo => todo.id !== id));
-      }, 1000);
+      }, 500);
     });
   };
   
-  // Render a simpler version during SSR to avoid hydration issues
-  if (typeof window === 'undefined') {
-    return (
-      <>
-        <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Add New Todo
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <TextField 
-              label="New Todo" 
-              variant="outlined" 
-              size="small"
-              fullWidth
-              disabled={true}
-            />
-            <Button 
-              variant="contained" 
-              disabled={true}
-            >
-              Add
-            </Button>
-          </Box>
-        </Paper>
-        
-        <Paper elevation={3} sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Todo List (with Optimistic UI)
-          </Typography>
-          
-          <List>
-            {initialTodos.map((todo, index) => (
-              <React.Fragment key={todo.id}>
-                {index > 0 && <Divider />}
-                <ListItem>
-                  <ListItemText
-                    primary={todo.text}
-                  />
-                </ListItem>
-              </React.Fragment>
-            ))}
-          </List>
-        </Paper>
-      </>
-    );
-  }
-  
-  // Full client-side rendering
   return (
     <>
       <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
@@ -270,9 +216,9 @@ const TodoList = () => {
           <Button 
             variant="contained" 
             onClick={addTodo}
-            disabled={!newTodo.trim()}
+            disabled={!newTodo.trim() || isPending}
           >
-            Add
+            {isPending ? 'Adding...' : 'Add'}
           </Button>
         </Box>
         
@@ -280,7 +226,7 @@ const TodoList = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <CircularProgress size={20} sx={{ mr: 1 }} />
             <Typography variant="body2" color="text.secondary">
-              Updating...
+              Processing...
             </Typography>
           </Box>
         )}
@@ -288,7 +234,7 @@ const TodoList = () => {
       
       <Paper elevation={3} sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
-          Todo List (with Optimistic UI)
+          Todo List (Optimistic UI)
         </Typography>
         
         <List>
@@ -301,6 +247,7 @@ const TodoList = () => {
                     color="error" 
                     onClick={() => deleteTodo(todo.id)}
                     size="small"
+                    disabled={isPending}
                   >
                     Delete
                   </Button>
@@ -335,21 +282,30 @@ const TodoList = () => {
 };
 
 // Create a simple error boundary for catching Suspense errors
-class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
-  constructor(props: {children: React.ReactNode}) {
+class ErrorBoundary extends React.Component {
+  constructor(props) {
     super(props);
     this.state = { hasError: false };
   }
-
+  
   static getDerivedStateFromError() {
     return { hasError: true };
   }
-
+  
+  componentDidCatch(error, errorInfo) {
+    console.error('Error caught by ErrorBoundary:', error, errorInfo);
+  }
+  
   render() {
     if (this.state.hasError) {
       return (
-        <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h6" color="error">Something went wrong.</Typography>
+        <Paper elevation={3} sx={{ p: 3, mb: 3, bgcolor: 'error.light' }}>
+          <Typography variant="h6" gutterBottom>
+            Something went wrong
+          </Typography>
+          <Typography variant="body1">
+            There was an error loading this component.
+          </Typography>
           <Button 
             variant="contained" 
             onClick={() => this.setState({ hasError: false })}
@@ -360,95 +316,98 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
         </Paper>
       );
     }
-
+    
     return this.props.children;
   }
 }
 
-// Main component that demonstrates React 18 features
-export const React19Features: React.FC = () => {
-  // Track if component has mounted to handle hydration safely
-  const [hasMounted, setHasMounted] = useState(false);
-  
-  // After initial render, mark component as mounted
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
-  
-  // Use simplified rendering during SSR to avoid Suspense and complex component issues
-  const isSSR = typeof window === 'undefined';
-  
+// Main React 19 Features component
+const React19Features = () => {
   return (
-    <Box sx={{ padding: 3, maxWidth: 800, margin: '0 auto' }}>
+    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
       <Typography variant="h4" gutterBottom>
-        React 18 Features Demo
+        React 19 Features Demo
       </Typography>
+      
       <Typography variant="body1" paragraph>
-        This component demonstrates features that are compatible with React 18.
+        This component demonstrates some of the key features in React 19, including Suspense for data fetching and the useOptimistic hook for optimistic UI updates.
       </Typography>
       
-      {/* For SSR - render components directly without Suspense to avoid streaming issues */}
-      {isSSR ? (
-        <>
-          <TodoList />
-          <SuspensefulCounter />
-        </>
-      ) : (
-        /* For client-side rendering - use Suspense and ErrorBoundary */
-        <>
-          <ErrorBoundary>
-            <Suspense fallback={
-              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                <CircularProgress />
-              </Box>
-            }>
-              {hasMounted && <TodoList />}
-            </Suspense>
-          </ErrorBoundary>
-          
-          <ErrorBoundary>
-            <Suspense fallback={
-              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                <CircularProgress />
-              </Box>
-            }>
-              {hasMounted && <SuspensefulCounter />}
-            </Suspense>
-          </ErrorBoundary>
-        </>
-      )}
-      
-      <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
+      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
         <Typography variant="h6" gutterBottom>
-          React 19 Features Used
+          Suspense for Data Fetching
+        </Typography>
+        
+        <Typography variant="body1" paragraph>
+          Suspense allows components to "wait" for something before rendering. This demo uses Suspense to wait for data to load before rendering the TodoList component.
+        </Typography>
+        
+        <ErrorBoundary>
+          <Suspense fallback={
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress />
+            </Box>
+          }>
+            <TodoList />
+          </Suspense>
+        </ErrorBoundary>
+      </Paper>
+      
+      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Lazy Loading with Suspense
+        </Typography>
+        
+        <Typography variant="body1" paragraph>
+          Suspense can also be used for code-splitting through React.lazy(). This allows you to load components only when they are needed.
+        </Typography>
+        
+        <ErrorBoundary>
+          <Suspense fallback={
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress />
+            </Box>
+          }>
+            <SuspensefulCounter />
+          </Suspense>
+        </ErrorBoundary>
+      </Paper>
+      
+      <Paper elevation={3} sx={{ p: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          About React 19 Features
+        </Typography>
+        
+        <Typography variant="body1" paragraph>
+          React 19 introduces several new features that improve the developer experience and application performance:
         </Typography>
         
         <List>
           <ListItem>
             <ListItemText 
-              primary="useOptimistic" 
-              secondary="For optimistic UI updates before server response"
+              primary="Concurrent Mode" 
+              secondary="Enables React to work on multiple tasks concurrently, improving responsiveness" 
             />
           </ListItem>
           <Divider />
           <ListItem>
             <ListItemText 
               primary="Suspense for Data Fetching" 
-              secondary="Declarative loading states while data loads"
+              secondary="Allows components to wait for data before rendering" 
             />
           </ListItem>
           <Divider />
           <ListItem>
             <ListItemText 
-              primary="Concurrent Mode" 
-              secondary="Non-blocking rendering with useTransition"
+              primary="useOptimistic Hook" 
+              secondary="Provides a way to update the UI optimistically before an operation completes" 
             />
           </ListItem>
           <Divider />
           <ListItem>
             <ListItemText 
-              primary="Streaming Suspense" 
-              secondary="Progressive loading of UI components"
+              primary="Server Components" 
+              secondary="Components that run on the server and stream HTML to the client" 
             />
           </ListItem>
         </List>
@@ -457,5 +416,4 @@ export const React19Features: React.FC = () => {
   );
 };
 
-// Export as default for compatibility with both direct imports and lazy loading
-export default React19Features; 
+export default React19Features;

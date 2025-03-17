@@ -186,7 +186,6 @@ const enhanceLogger = (originalLogger) => {
     };
   });
 
-  // Use type assertion to satisfy TypeScript
   return /** @type {import('winston').Logger} */ (enhanced);
 };
 

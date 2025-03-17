@@ -54,11 +54,8 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Performance optimizations
-// @ts-ignore - TypeScript doesn't understand Express middleware properly in JSDoc mode
 app.use(compressionMiddleware); // Compress responses
-// @ts-ignore - TypeScript doesn't understand Express middleware properly in JSDoc mode
 app.use(disableETagMiddleware); // Disable ETags
-// @ts-ignore - TypeScript doesn't understand Express middleware properly in JSDoc mode
 app.use(cacheControlMiddleware(86400)); // Set cache headers (1 day)
 
 // CORS middleware

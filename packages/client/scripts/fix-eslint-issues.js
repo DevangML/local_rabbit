@@ -30,7 +30,7 @@ const stats = {
 };
 
 /**
- * Get all JavaScript and TypeScript files recursively
+ * Get all JavaScript files recursively
  */
 function getAllJsFiles(dir, fileList = []) {
   const files = fs.readdirSync(dir);

@@ -10,8 +10,6 @@
   "eslint.validate": [
     "javascript",
     "javascriptreact",
-    "typescript",
-    "typescriptreact"
   ],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
@@ -22,16 +20,11 @@
   "eslint.probe": [
     "javascript",
     "javascriptreact",
-    "typescript",
-    "typescriptreact",
     "html",
     "vue",
     "markdown"
   ],
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
   "javascript.preferences.importModuleSpecifier": "relative",
-  "typescript.preferences.importModuleSpecifier": "relative",
   "debug.javascript.autoAttachFilter": "smart",
   "debug.javascript.terminalOptions": {
     "skipFiles": [

@@ -34,7 +34,7 @@ interface DiffSearchProps {
 
 const PREDEFINED_FILTERS = {
   diffTypes: ["Added", "Modified", "Deleted", "Renamed"],
-  fileTypes: ["JavaScript", "TypeScript", "CSS", "HTML", "JSON", "Other"],
+  fileTypes: ["JavaScript", "CSS", "HTML", "JSON", "Other"],
   severity: ["High", "Medium", "Low"],
   status: ["Pending", "Reviewed", "Approved", "Rejected"],
   qualityMetrics: ["Complexity", "Coverage", "Duplication", "Style Issues"],
@@ -57,13 +57,13 @@ const DiffSearch: React.FC<DiffSearchProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState(initialQuery);
-  const [activeFilters, setActiveFilters] = useState<Filter>({
+  const [activeFilters, setActiveFilters] = useState < Filter > ({
     ...DEFAULT_FILTERS,
     ...initialFilters,
   });
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchContainerRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef < HTMLDivElement > (null);
+  const searchContainerRef = useRef < HTMLDivElement > (null);
+  const searchInputRef = useRef < HTMLInputElement > (null);
 
   const flutterFilters: FlutterFilters = {
     fileTypes: [

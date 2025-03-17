@@ -13,10 +13,6 @@
     "lint:quiet": "eslint . --ext .ts,.js --quiet || true"
   },
   "devDependencies": {
-    "@types/node": "^20.11.19",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
     "eslint": "^8.57.1",
-    "typescript": "^5.3.3"
   }
 }

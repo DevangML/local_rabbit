@@ -1,3 +1,3 @@
-// This file is deprecated - use index.tsx directly
+// This file is deprecated - use index.jsx directly
 // Kept for backward compatibility
 export * from './FeatureDemo';

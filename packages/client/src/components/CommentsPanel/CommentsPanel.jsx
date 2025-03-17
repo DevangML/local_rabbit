@@ -5,38 +5,19 @@ import React, { useState, useEffect, useCallback } from "react";
 import { apiBaseUrl as API_BASE_URL } from "@/config";
 import "./CommentsPanel.css";
 
-interface Comment {
-        id: string;
-        line: number;
-        content: string;
-        createdAt: string;
-        type: "comment";
-}
-
-interface CommentsPanelProps {
-        comments: Comment[];
-        isLoading: boolean;
-        setIsLoading: (loading: boolean) => void;
-        setComments: (comments: Comment[]) => void;
-}
-
-interface ErrorResponse {
-        error: string;
-}
-
-const CommentsPanel: React.FC<CommentsPanelProps> = ({
+const CommentsPanel = ({
         comments,
         isLoading,
         setIsLoading,
         setComments,
 }) => {
         const [newComment, setNewComment] = useState("");
-        const [selectedLine, setSelectedLine] = useState<number | null>(null);
-        const [error, setError] = useState<string | null>(null);
+        const [selectedLine, setSelectedLine] = useState(null);
+        const [error, setError] = useState(null);
 
         const fileId = "mock-file-id"; // TODO: Replace with actual file ID
 
-        const fetchComments = useCallback(async (): Promise<void> => {
+        const fetchComments = useCallback(async () => {
             setIsLoading(true);
             setError(null);
 
@@ -44,11 +25,11 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({
                 const response = await fetch(`${API_BASE_URL}/api/comments/${encodeURIComponent(fileId)}`);
 
                 if (!response.ok) {
-                    const errorData = await response.json() as ErrorResponse;
+                    const errorData = await response.json();
                     throw new Error(errorData.error);
                 }
 
-                const data = await response.json() as Comment[];
+                const data = await response.json();
                 setComments(data);
             } catch (err) {
                 setError(err instanceof Error ? err.message : "An unknown error occurred");
@@ -61,7 +42,7 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({
             fetchComments();
         }, [fetchComments]);
 
-        const handleAddComment = async (): Promise<void> => {
+        const handleAddComment = async () => {
             if (!newComment || selectedLine === null) { return; }
 
             setIsLoading(true);
@@ -81,11 +62,11 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json() as ErrorResponse;
+                    const errorData = await response.json();
                     throw new Error(errorData.error);
                 }
 
-                const data = await response.json() as Comment;
+                const data = await response.json();
                 setComments([...comments, data]);
                 setNewComment("");
                 setSelectedLine(null);
@@ -96,7 +77,7 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({
             }
         };
 
-        const handleDeleteComment = async (commentId: string): Promise<void> => {
+        const handleDeleteComment = async (commentId) => {
             setIsLoading(true);
             setError(null);
 
@@ -106,7 +87,7 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json() as ErrorResponse;
+                    const errorData = await response.json();
                     throw new Error(errorData.error);
                 }
 
@@ -118,7 +99,7 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({
             }
         };
 
-        const formatTimestamp = (timestamp: string): string => {
+        const formatTimestamp = (timestamp) => {
             const date = new Date(timestamp);
             return date.toLocaleString();
         };
@@ -177,7 +158,7 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({
                                     <span className="comment-date">{formatTimestamp(comment.createdAt)}</span>
                                     <button
                                         className="delete-button"
-                                        onClick={(): Promise<void> => handleDeleteComment(comment.id)}
+                                        onClick={() => handleDeleteComment(comment.id)}
                                         title="Delete comment"
                                     >
                                         ×
@@ -192,4 +173,4 @@ const CommentsPanel: React.FC<CommentsPanelProps> = ({
         );
 };
 
-export default CommentsPanel; 
+export default CommentsPanel;

@@ -200,22 +200,14 @@ const DiffViewerContainer = ({
         >
           {error}
         </Alert>
-      ) : !diffData || diffData.length === 0 ? (
-        <Paper
-          sx={{
-            p: 3,
-            textAlign: "center",
-            color: "text.secondary",
-            border: "1px dashed",
-            borderColor: "divider",
-          }}
-        >
-          {fromBranch && Boolean(toBranch)
-            ? "No changes found between selected branches"
-            : "Select branches to compare changes"}
-        </Paper>
-      ) : (
+      ) : diffData && diffData.length > 0 ? (
         <DiffViewer files={diffData} />
+      ) : (
+        <Paper sx={{ p: 3, textAlign: "center" }}>
+          <Typography variant="body1" color="text.secondary">
+            {diffData ? "No changes found between branches" : "Select branches to compare"}
+          </Typography>
+        </Paper>
       )}
     </Container>
   );

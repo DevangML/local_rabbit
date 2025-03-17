@@ -3,7 +3,7 @@ import { Box, Typography, Paper, TextField, Button, List, ListItem, ListItemText
 import { Helmet } from 'react-helmet-async';
 
 // Document metadata component
-export const DocumentMetadata: React.FC = () => {
+export const DocumentMetadata = () => {
   // State for document metadata
   const [title, setTitle] = useState('React 19 Document Metadata Demo');
   const [description, setDescription] = useState('Learn how to use React 19 Document Metadata features');
@@ -19,7 +19,7 @@ export const DocumentMetadata: React.FC = () => {
   const [counter, setCounter] = useState(0);
   
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     // In a real app, you might save this to a database or context
     console.log('Metadata updated');
@@ -216,7 +216,11 @@ export const DocumentMetadata: React.FC = () => {
             helperText="Hex color code (e.g., #61dafb)"
           />
           
-          <Button type="submit" variant="contained" sx={{ mt: 2 }}>
+          <Button 
+            variant="contained" 
+            type="submit" 
+            sx={{ mt: 2 }}
+          >
             Update Metadata
           </Button>
         </Box>
@@ -267,4 +271,4 @@ export const DocumentMetadata: React.FC = () => {
       </Paper>
     </Box>
   );
-}; 
+};

@@ -114,5 +114,5 @@ const routes = [
 // Create the router with React 19 features enabled
 const router = createBrowserRouter(routes);
 
-// Export the router for use in main.tsx
+// Export the router for use in main.jsx
 export default router; 

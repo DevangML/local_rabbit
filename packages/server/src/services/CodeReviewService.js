@@ -237,8 +237,6 @@ class CodeReviewService {
     const fileTypes = {
       js: 'JavaScript',
       jsx: 'React JSX',
-      ts: 'TypeScript',
-      tsx: 'React TSX',
       py: 'Python',
       java: 'Java',
       rb: 'Ruby',

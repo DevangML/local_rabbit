@@ -9,8 +9,6 @@ import {
       useTheme,
       Switch,
       FormControlLabel,
-      Theme,
-      SxProps,
 } from "@mui/material";
 import {
       ContentCopy as CopyIcon,
@@ -22,48 +20,14 @@ import {
 } from "@mui/icons-material";
 import "./DiffViewer.css";
 
-export type DiffLine = {
-      type: "added" | "removed" | "unchanged" | "header";
-      content: string;
-      oldLineNumber?: number | undefined;
-      newLineNumber?: number | undefined;
-}
-
-type DiffFile = {
-      path: string;
-      changes: DiffLine[];
-      stats: {
-        additions: number;
-        deletions: number;
-        changes: number;
-      };
-}
-
-type DiffViewerProps = {
-      files: DiffFile[];
-}
-
-type DiffLineProps = {
-      type: DiffLine["type"];
-      content: string;
-      oldLineNumber?: number | undefined;
-      newLineNumber?: number | undefined;
-}
-
-type FileDiffProps = {
-      file: DiffFile;
-}
-
-type ViewMode = "split" | "unified";
-
 // Side-by-side diff line component
-const SideBySideDiffLine: React.FC<DiffLineProps> = ({ type, content, oldLineNumber, newLineNumber }) => {
+const SideBySideDiffLine = ({ type, content, oldLineNumber, newLineNumber }) => {
       const theme = useTheme();
       const isAdded = type === "added";
       const isRemoved = type === "removed";
       const isHeader = type === "header";
 
-      const getLineStyle = (side?: "left" | "right"): SxProps<Theme> => {
+      const getLineStyle = (side) => {
         if (isHeader) {
           return {
             backgroundColor: "rgba(122, 162, 247, 0.1)",
@@ -201,10 +165,10 @@ const SideBySideDiffLine: React.FC<DiffLineProps> = ({ type, content, oldLineNum
 };
 
 // Unified diff line component
-const UnifiedDiffLine: React.FC<DiffLineProps> = ({ type, content, oldLineNumber, newLineNumber }) => {
+const UnifiedDiffLine = ({ type, content, oldLineNumber, newLineNumber }) => {
       const theme = useTheme();
 
-      const getLineStyle = (): SxProps<Theme> => {
+      const getLineStyle = () => {
         switch (type) {
           case "added":
             return {
@@ -283,12 +247,12 @@ const UnifiedDiffLine: React.FC<DiffLineProps> = ({ type, content, oldLineNumber
       );
 };
 
-const FileDiff: React.FC<FileDiffProps> = ({ file }) => {
+const FileDiff = ({ file }) => {
       const [isExpanded, setIsExpanded] = useState(true);
-      const [viewMode, setViewMode] = useState<ViewMode>("split");
+      const [viewMode, setViewMode] = useState("split");
       const theme = useTheme();
 
-      const getFileStats = (): { additions: number; deletions: number; changes: number } => {
+      const getFileStats = () => {
         const additions = file.changes.filter(change => change.type === "added").length;
         const deletions = file.changes.filter(change => change.type === "removed").length;
         return {
@@ -405,7 +369,7 @@ const FileDiff: React.FC<FileDiffProps> = ({ file }) => {
       );
 };
 
-const DiffViewer: React.FC<DiffViewerProps> = ({ files }) => {
+const DiffViewer = ({ files }) => {
       return (
         <Box>
           { files.map((file, index) => (

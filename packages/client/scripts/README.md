@@ -1,6 +1,6 @@
 # Type Error Fixer
 
-This powerful script automatically analyzes and fixes TypeScript errors in the client codebase. It goes beyond the capabilities of standard linting tools like `yarn lint --fix` by intelligently resolving complex type issues.
+This powerful script automatically analyzes and fixes errors in the client codebase. It goes beyond the capabilities of standard linting tools like `yarn lint --fix` by intelligently resolving complex type issues.
 
 ## Features
 
@@ -16,12 +16,10 @@ This powerful script automatically analyzes and fixes TypeScript errors in the c
 
 The script:
 
-1. Analyzes all TypeScript files in the client codebase
-2. Identifies type errors using the TypeScript Compiler API
-3. Categorizes errors by type and location
-4. Applies intelligent fixes based on error type
-5. Formats fixed files with Prettier
-6. Provides a detailed summary of fixes applied
+1. Categorizes errors by type and location
+2. Applies intelligent fixes based on error type
+3. Formats fixed files with Prettier
+4. Provides a detailed summary of fixes applied
 
 ## Usage
 
