@@ -20,7 +20,7 @@
     "fix:code-quality": "./fix-code-quality.sh"
   },
   "dependencies": {
-    "@babel/runtime": "^7.24.0",
+    "@babel/runtime": "^7.26.10",
     "@local-rabbit/shared": "^1.0.0",
     "@vitejs/plugin-react": "^4.2.1",
     "compression": "^1.7.4",
