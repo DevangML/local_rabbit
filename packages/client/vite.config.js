@@ -105,8 +105,8 @@ export default defineConfig({
     })
   ],
   server: {
-    port: 3000,
-    strictPort: true,
+    port: 5173, // Changed from 3000 to Vite's default 5173
+    strictPort: false, // Changed to allow fallback ports
     headers: {
       'Service-Worker-Allowed': '/',
       'Cross-Origin-Embedder-Policy': 'require-corp',
@@ -120,8 +120,8 @@ export default defineConfig({
     minify: 'esbuild',
     cssMinify: true,
     sourcemap: true,
-    rollupOptions: process.env.SSR ? {
-      input: './src/entry-server.jsx', // Changed from object to direct path
+    rollupOptions: process.env.SSR === 'true' ? {
+      input: './src/entry-server.jsx',
       output: {
         format: 'esm',
         dir: 'dist/server',
@@ -165,26 +165,14 @@ export default defineConfig({
         polyfill: true
       },
       reportCompressedSize: true,
-      cssCodeSplit: true,
-      ssr: process.env.SSR ? './src/entry-server.jsx' : undefined
+      cssCodeSplit: true
     },
-    ssr: {
+    ssr: process.env.SSR === 'true' ? {
       noExternal: ['@emotion/*', '@mui/material/*', '@mui/system/*'],
       target: 'node',
-      format: 'esm', // Add this line to ensure ESM output
-      entry: './src/entry-server.jsx', // Add explicit SSR entry point
-      optimizeDeps: {
-        include: [
-          '@emotion/react',
-          '@emotion/styled',
-          '@emotion/cache',
-          '@emotion/server',
-          '@emotion/use-insertion-effect-with-fallbacks',
-          '@mui/material',
-          '@mui/system'
-        ]
-      }
-    }
+      format: 'esm',
+      entry: './src/entry-server.jsx'
+    } : undefined
   },
   optimizeDeps: {
     include: [

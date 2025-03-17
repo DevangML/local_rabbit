@@ -38,3 +38,5 @@ export function FeatureDemo() {
     </Box>
   );
 }
+
+export default FeatureDemo;

@@ -416,4 +416,6 @@ const React19Features = () => {
   );
 };
 
+// Export both as named and default export for better compatibility
+export { React19Features };
 export default React19Features;

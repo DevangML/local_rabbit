@@ -70,3 +70,6 @@ export const createAppTheme = (mode = 'light') => {
     },
   });
 };
+
+// Create a default theme to export
+export const theme = createAppTheme('light');

@@ -10,7 +10,7 @@ import fs from 'fs';
 import dotenv from 'dotenv';
 import React from 'react';
 import { renderToString, renderToPipeableStream } from 'react-dom/server';
-import { StaticRouter } from 'react-router-dom/server';
+import { StaticRouter } from 'react-router-dom/server.js';
 import { cpus } from 'os';
 
 // Setup browser globals for SSR
@@ -662,9 +662,42 @@ app.get('/health', (req, res) => {
 app.get('*', ssrHandler);
 
 // 11. Start the server with proper error handling
-const server = app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+async function findAvailablePort(startPort, maxAttempts = 10) {
+  const net = await import('net');
+
+  async function isPortAvailable(port) {
+    return new Promise((resolve) => {
+      const server = net.createServer();
+      server.once('error', () => resolve(false));
+      server.once('listening', () => {
+        server.close(() => resolve(true));
+      });
+      server.listen(port, '127.0.0.1');
+    });
+  }
+
+  for (let port = startPort; port < startPort + maxAttempts; port++) {
+    if (await isPortAvailable(port)) {
+      return port;
+    }
+  }
+  throw new Error(`No available ports found between ${startPort} and ${startPort + maxAttempts - 1}`);
+}
+
+let server;
+try {
+  const availablePort = await findAvailablePort(PORT);
+  if (availablePort !== PORT) {
+    console.log(`Port ${PORT} is in use, using port ${availablePort} instead`);
+  }
+
+  server = app.listen(availablePort, () => {
+    console.log(`Server running at http://localhost:${availablePort}`);
+  });
+} catch (error) {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+}
 
 // 12. Implement graceful shutdown
 process.on('SIGTERM', () => {

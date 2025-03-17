@@ -1,18 +1,25 @@
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-}
+/**
+ * @typedef {Object} User
+ * @property {string} id
+ * @property {string} name
+ * @property {string} email
+ * @property {string} [avatar] - Optional user avatar URL
+ */
 
-export interface ApiResponse<T> {
-  data: T;
-  status: number;
-  message: string;
-}
+/**
+ * @template T
+ * @typedef {Object} ApiResponse
+ * @property {T} data
+ * @property {number} status
+ * @property {string} message
+ */
 
-export interface ErrorResponse {
-  error: string;
-  status: number;
-  details?: unknown;
-} 
+/**
+ * @typedef {Object} ErrorResponse
+ * @property {string} error
+ * @property {number} status
+ * @property {*} [details] - Optional error details
+ */
+
+// Export empty object to make this a proper ES module
+export default {};

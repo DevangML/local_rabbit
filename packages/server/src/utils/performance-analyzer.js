@@ -7,12 +7,12 @@
 
 const _ = require('lodash');
 const async = require('async');
-const chalk = require('chalk');
 const fs = require('fs');
 const path = require('path');
 const { performance } = require('perf_hooks');
-const winston = require('winston');
 const logger = require('./logger');
+import winston from 'winston';
+import chalk from 'chalk';
 
 /** @typedef {Object} PerformanceItem
  * @property {number} value - The item's value
