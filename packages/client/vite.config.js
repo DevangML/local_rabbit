@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
-import { comlink } from 'vite-plugin-comlink';
+// Remove or comment out comlink if not needed
+// import { comlink } from 'vite-plugin-comlink';
 import WebfontDownload from 'vite-plugin-webfont-dl';
 import optimizer from 'vite-plugin-optimizer';
 import { robots } from 'vite-plugin-robots';
@@ -28,7 +29,8 @@ export default defineConfig({
       jsxRuntime: 'automatic',
       jsxImportSource: '@emotion/react'
     }),
-    comlink(),
+    // Remove or comment out comlink() if not needed
+    // comlink(),
     WebfontDownload([
       'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
       'https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap'

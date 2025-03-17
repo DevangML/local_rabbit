@@ -16,6 +16,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:ssr": "cross-env SSR=true vite build && node scripts/post-build-ssr.js",
+    "build:prod": "vite build --mode production",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -63,7 +64,8 @@
     "rollup": "^3.29.4",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
-    "@alloc/quick-lru": "5.2.0"
+    "@alloc/quick-lru": "5.2.0",
+    "vite-plugin-comlink": "3.0.1"
   },
   "resolutions": {
     "@remix-run/router": "1.15.0",
@@ -81,6 +83,7 @@
     "@vitejs/plugin-react": "4.2.1",
     "@rollup/plugin-commonjs": "25.0.7",
     "@rollup/plugin-node-resolve": "15.2.3",
-    "@types/node": "18.19.3"
+    "@types/node": "18.19.3",
+    "vite-plugin-comlink": "3.0.1"
   }
 }
