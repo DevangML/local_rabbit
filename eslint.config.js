@@ -54,12 +54,7 @@ export default [
     },
   },
   {
-    files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
-      parser: tsparser,
-      parserOptions: {
-        project: './tsconfig.json',
-      },
       globals: {
         ...globals.node,
       },

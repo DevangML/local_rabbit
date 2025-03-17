@@ -3,7 +3,6 @@ import './mui-patches/monkeyPatch';
 
 // Patch useEnhancedEffect directly to avoid errors
 // This needs to be done before any MUI imports
-// @ts-ignore
 global.useEnhancedEffectPatched = true;
 
 // Then import our patches
@@ -19,12 +18,10 @@ import { SafeRender, isServer } from './emotion-fix.js';
 
 // Make React available globally
 import * as React from 'react';
-// @ts-ignore
 global.React = React;
 
 // Override React.useLayoutEffect to avoid SSR warnings
 if (typeof window === 'undefined') {
-  // @ts-ignore
   React.useLayoutEffect = React.useEffect;
 }
 
@@ -75,7 +72,6 @@ const LoadingFallback = () => (
 // Error boundary component for SSR
 class ErrorBoundary extends React.Component {
   // Define props interface
-  // @ts-ignore
   constructor(props) {
     super(props);
     this.state = { hasError: false };
@@ -97,7 +93,6 @@ class ErrorBoundary extends React.Component {
       return <div>Something went wrong. Please try again later.</div>;
     }
 
-    // @ts-ignore
     return <SafeRender>{this.props.children}</SafeRender>;
   }
 }

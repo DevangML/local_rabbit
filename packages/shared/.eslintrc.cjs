@@ -16,9 +16,9 @@ module.exports = {
     'node_modules',
     '.eslintrc.js',
     '.eslintrc.cjs',
-    '*.test.ts',
     '*.test.js',
-    '**/*.d.ts'
+    '*.test.js',
+    '**/*.d.js'
   ],
   globals: {
     process: 'readonly',

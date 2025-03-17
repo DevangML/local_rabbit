@@ -14,7 +14,6 @@ const compression = require('compression');
  * Only compresses responses above a certain size threshold
  * @type {Function}
  */
-// @ts-ignore - Bypass type conflict between compression and express
 const compressionMiddleware = compression({
   // Only compress responses larger than 1KB
   threshold: 1024,

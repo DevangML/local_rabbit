@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Performance utilities using Lodash and Async
  * This file provides optimized utility functions for common operations

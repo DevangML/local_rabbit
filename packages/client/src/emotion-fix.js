@@ -15,18 +15,6 @@ if (isBrowser) {
   window.React = React;
 }
 
-// Add type declaration for Emotion's property
-declare global {
-  interface Window {
-    __EMOTION_INSERTION_EFFECT__?: boolean;
-    React?: any; // Add React to the Window interface
-    // Add webpack require for our runtime patching
-    __webpack_require__?: {
-      c: Record<string, { exports: any }>;
-    };
-  }
-}
-
 // Polyfill React's useInsertionEffect for Emotion
 // This needs to be done before any Emotion imports
 if (isBrowser) {
@@ -36,15 +24,15 @@ if (isBrowser) {
 }
 
 // Define a safe way to access React hooks that handles when they might be undefined
-const getSafeReactHook = (hookName: string) => {
+const getSafeReactHook = (hookName) => {
   // First check if React is available
   if (!React) {
     // Return a no-op function if React isn't available
-    return (fn: () => void) => { fn(); return () => {}; };
+    return (fn) => { fn(); return () => {}; };
   }
   
   // Then safely access the hook
-  return (React as any)[hookName] || ((fn: () => void) => { fn(); return () => {}; });
+  return React[hookName] || ((fn) => { fn(); return () => {}; });
 };
 
 // Define our own useInsertionEffect hook that falls back to useLayoutEffect or useEffect
@@ -53,18 +41,10 @@ export const useInsertionEffectPolyfill =
   (React.useInsertionEffect || 
   // On the server, useLayoutEffect causes a warning, so we use useEffect instead
   (isServer ? getSafeReactHook('useEffect') : getSafeReactHook('useLayoutEffect')) || 
-  ((fn: () => void) => fn()));
+  ((fn) => fn()));
 
 // Import the module to reference it before augmentation
 import '@mui/styled-engine';
-
-// Patch for @mui/system issue with internal_processStyles
-// The MUI system is trying to import internal_processStyles which doesn't exist in @mui/styled-engine v6
-// This module augmentation adds the missing export
-declare module '@mui/styled-engine' {
-  // Add the missing export that's being imported in @mui/system/createStyled.js
-  export const internal_processStyles: any;
-}
 
 // Export our own implementation of useEnhancedEffect for MUI to use
 export const muiUseEnhancedEffect = isServer ? getSafeReactHook('useEffect') : getSafeReactHook('useLayoutEffect');
@@ -75,7 +55,7 @@ if (typeof window !== 'undefined') {
   try {
     // Create a global function that mimics the useEnhancedEffect hook
     // This creates a safer approach than patching webpack modules
-    (window as any).MUI_useEnhancedEffect = muiUseEnhancedEffect;
+    window.MUI_useEnhancedEffect = muiUseEnhancedEffect;
     
     // Try to define a module to handle any import to useEnhancedEffect
     if (window.__webpack_require__) {
@@ -100,7 +80,7 @@ if (typeof window !== 'undefined') {
 }
 
 // Create a safe wrapper for React elements to prevent "Objects are not valid as a React child" errors
-export function safeChild(child: any): any {
+export function safeChild(child) {
   if (child === null || child === undefined) {
     return null;
   }
@@ -116,7 +96,7 @@ export function safeChild(child: any): any {
       // In SSR context, we need to be more careful with React elements
       if (typeof window === 'undefined' && child.type && typeof child.type === 'function') {
         // For component elements in SSR, return a placeholder instead of the actual element
-        // This helps avoid the "Objects are not valid as React child" error
+        // This helps avoid the "Objects are not valid as a React child" error
         return null;
       }
       return child; // Valid React elements are returned as is in browser context
@@ -141,7 +121,7 @@ export function safeChild(child: any): any {
 }
 
 // Export a utility to safely render children
-export function safeRender(children: React.ReactNode): React.ReactNode {
+export function safeRender(children) {
   if (children === null || children === undefined) {
     return null;
   }
@@ -154,7 +134,7 @@ export function safeRender(children: React.ReactNode): React.ReactNode {
 }
 
 // Create a wrapper component that safely renders its children
-export const SafeRender: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const SafeRender = ({ children }) => {
   try {
     const safeChildren = safeRender(children);
     return React.createElement(React.Fragment, null, safeChildren);

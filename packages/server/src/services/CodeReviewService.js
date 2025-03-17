@@ -154,9 +154,7 @@ class CodeReviewService {
    */
   async getDiffBetweenBranches(repoPath, baseBranch, headBranch) {
     try {
-      // @ts-ignore - Create GitService instance
       const gitService = new this.GitService(repoPath);
-      // @ts-ignore - Call instance method
       const diffOutput = await gitService.getDiffBetweenBranches(repoPath, baseBranch, headBranch);
       return this.parseGitDiff(diffOutput);
     } catch (/** @type {unknown} */ error) {
@@ -469,16 +467,13 @@ class CodeReviewService {
       const result = await model.generateContent(prompt);
       logger.info(`[API CALL] Successful response from Gemini API`);
 
-      // @ts-ignore - Raw response from API, will be processed later
       return result.response;
     } catch (/** @type {unknown} */ error) {
       // Debug: Log detailed error information
       logger.error('[API CALL ERROR] Error calling Gemini API:');
       if (error instanceof Error) {
         if ('response' in error) {
-          // @ts-ignore
           logger.error(`Status: ${error.response?.status}`);
-          // @ts-ignore
           logger.error(`Data: ${JSON.stringify(error.response?.data)}`);
         } else if ('request' in error) {
           logger.error('No response received');
@@ -500,14 +495,10 @@ class CodeReviewService {
    */
   parseReviewResponse(response, originalFiles) {
     try {
-      // @ts-ignore - Handle the Gemini API response format
       if (response && typeof response === 'object' &&
-        // @ts-ignore - Candidates property from Gemini API
         Array.isArray(response.candidates) &&
-        // @ts-ignore - Candidates property from Gemini API
         response.candidates.length > 0) {
 
-        // @ts-ignore - Extract text content from Gemini response
         const textContent = response.candidates[0].content.parts[0].text;
 
         // Find JSON in the response

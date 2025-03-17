@@ -4,8 +4,6 @@
  * This file uses JavaScript with JSDoc comments for minimal type checking
  * while allowing us to mock browser globals for SSR testing.
  * 
- * @ts-ignore
- * @ts-nocheck
  * @jsxImportSource react
  */
 

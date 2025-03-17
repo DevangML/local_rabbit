@@ -51,7 +51,6 @@ function installHook() {
     }
 
     // For all other modules, use the original require
-    // @ts-ignore
     return originalRequire.apply(this, arguments);
   };
 

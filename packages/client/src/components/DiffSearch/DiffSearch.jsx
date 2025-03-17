@@ -1,36 +1,37 @@
 /* global document */
-/* global document */
-/* global document */
-/* global document */
 import React, { useState, useRef, useEffect } from "react";
 import "./DiffSearch.css";
 
-interface Filter {
-  diffTypes: string[];
-  fileTypes: string[];
-  severity: string[];
-  status: string[];
-  qualityMetrics: string[];
-  widgetTypes: string[];
-  changeTypes: string[];
-}
+/**
+ * @typedef {Object} Filter
+ * @property {string[]} diffTypes
+ * @property {string[]} fileTypes
+ * @property {string[]} severity
+ * @property {string[]} status
+ * @property {string[]} qualityMetrics
+ * @property {string[]} widgetTypes
+ * @property {string[]} changeTypes
+ */
 
-interface FlutterFilter {
-  label: string;
-  value: string;
-}
+/**
+ * @typedef {Object} FlutterFilter
+ * @property {string} label
+ * @property {string} value
+ */
 
-interface FlutterFilters {
-  fileTypes: FlutterFilter[];
-  widgetTypes: FlutterFilter[];
-  changeTypes: FlutterFilter[];
-}
+/**
+ * @typedef {Object} FlutterFilters
+ * @property {FlutterFilter[]} fileTypes
+ * @property {FlutterFilter[]} widgetTypes
+ * @property {FlutterFilter[]} changeTypes
+ */
 
-interface DiffSearchProps {
-  onSearch: (params: { query: string; filters: Filter }) => void;
-  initialFilters?: Partial<Filter>;
-  initialQuery?: string;
-}
+/**
+ * @typedef {Object} DiffSearchProps
+ * @property {function({ query: string, filters: Filter }): void} onSearch
+ * @property {Partial<Filter>} [initialFilters]
+ * @property {string} [initialQuery]
+ */
 
 const PREDEFINED_FILTERS = {
   diffTypes: ["Added", "Modified", "Deleted", "Renamed"],
@@ -40,7 +41,7 @@ const PREDEFINED_FILTERS = {
   qualityMetrics: ["Complexity", "Coverage", "Duplication", "Style Issues"],
 };
 
-const DEFAULT_FILTERS: Filter = {
+const DEFAULT_FILTERS = {
   diffTypes: [],
   fileTypes: [],
   severity: [],
@@ -50,22 +51,25 @@ const DEFAULT_FILTERS: Filter = {
   changeTypes: [],
 };
 
-const DiffSearch: React.FC<DiffSearchProps> = ({
+/**
+ * @param {DiffSearchProps} props
+ */
+const DiffSearch = ({
   onSearch,
   initialFilters = {},
   initialQuery = "",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState(initialQuery);
-  const [activeFilters, setActiveFilters] = useState < Filter > ({
+  const [activeFilters, setActiveFilters] = useState({
     ...DEFAULT_FILTERS,
     ...initialFilters,
   });
-  const dropdownRef = useRef < HTMLDivElement > (null);
-  const searchContainerRef = useRef < HTMLDivElement > (null);
-  const searchInputRef = useRef < HTMLInputElement > (null);
+  const dropdownRef = useRef(null);
+  const searchContainerRef = useRef(null);
+  const searchInputRef = useRef(null);
 
-  const flutterFilters: FlutterFilters = {
+  const flutterFilters = {
     fileTypes: [
       { label: "Dart Files", value: "DART" },
       { label: "Widget Files", value: "WIDGET" },
@@ -90,10 +94,10 @@ const DiffSearch: React.FC<DiffSearchProps> = ({
   };
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event) => {
       if (
         searchContainerRef.current &&
-        !searchContainerRef.current.contains(event.target as Node)
+        !searchContainerRef.current.contains(event.target)
       ) {
         setIsOpen(false);
       }
@@ -103,8 +107,8 @@ const DiffSearch: React.FC<DiffSearchProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSubmit = (e?: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e) => {
+    if (e) e.preventDefault();
     onSearch({ query, filters: activeFilters });
     setIsOpen(false);
     if (searchInputRef.current) {
@@ -112,7 +116,7 @@ const DiffSearch: React.FC<DiffSearchProps> = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       handleSubmit(e);
     } else if (e.key === "Escape") {
@@ -123,7 +127,7 @@ const DiffSearch: React.FC<DiffSearchProps> = ({
     }
   };
 
-  const handleFilterChange = (category: keyof Filter, value: string) => {
+  const handleFilterChange = (category, value) => {
     setActiveFilters((prev) => ({
       ...prev,
       [category]: prev[category].includes(value)
@@ -132,7 +136,7 @@ const DiffSearch: React.FC<DiffSearchProps> = ({
     }));
   };
 
-  const toggleFilter = (category: keyof Filter, value: string) => {
+  const toggleFilter = (category, value) => {
     setActiveFilters((prev) => {
       const current = prev[category] || [];
       const updated = current.includes(value)
@@ -159,7 +163,7 @@ const DiffSearch: React.FC<DiffSearchProps> = ({
     handleSubmit();
   };
 
-  const getActiveFilterCount = (): number => {
+  const getActiveFilterCount = () => {
     return Object.values(activeFilters).reduce(
       (count, filterArray) =>
         count + (Array.isArray(filterArray) ? filterArray.length : 0),
@@ -232,12 +236,9 @@ const DiffSearch: React.FC<DiffSearchProps> = ({
                     <label key={option} className="filter-option">
                       <input
                         type="checkbox"
-                        checked={isFilterActive(
-                          category as keyof Filter,
-                          option,
-                        )}
+                        checked={isFilterActive(category, option)}
                         onChange={() =>
-                          handleFilterChange(category as keyof Filter, option)
+                          handleFilterChange(category, option)
                         }
                       />
                       <span>{option}</span>
@@ -257,9 +258,9 @@ const DiffSearch: React.FC<DiffSearchProps> = ({
                     {options.map(({ label, value }) => (
                       <button
                         key={value}
-                        className={`filter-option ${isFilterActive(category as keyof Filter, value) ? "active" : ""}`}
+                        className={`filter-option ${isFilterActive(category, value) ? "active" : ""}`}
                         onClick={() =>
-                          toggleFilter(category as keyof Filter, value)
+                          toggleFilter(category, value)
                         }
                       >
                         {label}

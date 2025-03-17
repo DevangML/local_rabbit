@@ -47,8 +47,8 @@ export default [
     },
   },
   {
-    files: ['**/*.ts', '**/*.tsx'],
-    ignores: ['vite.config.ts'],
+    files: ['**/*.js', '**/*.jsx'],
+    ignores: ['vite.config.js'],
     languageOptions: {
       parser: tsparser,
       parserOptions: {
@@ -88,7 +88,7 @@ export default [
     },
   },
   {
-    files: ['vite.config.ts'],
+    files: ['vite.config.js'],
     languageOptions: {
       parser: tsparser,
       globals: {
@@ -100,7 +100,7 @@ export default [
     },
   },
   {
-    files: ['**/tests/**/*.js', '**/*.test.js', '**/*.test.ts'],
+    files: ['**/tests/**/*.js', '**/*.test.js', '**/*.test.js'],
     languageOptions: {
       globals: {
         ...globals.node,

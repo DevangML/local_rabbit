@@ -11,7 +11,6 @@ export default defineConfig({
       exclude: [
         'node_modules/',
         'src/tests/',
-        '**/*.d.ts',
       ],
       branches: 80,
       functions: 80,

@@ -1,38 +1,9 @@
 /* eslint-disable no-unused-vars */
 import * as Comlink from "comlink";
 
-interface GroupedData<T> {
-    [key: string]: T[];
-}
-
-interface Change {
-    type: "add" | "remove";
-}
-
-interface DiffFile {
-    path: string;
-    status: "added" | "modified" | "removed";
-    changes: Change[];
-}
-
-interface DiffData {
-    files: DiffFile[];
-}
-
-interface DiffAnalysis {
-    summary: string;
-    complexity: {
-        overall: number;
-        filesIncreased: number;
-        filesDecreased: number;
-    };
-    impactedAreas: Set<string>;
-    riskScore: number;
-}
-
 class Calculator {
     // Example heavy computation
-    async fibonacci(n: number): Promise<number> {
+    async fibonacci(n) {
         if (n <= 1) { return n; }
         const [a, b] = await Promise.all([
             this.fibonacci(n - 1),
@@ -42,35 +13,29 @@ class Calculator {
     }
 
     // Data processing with filtering, mapping, and sorting
-
-    async processArrayData<T, R = T>(data: T[], options: {
-        filterFn?: (item: T) => boolean;
-        mapFn?: (item: T) => R;
-        sortFn?: (a: T, b: T) => number;
-        groupFn?: (item: T) => string | number;
-    }): Promise<R[] | GroupedData<R>> {
-        let result = [...data] as unknown as R[];
+    async processArrayData(data, options) {
+        let result = [...data];
 
         // Apply filter
         if (options.filterFn) {
-            result = (result as unknown as T[]).filter(options.filterFn) as unknown as R[];
+            result = result.filter(options.filterFn);
         }
 
         // Apply map
         if (options.mapFn) {
-            result = (result as unknown as T[]).map(options.mapFn);
+            result = result.map(options.mapFn);
         }
 
         // Apply sort
         if (options.sortFn) {
-            result = result.sort((a, b) => options.sortFn(a as unknown as T, b as unknown as T));
+            result = result.sort((a, b) => options.sortFn(a, b));
         }
 
         // Apply grouping
         if (options.groupFn) {
-            const grouped: GroupedData<R> = {};
+            const grouped = {};
             for (const item of result) {
-                const key = options.groupFn((item as unknown as T)).toString();
+                const key = options.groupFn(item).toString();
                 if (!grouped[key]) {
                     grouped[key] = [];
                 }
@@ -83,12 +48,7 @@ class Calculator {
     }
 
     // Image processing with various operations
-    async processImage(imageData: ImageData, operations: {
-        invert?: boolean;
-        grayscale?: boolean;
-        blur?: boolean;
-        brightness?: number;
-    } = {}): Promise<ImageData> {
+    async processImage(imageData, operations = {}) {
         const data = new Uint8ClampedArray(imageData.data);
 
         if (operations.invert) {
@@ -144,20 +104,20 @@ class Calculator {
     }
 
     // Diff analysis
-    async analyzeDiff(diffData: DiffData): Promise<DiffAnalysis> {
-        const analysis: DiffAnalysis = {
+    async analyzeDiff(diffData) {
+        const analysis = {
             summary: "",
             complexity: {
                 overall: 0,
                 filesIncreased: 0,
                 filesDecreased: 0
             },
-            impactedAreas: new Set < string > (),
+            impactedAreas: new Set(),
             riskScore: 0
         };
 
         let totalComplexityChange = 0;
-        const processedFiles = new Set < string > ();
+        const processedFiles = new Set();
 
         for (const file of diffData.files || []) {
             const fileComplexity = this.calculateFileComplexity(file);
@@ -179,7 +139,7 @@ class Calculator {
         return analysis;
     }
 
-    private calculateFileComplexity(file: DiffFile): number {
+    calculateFileComplexity(file) {
         // Simple complexity calculation based on changes
         let complexity = 0;
 
@@ -199,30 +159,42 @@ class Calculator {
         return complexity;
     }
 
-    private calculateRiskScore(diffData: DiffData, processedFiles: Set<string>): number {
+    calculateRiskScore(diffData, processedFiles) {
         let risk = 0;
 
         // More files changed = higher risk
-        risk += processedFiles.size * 2;
+        risk += Math.min(50, (diffData.files || []).length * 2);
 
-        // Changes to critical paths increase risk
-        const criticalPaths = ["src/core", "src/auth", "src/api"];
+        // Check for critical paths
+        const criticalPaths = ["security", "auth", "payment", "core", "config"];
         for (const file of processedFiles) {
             if (criticalPaths.some(path => file.includes(path))) {
-                risk += 5;
+                risk += 10;
             }
         }
 
         return Math.min(100, risk);
     }
 
-    private generateSummary(analysis: DiffAnalysis): string {
-        return `Analysis found changes affecting ${analysis.impactedAreas.size} areas with a risk score of ${analysis.riskScore}. ` +
-            `Complexity ${analysis.complexity.overall > 0 ? "increased" : "decreased"} in ${Math.abs(analysis.complexity.overall)} units.`;
+    generateSummary(analysis) {
+        const filesChanged = analysis.complexity.filesIncreased + analysis.complexity.filesDecreased;
+        const areasChanged = analysis.impactedAreas.size;
+
+        let summary = `This change affects ${filesChanged} files across ${areasChanged} areas. `;
+
+        if (analysis.riskScore > 70) {
+            summary += "This is a high-risk change with significant impact.";
+        } else if (analysis.riskScore > 40) {
+            summary += "This is a medium-risk change with moderate impact.";
+        } else {
+            summary += "This is a low-risk change with minimal impact.";
+        }
+
+        return summary;
     }
 }
 
-Comlink.expose(Calculator);
+Comlink.expose(new Calculator());
 
 /* eslint-env worker */
 /* global self */

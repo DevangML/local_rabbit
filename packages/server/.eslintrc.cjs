@@ -54,7 +54,7 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['*.ts', '*.tsx'],
+      files: ['*.js', '*.jsx'],
     },
   ],
 }; 

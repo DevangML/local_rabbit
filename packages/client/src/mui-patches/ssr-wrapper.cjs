@@ -18,4 +18,4 @@ Module.prototype.require = function (...args) {
   }
 };
 
-module.exports = require('../entry-server.tsx');
+module.exports = require('../entry-server.jsx');

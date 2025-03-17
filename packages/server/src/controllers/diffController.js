@@ -115,7 +115,6 @@ exports.analyzeDiff = async (req, res) => {
       toBranch,
       repository: gitService.repoPath,
     });
-    // @ts-ignore
   } catch (/** @type {Error} */ error) {
     logger.error('Error analyzing diff:', error);
     return res.status(500).json({

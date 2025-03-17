@@ -41,7 +41,7 @@ function getAllJsFiles(dir, fileList = []) {
 
     if (stat.isDirectory() && file !== 'node_modules' && file !== 'dist') {
       getAllJsFiles(filePath, fileList);
-    } else if (/\.(js|jsx|ts|tsx)$/.test(file)) {
+    } else if (/\.(js|jsx)$/.test(file)) {
       fileList.push(filePath);
     }
   });

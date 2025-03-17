@@ -9,7 +9,7 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       input: {
-        server: resolve(__dirname, 'src/server.ts'),
+        server: resolve(__dirname, 'src/server.js'),
       },
       output: {
         format: 'esm',

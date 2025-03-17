@@ -2,7 +2,6 @@ const path = require('path');
 const fs = require('fs').promises;
 const fsSync = require('fs');
 const os = require('os');
-// @ts-ignore - Import simple-git with correct syntax
 const simpleGitFactory = require('simple-git');
 const logger = require('../utils/logger');
 const config = require('../config');
@@ -41,7 +40,6 @@ const validatePath = (filePath, allowedPaths = []) => {
 class GitService {
   constructor(repoPath = '') {
     this.repoPath = repoPath;
-    // @ts-ignore - simpleGit is callable at runtime
     this.git = simpleGitFactory(repoPath);
     // Ensure the state directory exists
     const stateDir = path.join(__dirname, '..', '..', path.dirname(config.git.statePath));
@@ -57,7 +55,6 @@ class GitService {
    */
   setRepoPath(repoPath) {
     this.repoPath = repoPath;
-    // @ts-ignore - simpleGit is callable at runtime
     this.git = simpleGitFactory(repoPath);
   }
 
@@ -179,7 +176,6 @@ class GitService {
    */
   static async findRepositories() {
     const homeDir = os.homedir();
-    /** @type {string[]} */
     const results = [];
     const checkedDirs = new Set();
 
@@ -259,7 +255,6 @@ class GitService {
    */
   async isGitRepository(dirPath) {
     try {
-      // @ts-ignore - simpleGit is callable at runtime
       const git = simpleGitFactory(dirPath);
       return await git.checkIsRepo();
     } catch (error) {

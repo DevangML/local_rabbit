@@ -32,7 +32,7 @@ Run the script from the client directory:
 Or directly:
 
 ```bash
-npx tsx scripts/fix-type-errors.ts
+npx jsx scripts/fix-type-errors.js
 ```
 
 ## Supported Error Types

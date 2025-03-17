@@ -8,10 +8,9 @@
       "runtimeExecutable": "node",
       "runtimeArgs": [
         "--loader",
-        "tsx"
       ],
       "args": [
-        "${workspaceFolder}/packages/server/src/server.ts"
+        "${workspaceFolder}/packages/server/src/server.js"
       ],
       "cwd": "${workspaceFolder}",
       "internalConsoleOptions": "openOnSessionStart",

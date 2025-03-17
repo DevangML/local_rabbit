@@ -958,7 +958,7 @@ EOF
     
     # Run client linting in watch mode in the background using nodemon
     echo -e "${CYAN}Starting client linting in watch mode...${NC}"
-    (cd client && npx nodemon --watch src --ext js,jsx,ts,tsx --exec "yarn eslint --format unix src/ 2>&1 | tee ../reports/client-lint.txt | ../reports/filter-eslint.sh") &
+    (cd client && npx nodemon --watch src --ext js,jsx --exec "yarn eslint --format unix src/ 2>&1 | tee ../reports/client-lint.txt | ../reports/filter-eslint.sh") &
     CLIENT_PID=$!
     
     # Run server linting in watch mode in the background using nodemon

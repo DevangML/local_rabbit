@@ -10,4 +10,4 @@ import './src/requireHook.js';
 process.env.NODE_ENV = 'development';
 
 // Now import and run the server
-await import('./src/server.ts'); 
+await import('./src/server.js'); 

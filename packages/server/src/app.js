@@ -1,11 +1,8 @@
 /**
  * Express application setup
- * @typedef {import('express').Application} Application
- * @typedef {import('express').RequestHandler} RequestHandler
  */
 
 const express = require('express');
-// @ts-ignore
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
@@ -16,12 +13,10 @@ const errorHandler = require('./middleware/errorHandler');
 const routes = require('./routes');
 const logger = require('./utils/logger');
 const { compressionMiddleware, disableETagMiddleware, cacheControlMiddleware } = require('./middleware/performance');
-// @ts-ignore
 const rateLimit = require('express-rate-limit');
 const config = require('./config');
 
 // Create Express app
-/** @type {Application} */
 const app = express();
 
 // Create logs directory if it doesn't exist
@@ -39,7 +34,6 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Security middleware
-// @ts-ignore
 app.use(helmet());
 
 // Rate limiting in production

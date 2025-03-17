@@ -10,7 +10,6 @@ const __dirname = path.dirname(__filename);
 
 // Initialize logger
 logger.info(`Server starting in ${process.env.NODE_ENV || 'development'} mode`);
-// @ts-ignore - Custom success method defined in logger.js
 logger.success('Logger initialized successfully');
 
 // Start the server

@@ -18,7 +18,6 @@ const logger = require('./logger');
 
 class MonitoringUtils {
   static getSystemMetrics() {
-    /** @type {SystemMetrics} */
     const metrics = {
       timestamp: new Date().toISOString(),
       memory: {
@@ -56,8 +55,7 @@ class MonitoringUtils {
 
       // Alert on high CPU load
       if (Array.isArray(metrics.cpu.loadAvg) && metrics.cpu.loadAvg.length > 0) {
-        // Use type assertion to tell TypeScript we know what we're doing
-        const cpuCount = /** @type {number} */ (metrics.cpu.cpus);
+        const cpuCount = metrics.cpu.cpus;
         // Safely access the first element of the array
         const loadAvg = metrics.cpu.loadAvg[0] || 0;
         if (loadAvg > cpuCount * 0.8) {
@@ -91,7 +89,6 @@ class MonitoringUtils {
 
   static async checkHealth() {
     const metrics = this.getSystemMetrics();
-    /** @type {HealthStatus} */
     const health = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
@@ -113,8 +110,7 @@ class MonitoringUtils {
 
     // Check CPU load
     if (Array.isArray(metrics.cpu.loadAvg) && metrics.cpu.loadAvg.length > 0) {
-      // Use type assertion to tell TypeScript we know what we're doing
-      const cpuCount = /** @type {number} */ (metrics.cpu.cpus);
+      const cpuCount = metrics.cpu.cpus;
       // Safely access the first element of the array
       const loadAvg = metrics.cpu.loadAvg[0] || 0;
       if (loadAvg > cpuCount * 0.8) {
