@@ -8,7 +8,6 @@ import './mui-patches/index';
 import './emotion-fix';
 
 // Import router patch to fix compatibility issues between different router versions
-import './utils/routerPatch';
 
 import React from "react";
 import { hydrateRoot, createRoot } from "react-dom/client";
