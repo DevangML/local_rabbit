@@ -70,7 +70,7 @@
     "vite-plugin-robots": "^1.0.5",
     "vite-plugin-vconsole": "^2.1.1",
     "vite-plugin-webfont-dl": "^3.10.4",
-    "esbuild": "0.18.20"
+    "esbuild": "0.25.0"
   },
   "resolutions": {
     "@remix-run/router": "1.13.1",
@@ -90,7 +90,7 @@
     "@rollup/plugin-node-resolve": "15.2.3",
     "@types/node": "18.19.3",
     "vite-plugin-comlink": "3.0.1",
-    "esbuild": "0.18.20",
+    "esbuild": "0.25.0",
     "@esbuild/darwin-x64": "0.18.20",
     "@esbuild/linux-x64": "0.18.20",
     "@esbuild/win32-x64": "0.18.20"
